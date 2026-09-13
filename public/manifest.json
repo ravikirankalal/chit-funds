@@ -1,0 +1,11 @@
+{
+  "name": "Chit Funds",
+  "short_name": "Chit Funds",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#faf9f6",
+  "theme_color": "#146b52",
+  "icons": [
+    { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

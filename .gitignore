@@ -1,0 +1,13 @@
+# Firebase local state / logs — never commit these
+.firebase/
+firebase-debug.log
+firebase-debug.*.log
+firestore-debug.log
+ui-debug.log
+*.log
+
+# Node (no build step here, but just in case)
+node_modules/
+
+# OS cruft
+.DS_Store

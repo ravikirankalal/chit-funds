@@ -1,0 +1,26 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Keep these in sync with public/firebase-config.js (ADMINS + SUPER_ADMIN).
+    // Rules can't import app code, so the emails are duplicated here.
+    function isFinancialAdmin() {
+      return request.auth != null &&
+        request.auth.token.email in ['ramesh@gmail.com', 'ravikiran.kalal@gmail.com'];
+    }
+    function isSuperAdmin() {
+      return request.auth != null &&
+        request.auth.token.email == 'ravikiran.kalal@gmail.com';
+    }
+
+    // This is a private tool for a small team, not a multi-tenant app.
+    // The two financial admins can read and write everything; the super
+    // admin gets read-only oversight of everything and can never write —
+    // that's the whole point of "view-only".
+    match /{document=**} {
+      allow read: if isFinancialAdmin() || isSuperAdmin();
+      allow write: if isFinancialAdmin();
+    }
+  }
+}

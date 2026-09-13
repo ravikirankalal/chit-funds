@@ -1,0 +1,1209 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+  <style>
+    :root {
+      --bg: #faf9f6;
+      --surface: #ffffff;
+      --border: #e9e5dc;
+      --text: #1c1b19;
+      --text-muted: #6f6a62;
+      --accent: #146b52;
+      --accent-soft: #e6f2ec;
+      --warning: #b45309;
+      --warning-soft: #fdf1e4;
+      --danger: #b3261e;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #d8d4cb; font-family: 'IBM Plex Sans', system-ui, sans-serif; color: var(--text); display: flex; align-items: flex-start; justify-content: center; }
+    ::-webkit-scrollbar { display: none; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { color: #0d4d3a; }
+    input { font-family: 'IBM Plex Sans', system-ui, sans-serif; }
+    input:focus { outline: none; border-color: var(--accent) !important; }
+    button { font-family: 'IBM Plex Sans', system-ui, sans-serif; cursor: pointer; border: none; }
+  </style>
+</helmet>
+
+<div style="width:390px; height:844px; background:var(--bg); overflow:hidden; position:relative; display:flex; flex-direction:column; box-shadow:0 0 0 1px var(--border);">
+
+  <!-- ============ LOGIN ============ -->
+  <sc-if value="{{isLogin}}" hint-placeholder-val="{{true}}">
+    <div style="flex:1 1 auto; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:32px; gap:28px;">
+      <div style="display:flex; flex-direction:column; align-items:center; gap:14px;">
+        <div style="width:56px; height:56px; border-radius:16px; background:var(--accent); display:flex; align-items:center; justify-content:center;">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M12 2L4 6V11C4 15.5 7.4 19.7 12 21C16.6 19.7 20 15.5 20 11V6L12 2Z" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 12L11 14L15.5 9.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-family:'Space Grotesk',sans-serif; font-size:22px; font-weight:700;">Chit Funds</div>
+          <div style="font-size:13px; color:var(--text-muted); margin-top:2px;">Admin console</div>
+        </div>
+      </div>
+
+      <div style="width:100%; display:flex; flex-direction:column; gap:14px;">
+        <div style="display:flex; align-items:center; justify-content:center; gap:8px;">
+          <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#4285F4" d="M45.1 24.5c0-1.6-.1-3.1-.4-4.6H24v9h11.8c-.5 2.7-2.1 5-4.4 6.6v5.5h7.1C42.6 37.3 45.1 31.4 45.1 24.5z"/><path fill="#34A853" d="M24 46c6 0 10.9-2 14.6-5.4l-7.1-5.5c-2 1.3-4.5 2.1-7.5 2.1-5.8 0-10.6-3.9-12.4-9.1H4.3v5.7C8 41.2 15.4 46 24 46z"/><path fill="#FBBC05" d="M11.6 28.1c-.5-1.3-.7-2.7-.7-4.1s.3-2.8.7-4.1v-5.7H4.3C2.8 17.2 2 20.5 2 24s.8 6.8 2.3 9.8l7.3-5.7z"/><path fill="#EA4335" d="M24 10.4c3.3 0 6.2 1.1 8.5 3.3l6.3-6.3C34.9 3.9 30 2 24 2 15.4 2 8 6.8 4.3 14.2l7.3 5.7c1.8-5.2 6.6-9.5 12.4-9.5z"/></svg>
+          <div style="font-size:12.5px; color:var(--text-muted); font-weight:500;">Sign in with Google</div>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <div onClick="{{loginAsA}}" style="display:flex; align-items:center; gap:12px; padding:12px 14px; border-radius:12px; border:1px solid var(--border); background:var(--surface);">
+            <div style="width:34px; height:34px; border-radius:17px; background:#146b52; color:#fff; font-size:13px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0;">R</div>
+            <div style="flex:1 1 auto; min-width:0;">
+              <div style="font-size:13.5px; font-weight:600;">Ramesh Kumar</div>
+              <div style="font-size:11.5px; color:var(--text-muted);">ramesh@gmail.com</div>
+            </div>
+          </div>
+          <div onClick="{{loginAsB}}" style="display:flex; align-items:center; gap:12px; padding:12px 14px; border-radius:12px; border:1px solid var(--border); background:var(--surface);">
+            <div style="width:34px; height:34px; border-radius:17px; background:#8a5a2b; color:#fff; font-size:13px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0;">S</div>
+            <div style="flex:1 1 auto; min-width:0;">
+              <div style="font-size:13.5px; font-weight:600;">Suresh Babu</div>
+              <div style="font-size:11.5px; color:var(--text-muted);">suresh@gmail.com</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="font-size:12px; color:var(--text-muted); text-align:center;">Only these two Google accounts can access this app</div>
+    </div>
+  </sc-if>
+
+  <!-- ============ TOP-LEVEL SCREENS (dashboard / ledger) ============ -->
+  <sc-if value="{{isTopLevel}}" hint-placeholder-val="{{false}}">
+
+    <!-- ---- DASHBOARD ---- -->
+    <sc-if value="{{isDashboard}}" hint-placeholder-val="{{true}}">
+      <div style="padding:20px 20px 4px; flex-shrink:0; display:flex; align-items:center; justify-content:space-between;">
+        <div>
+          <div style="font-size:12px; color:var(--text-muted); font-weight:500;">Welcome back, {{currentAdminName}}</div>
+          <div style="font-family:'Space Grotesk',sans-serif; font-size:22px; font-weight:700;">Chit Funds</div>
+        </div>
+        <div onClick="{{logout}}" style="width:34px; height:34px; border-radius:17px; background:{{currentAdminColor}}; color:#fff; font-size:13px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0;">{{currentAdminInitial}}</div>
+      </div>
+
+      <div style="flex:1 1 auto; overflow-y:auto; padding:16px 20px 90px; display:flex; flex-direction:column; gap:18px;">
+
+        <sc-if value="{{showApprovalBanner}}" hint-placeholder-val="{{false}}">
+          <div onClick="{{openCurrentMonth}}" style="background:var(--warning-soft); border-radius:14px; padding:14px; display:flex; flex-direction:column; gap:8px;">
+            <div style="font-size:12.5px; color:var(--warning); font-weight:600;">Transfer needs your approval</div>
+            <div style="font-size:12.5px; color:var(--text); line-height:1.4;">{{pendingRequesterName}} wants to send {{pendingAmountFormatted}} &middot; {{pendingFromName}} &rarr; {{pendingToName}} (Month {{pendingMonth}})</div>
+            <div style="font-size:11.5px; color:var(--warning); font-weight:600;">Tap to review &rarr;</div>
+          </div>
+        </sc-if>
+
+        <div style="background:var(--accent); border-radius:16px; padding:20px; color:#fff;">
+          <div style="font-size:12px; opacity:0.85; font-weight:500;">Total fund available</div>
+          <div style="font-family:'Space Grotesk',sans-serif; font-size:30px; font-weight:700; margin-top:4px;">{{totalFundFormatted}}</div>
+          <div style="font-size:12px; opacity:0.8; margin-top:2px;">Held across both admins</div>
+        </div>
+
+        <div style="display:flex; gap:12px;">
+          <div onClick="{{goLedger}}" style="flex:1 1 0; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:14px;">
+            <div style="font-size:11px; color:var(--text-muted); font-weight:500;">Admin A &middot; Ramesh</div>
+            <div style="font-family:'Space Grotesk',sans-serif; font-size:17px; font-weight:700; margin-top:2px;">{{adminAFormatted}}</div>
+          </div>
+          <div onClick="{{goLedger}}" style="flex:1 1 0; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:14px;">
+            <div style="font-size:11px; color:var(--text-muted); font-weight:500;">Admin B &middot; Suresh</div>
+            <div style="font-family:'Space Grotesk',sans-serif; font-size:17px; font-weight:700; margin-top:2px;">{{adminBFormatted}}</div>
+          </div>
+        </div>
+
+        <div>
+          <div style="font-size:13px; font-weight:600; color:var(--text-muted); margin-bottom:10px;">Groups</div>
+          <div onClick="{{openCurrentMonth}}" style="background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:16px; display:flex; flex-direction:column; gap:10px;">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+              <div>
+                <div style="font-size:15px; font-weight:600;">Friends Chit 2026</div>
+                <div style="font-size:12px; color:var(--text-muted); margin-top:2px;">24 members &middot; ₹5,000 / month</div>
+              </div>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style="flex-shrink:0; margin-top:2px;"><path d="M9 6l6 6-6 6" stroke="#a39d92" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <div>
+              <div style="height:6px; border-radius:3px; background:var(--border); overflow:hidden;">
+                <div style="height:100%; width:{{groupProgressPct}}; background:var(--accent); border-radius:3px;"></div>
+              </div>
+              <div style="display:flex; justify-content:space-between; margin-top:6px;">
+                <div style="font-size:12px; color:var(--text-muted);">Month {{openMonth}} of 24</div>
+                <div style="font-size:12px; color:var(--accent); font-weight:600;">In progress</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <button onClick="{{goCreateGroup}}" style="position:absolute; right:20px; bottom:96px; width:52px; height:52px; border-radius:26px; background:var(--text); color:#fff; box-shadow:0 6px 16px rgba(0,0,0,0.25); display:flex; align-items:center; justify-content:center;">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 5V19M5 12H19" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></svg>
+      </button>
+    </sc-if>
+
+    <!-- ---- LEDGER ---- -->
+    <sc-if value="{{isLedger}}" hint-placeholder-val="{{false}}">
+      <div style="padding:20px 20px 4px; flex-shrink:0;">
+        <div style="font-family:'Space Grotesk',sans-serif; font-size:20px; font-weight:700;">Admin &amp; Ledger</div>
+        <div style="font-size:12px; color:var(--text-muted); margin-top:2px;">Balances &amp; transactions</div>
+      </div>
+
+      <div style="flex:1 1 auto; overflow-y:auto; padding:16px 20px 24px; display:flex; flex-direction:column; gap:18px;">
+
+        <div style="display:flex; gap:12px;">
+          <div style="flex:1 1 0; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:14px;">
+            <div style="font-size:11px; color:var(--text-muted); font-weight:500;">Admin A &middot; Ramesh</div>
+            <div style="font-family:'Space Grotesk',sans-serif; font-size:18px; font-weight:700; margin-top:2px;">{{adminAFormatted}}</div>
+          </div>
+          <div style="flex:1 1 0; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:14px;">
+            <div style="font-size:11px; color:var(--text-muted); font-weight:500;">Admin B &middot; Suresh</div>
+            <div style="font-family:'Space Grotesk',sans-serif; font-size:18px; font-weight:700; margin-top:2px;">{{adminBFormatted}}</div>
+          </div>
+        </div>
+
+        <div style="background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:6px 16px; display:flex; justify-content:space-between; align-items:center;">
+          <div style="font-size:13px; color:var(--text-muted);">Total in ledger</div>
+          <div style="font-family:'Space Grotesk',sans-serif; font-size:15px; font-weight:700;">{{totalFundFormatted}}</div>
+        </div>
+
+        <div style="background:var(--accent-soft); border-radius:14px; padding:14px; display:flex; gap:10px; align-items:flex-start;">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" style="flex-shrink:0; margin-top:1px;"><circle cx="12" cy="12" r="9" stroke="var(--accent)" stroke-width="1.8"/><path d="M12 11V17M12 8V8.1" stroke="var(--accent)" stroke-width="1.8" stroke-linecap="round"/></svg>
+          <div style="font-size:12px; color:var(--accent); line-height:1.4;">There's no direct admin-to-admin transfer here. Funds only move between admins per month, tied to what was actually collected — open a month to rebalance it.</div>
+        </div>
+
+        <div>
+          <div style="font-size:13px; font-weight:600; color:var(--text-muted); margin-bottom:10px;">Recent activity</div>
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <sc-for list="{{ledgerRows}}" as="row" hint-placeholder-count="8">
+              <div style="background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:12px 14px; display:flex; align-items:center; gap:12px;">
+                <div style="width:34px; height:34px; border-radius:10px; background:{{row.iconBg}}; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                  <sc-if value="{{row.isCollection}}" hint-placeholder-val="{{false}}">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 5V19M12 19L6 13M12 19L18 13" stroke="{{row.iconColor}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  </sc-if>
+                  <sc-if value="{{row.isPayout}}" hint-placeholder-val="{{false}}">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 19V5M12 5L6 11M12 5L18 11" stroke="{{row.iconColor}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  </sc-if>
+                  <sc-if value="{{row.isTransfer}}" hint-placeholder-val="{{true}}">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M7 7H17M17 7L14 4M17 7L14 10" stroke="{{row.iconColor}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  </sc-if>
+                </div>
+                <div style="flex:1 1 auto; min-width:0;">
+                  <div style="font-size:13px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{row.title}}</div>
+                  <div style="font-size:11.5px; color:var(--text-muted); margin-top:1px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{row.subtitle}}</div>
+                </div>
+                <div style="font-size:13px; font-weight:700; color:{{row.amountColor}}; flex-shrink:0;">{{row.amountFormatted}}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+
+      </div>
+    </sc-if>
+
+    <!-- bottom nav shared by dashboard + ledger -->
+    <div style="flex-shrink:0; height:64px; border-top:1px solid var(--border); background:var(--surface); display:flex;">
+      <div onClick="{{goDashboard}}" style="flex:1 1 0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 11L12 4L20 11V19A1 1 0 0 1 19 20H5A1 1 0 0 1 4 19V11Z" stroke="{{dashTabColor}}" stroke-width="1.9" stroke-linejoin="round"/></svg>
+        <div style="font-size:10.5px; font-weight:600; color:{{dashTabColor}};">Dashboard</div>
+      </div>
+      <div onClick="{{goLedger}}" style="flex:1 1 0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="4" y="8" width="16" height="11" rx="1.5" stroke="{{ledgerTabColor}}" stroke-width="1.9"/><path d="M8 8V6.5A2.5 2.5 0 0 1 10.5 4H13.5A2.5 2.5 0 0 1 16 6.5V8" stroke="{{ledgerTabColor}}" stroke-width="1.9"/></svg>
+        <div style="font-size:10.5px; font-weight:600; color:{{ledgerTabColor}};">Ledger</div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ============ GROUP DETAIL ============ -->
+  <sc-if value="{{isGroupDetail}}" hint-placeholder-val="{{false}}">
+    <div style="flex-shrink:0; padding:18px 20px 14px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:12px;">
+      <div onClick="{{goDashboard}}" style="width:32px; height:32px; border-radius:10px; background:var(--bg); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M15 6L9 12L15 18" stroke="var(--text)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div>
+        <div style="font-family:'Space Grotesk',sans-serif; font-size:17px; font-weight:700;">Friends Chit 2026</div>
+        <div style="font-size:12px; color:var(--text-muted);">Month {{openMonth}} of 24 &middot; started Jan 2026</div>
+      </div>
+    </div>
+
+    <div style="flex:1 1 auto; overflow-y:auto; padding:16px 20px 24px; display:flex; flex-direction:column; gap:18px;">
+
+      <div style="display:flex; gap:10px;">
+        <div style="flex:1 1 0; background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:12px;">
+          <div style="font-size:10.5px; color:var(--text-muted); font-weight:500;">Monthly deposit</div>
+          <div style="font-family:'Space Grotesk',sans-serif; font-size:15px; font-weight:700; margin-top:2px;">₹5,000</div>
+        </div>
+        <div style="flex:1 1 0; background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:12px;">
+          <div style="font-size:10.5px; color:var(--text-muted); font-weight:500;">Collected so far</div>
+          <div style="font-family:'Space Grotesk',sans-serif; font-size:15px; font-weight:700; margin-top:2px;">{{collectedSoFarFormatted}}</div>
+        </div>
+        <div style="flex:1 1 0; background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:12px;">
+          <div style="font-size:10.5px; color:var(--text-muted); font-weight:500;">Members</div>
+          <div style="font-family:'Space Grotesk',sans-serif; font-size:15px; font-weight:700; margin-top:2px;">24</div>
+        </div>
+      </div>
+
+      <div>
+        <div style="font-size:13px; font-weight:600; color:var(--text-muted); margin-bottom:10px;">Months</div>
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <sc-for list="{{monthsRows}}" as="m" hint-placeholder-count="24">
+            <div onClick="{{m.open}}" style="background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:12px 14px; display:flex; align-items:center; gap:12px;">
+              <div style="width:34px; height:34px; border-radius:10px; background:{{m.badgeBg}}; color:{{m.badgeColor}}; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; flex-shrink:0;">{{m.number}}</div>
+              <div style="flex:1 1 auto; min-width:0;">
+                <div style="font-size:13px; font-weight:600;">{{m.title}}</div>
+                <div style="font-size:11.5px; color:var(--text-muted); margin-top:1px;">{{m.subtitle}}</div>
+              </div>
+              <div style="font-size:13px; font-weight:700; color:{{m.statusColor}}; flex-shrink:0;">{{m.statusLabel}}</div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+    </div>
+  </sc-if>
+
+  <!-- ============ CREATE GROUP ============ -->
+  <sc-if value="{{isCreateGroup}}" hint-placeholder-val="{{false}}">
+    <div style="flex-shrink:0; padding:18px 20px 14px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:12px;">
+      <div onClick="{{goDashboard}}" style="width:32px; height:32px; border-radius:10px; background:var(--bg); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M15 6L9 12L15 18" stroke="var(--text)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div style="font-family:'Space Grotesk',sans-serif; font-size:17px; font-weight:700;">New Chit Group</div>
+    </div>
+
+    <div style="flex:1 1 auto; overflow-y:auto; padding:18px 20px 24px; display:flex; flex-direction:column; gap:16px;">
+
+      <div style="display:flex; flex-direction:column; gap:6px;">
+        <label style="font-size:12px; font-weight:500; color:var(--text-muted);">Group name</label>
+        <input type="text" value="{{newGroupName}}" onChange="{{updateName}}" style="width:100%; padding:12px 14px; border-radius:10px; border:1px solid var(--border); background:var(--surface); font-size:14px;" />
+      </div>
+
+      <div style="display:flex; gap:12px;">
+        <div style="flex:1 1 0; display:flex; flex-direction:column; gap:6px;">
+          <label style="font-size:12px; font-weight:500; color:var(--text-muted);">Members</label>
+          <input type="number" value="{{newMemberCount}}" onChange="{{updateMemberCount}}" style="width:100%; padding:12px 14px; border-radius:10px; border:1px solid var(--border); background:var(--surface); font-size:14px;" />
+        </div>
+        <div style="flex:1 1 0; display:flex; flex-direction:column; gap:6px;">
+          <label style="font-size:12px; font-weight:500; color:var(--text-muted);">Duration (months)</label>
+          <input type="number" value="{{newDuration}}" onChange="{{updateDuration}}" style="width:100%; padding:12px 14px; border-radius:10px; border:1px solid var(--border); background:var(--surface); font-size:14px;" />
+        </div>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:6px;">
+        <label style="font-size:12px; font-weight:500; color:var(--text-muted);">Monthly deposit per member (&#8377;)</label>
+        <input type="number" value="{{newMonthlyDeposit}}" onChange="{{updateDeposit}}" style="width:100%; padding:12px 14px; border-radius:10px; border:1px solid var(--border); background:var(--surface); font-size:14px;" />
+      </div>
+
+      <div style="height:1px; background:var(--border); margin:2px 0;"></div>
+
+      <div>
+        <div style="font-size:13px; font-weight:600; margin-bottom:2px;">Payout schedule</div>
+        <div style="font-size:11.5px; color:var(--text-muted); margin-bottom:12px;">Set the first and last month's payout — the 24 months in between are generated automatically. Each one stays editable later.</div>
+        <div style="display:flex; gap:12px; margin-bottom:12px;">
+          <div style="flex:1 1 0; display:flex; flex-direction:column; gap:6px;">
+            <label style="font-size:12px; font-weight:500; color:var(--text-muted);">Month 1 payout (&#8377;)</label>
+            <input type="number" value="{{newPayoutStart}}" onChange="{{updatePayoutStart}}" style="width:100%; padding:12px 14px; border-radius:10px; border:1px solid var(--border); background:var(--surface); font-size:14px;" />
+          </div>
+          <div style="flex:1 1 0; display:flex; flex-direction:column; gap:6px;">
+            <label style="font-size:12px; font-weight:500; color:var(--text-muted);">Final month payout (&#8377;)</label>
+            <input type="number" value="{{newPayoutEnd}}" onChange="{{updatePayoutEnd}}" style="width:100%; padding:12px 14px; border-radius:10px; border:1px solid var(--border); background:var(--surface); font-size:14px;" />
+          </div>
+        </div>
+
+        <div style="max-height:180px; overflow-y:auto; border:1px solid var(--border); border-radius:12px; background:var(--surface);">
+          <sc-for list="{{payoutPreviewRows}}" as="p" hint-placeholder-count="24">
+            <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border-bottom:1px solid var(--border);">
+              <div style="font-size:12.5px; color:var(--text-muted);">Month {{p.month}}</div>
+              <div style="font-size:13px; font-weight:600;">{{p.amountFormatted}}</div>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M16.5 3.5L20.5 7.5L8 20H4V16L16.5 3.5Z" stroke="#c2bcae" stroke-width="1.6" stroke-linejoin="round"/></svg>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+    </div>
+
+    <div style="flex-shrink:0; padding:14px 20px; border-top:1px solid var(--border); background:var(--surface);">
+      <button onClick="{{createGroup}}" style="width:100%; padding:14px; border-radius:10px; background:var(--accent); color:#fff; font-size:14px; font-weight:600;">Create Group</button>
+    </div>
+  </sc-if>
+
+  <!-- ============ MONTH DETAIL ============ -->
+  <sc-if value="{{isMonthDetail}}" hint-placeholder-val="{{false}}">
+    <div style="flex-shrink:0; padding:18px 20px 14px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:12px;">
+      <div onClick="{{goGroup}}" style="width:32px; height:32px; border-radius:10px; background:var(--bg); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M15 6L9 12L15 18" stroke="var(--text)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div style="flex:1 1 auto;">
+        <div style="font-family:'Space Grotesk',sans-serif; font-size:17px; font-weight:700;">Month {{viewMonth}}</div>
+        <div style="font-size:12px; color:var(--text-muted);">of 24</div>
+      </div>
+      <div style="font-size:11px; font-weight:700; padding:5px 10px; border-radius:8px; background:{{monthStatusBg}}; color:{{monthStatusColor}};">{{monthStatusLabel}}</div>
+    </div>
+
+    <div style="flex:1 1 auto; overflow-y:auto; padding:16px 20px 24px; display:flex; flex-direction:column; gap:16px;">
+
+      <!-- CLOSED summary -->
+      <sc-if value="{{isMonthClosed}}" hint-placeholder-val="{{false}}">
+        <div style="background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:16px; display:flex; flex-direction:column; gap:10px;">
+          <div style="display:flex; justify-content:space-between;">
+            <div style="font-size:12px; color:var(--text-muted);">Winner</div>
+            <div style="font-size:13px; font-weight:700;">{{closedWinnerName}}</div>
+          </div>
+          <div style="display:flex; justify-content:space-between;">
+            <div style="font-size:12px; color:var(--text-muted);">Payout amount</div>
+            <div style="font-size:13px; font-weight:700;">{{scheduledPayoutFormatted}}</div>
+          </div>
+          <div style="display:flex; justify-content:space-between;">
+            <div style="font-size:12px; color:var(--text-muted);">Paid out by</div>
+            <div style="font-size:13px; font-weight:700;">{{closedPayoutAdminName}}</div>
+          </div>
+          <div style="display:flex; justify-content:space-between;">
+            <div style="font-size:12px; color:var(--text-muted);">Collected</div>
+            <div style="font-size:13px; font-weight:700;">{{collectedThisMonthFormatted}}</div>
+          </div>
+          <div style="height:1px; background:var(--border);"></div>
+          <div style="display:flex; justify-content:space-between;">
+            <div style="font-size:12px; color:var(--text-muted);">Split after transfer</div>
+            <div style="font-size:13px; font-weight:700;">Ramesh {{monthAdjAFormatted}} &middot; Suresh {{monthAdjBFormatted}}</div>
+          </div>
+          <sc-if value="{{hasMonthTransfer}}" hint-placeholder-val="{{false}}">
+            <div style="font-size:11.5px; color:var(--text-muted);">{{monthTransferNote}}</div>
+          </sc-if>
+          <div style="display:flex; justify-content:space-between;">
+            <div style="font-size:12px; color:var(--text-muted);">Closed</div>
+            <div style="font-size:13px; font-weight:700;">{{closedLabel}}</div>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- UPCOMING notice -->
+      <sc-if value="{{isMonthUpcoming}}" hint-placeholder-val="{{false}}">
+        <div style="background:var(--warning-soft); border-radius:14px; padding:16px;">
+          <div style="font-size:12px; color:var(--warning); font-weight:600;">Not yet open</div>
+          <div style="font-size:12.5px; color:var(--text-muted); margin-top:4px;">Opens once Month {{previousMonth}} is closed. Scheduled payout: {{scheduledPayoutFormatted}}.</div>
+        </div>
+      </sc-if>
+
+      <!-- OPEN interactive month -->
+      <sc-if value="{{isMonthOpen}}" hint-placeholder-val="{{true}}">
+        <div style="background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:14px; display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <div style="font-size:12px; color:var(--text-muted);">Collected</div>
+            <div style="font-family:'Space Grotesk',sans-serif; font-size:16px; font-weight:700;">{{collectedThisMonthFormatted}} <span style="font-size:12px; color:var(--text-muted); font-weight:400;">/ {{targetThisMonthFormatted}}</span></div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:12px; color:var(--text-muted);">Scheduled payout</div>
+            <div style="font-family:'Space Grotesk',sans-serif; font-size:16px; font-weight:700; color:var(--accent);">{{scheduledPayoutFormatted}}</div>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- payment details: shown for both OPEN and CLOSED months -->
+      <sc-if value="{{showPayments}}" hint-placeholder-val="{{true}}">
+        <div>
+          <div style="font-size:13px; font-weight:600; color:var(--text-muted); margin-bottom:10px;">Member payments ({{paidCount}}/24)</div>
+          <div style="display:flex; flex-direction:column; gap:6px;">
+            <sc-for list="{{paymentRows}}" as="mem" hint-placeholder-count="24">
+              <div onClick="{{mem.openModal}}" style="display:flex; align-items:center; gap:10px; padding:8px 10px; background:var(--surface); border:1px solid var(--border); border-radius:10px;">
+                <div style="width:28px; height:28px; border-radius:8px; background:{{mem.avatarColor}}; color:#fff; font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0;">{{mem.initials}}</div>
+                <div style="flex:1 1 auto; min-width:0;">
+                  <div style="font-size:13px; font-weight:500;">{{mem.name}}</div>
+                  <sc-if value="{{mem.paid}}" hint-placeholder-val="{{false}}">
+                    <div style="font-size:11px; color:var(--text-muted); margin-top:1px;">Collected by <span style="font-weight:600; color:var(--accent);">{{mem.collectorLabel}}</span> &middot; {{mem.modeLabel}} &middot; {{mem.paidDateLabel}}</div>
+                  </sc-if>
+                  <sc-if value="{{mem.notPaid}}" hint-placeholder-val="{{true}}">
+                    <div style="font-size:11px; color:var(--danger); margin-top:1px;">Not paid yet &middot; tap to record</div>
+                  </sc-if>
+                </div>
+                <div style="width:24px; height:24px; border-radius:7px; background:{{mem.checkBg}}; border:1.5px solid {{mem.checkBorder}}; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                  <sc-if value="{{mem.paid}}" hint-placeholder-val="{{false}}">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M5 13L9.5 17.5L19 7" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  </sc-if>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{isMonthOpen}}" hint-placeholder-val="{{true}}">
+
+        <div style="background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:14px; display:flex; flex-direction:column; gap:12px;">
+          <div style="font-size:13px; font-weight:600;">This month's fund position</div>
+          <div style="display:flex; gap:12px;">
+            <div style="flex:1 1 0;">
+              <div style="font-size:11px; color:var(--text-muted);">Ramesh holds</div>
+              <div style="font-family:'Space Grotesk',sans-serif; font-size:15px; font-weight:700;">{{monthAdjAFormatted}}</div>
+            </div>
+            <div style="flex:1 1 0; text-align:right;">
+              <div style="font-size:11px; color:var(--text-muted);">Suresh holds</div>
+              <div style="font-family:'Space Grotesk',sans-serif; font-size:15px; font-weight:700;">{{monthAdjBFormatted}}</div>
+            </div>
+          </div>
+
+          <sc-if value="{{showNoPendingTransfer}}" hint-placeholder-val="{{true}}">
+            <div style="display:flex; gap:8px;">
+              <button onClick="{{requestTransferToB}}" style="flex:1 1 0; padding:10px; border-radius:10px; background:var(--accent-soft); color:var(--accent); font-size:12px; font-weight:600;">Send all to Suresh &rarr;</button>
+              <button onClick="{{requestTransferToA}}" style="flex:1 1 0; padding:10px; border-radius:10px; background:var(--accent-soft); color:var(--accent); font-size:12px; font-weight:600;">&larr; Send all to Ramesh</button>
+            </div>
+            <div style="font-size:11px; color:var(--text-muted); line-height:1.4;">No free-amount transfers — sending funds still needs {{otherAdminName}} to accept before it counts.</div>
+          </sc-if>
+
+          <sc-if value="{{showPendingMine}}" hint-placeholder-val="{{false}}">
+            <div style="background:var(--warning-soft); border-radius:10px; padding:12px; display:flex; flex-direction:column; gap:8px;">
+              <div style="font-size:12.5px; color:var(--warning); font-weight:600;">Waiting for {{pendingApproverName}} to accept</div>
+              <div style="font-size:12px; color:var(--text);">{{pendingAmountFormatted}} &middot; {{pendingFromName}} &rarr; {{pendingToName}}</div>
+              <button onClick="{{cancelTransferRequest}}" style="width:100%; padding:9px; border-radius:8px; background:transparent; border:1px solid var(--border); color:var(--text-muted); font-size:12px; font-weight:600;">Cancel request</button>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{showPendingTheirs}}" hint-placeholder-val="{{false}}">
+            <div style="background:var(--warning-soft); border-radius:10px; padding:12px; display:flex; flex-direction:column; gap:8px;">
+              <div style="font-size:12.5px; color:var(--warning); font-weight:600;">{{pendingRequesterName}} wants to send {{pendingAmountFormatted}}</div>
+              <div style="font-size:12px; color:var(--text);">{{pendingFromName}} &rarr; {{pendingToName}}</div>
+              <div style="display:flex; gap:8px;">
+                <button onClick="{{declineTransferRequest}}" style="flex:1 1 0; padding:9px; border-radius:8px; background:transparent; border:1px solid var(--border); color:var(--text-muted); font-size:12px; font-weight:600;">Decline</button>
+                <button onClick="{{acceptTransferRequest}}" style="flex:1 1 0; padding:9px; border-radius:8px; background:var(--accent); color:#fff; font-size:12px; font-weight:600;">Accept</button>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+
+        <div style="background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:14px; display:flex; flex-direction:column; gap:10px;">
+          <div style="font-size:13px; font-weight:600;">This month's winner</div>
+          <sc-if value="{{hasWinnerSelected}}" hint-placeholder-val="{{false}}">
+            <div onClick="{{openWinnerPicker}}" style="display:flex; align-items:center; gap:10px; padding:8px 10px; background:var(--accent-soft); border-radius:10px;">
+              <div style="width:28px; height:28px; border-radius:8px; background:{{selectedWinnerColor}}; color:#fff; font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0;">{{selectedWinnerInitials}}</div>
+              <div style="flex:1 1 auto; font-size:13px; font-weight:600; color:var(--accent);">{{selectedWinnerName}}</div>
+              <div style="font-size:12px; color:var(--accent); font-weight:600;">Change</div>
+            </div>
+          </sc-if>
+          <sc-if value="{{noWinnerSelected}}" hint-placeholder-val="{{true}}">
+            <button onClick="{{openWinnerPicker}}" style="width:100%; padding:13px; border-radius:10px; background:var(--accent); color:#fff; font-size:13px; font-weight:600;">Select Winner</button>
+          </sc-if>
+        </div>
+
+        <div style="background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:14px; display:flex; flex-direction:column; gap:12px;">
+          <div style="font-size:13px; font-weight:600;">Record payout</div>
+          <div style="display:flex; gap:8px;">
+            <button onClick="{{setPayoutA}}" style="flex:1 1 0; padding:10px; border-radius:10px; font-size:12px; font-weight:600; background:{{payoutABg}}; color:{{payoutAColor}}; border:1px solid var(--border);">Paid by Ramesh</button>
+            <button onClick="{{setPayoutB}}" style="flex:1 1 0; padding:10px; border-radius:10px; font-size:12px; font-weight:600; background:{{payoutBBg}}; color:{{payoutBColor}}; border:1px solid var(--border);">Paid by Suresh</button>
+          </div>
+          <button onClick="{{closeMonth}}" style="width:100%; padding:13px; border-radius:10px; background:{{closeMonthBg}}; color:#fff; font-size:14px; font-weight:600;">Close Month &amp; Pay {{scheduledPayoutFormatted}}</button>
+        </div>
+
+      </sc-if>
+
+    </div>
+  </sc-if>
+
+  <!-- ============ WINNER PICKER OVERLAY ============ -->
+  <sc-if value="{{showWinnerOverlay}}" hint-placeholder-val="{{false}}">
+    <div style="position:absolute; inset:0; background:rgba(28,27,25,0.45); display:flex; align-items:flex-end; z-index:20;">
+      <div style="width:100%; max-height:72%; background:var(--surface); border-radius:20px 20px 0 0; display:flex; flex-direction:column;">
+        <div style="padding:16px 20px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; flex-shrink:0;">
+          <div style="font-size:14px; font-weight:700;">Select this month's winner</div>
+          <div onClick="{{closeWinnerPicker}}" style="width:28px; height:28px; border-radius:8px; background:var(--bg); display:flex; align-items:center; justify-content:center;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M6 6L18 18M18 6L6 18" stroke="var(--text)" stroke-width="2" stroke-linecap="round"/></svg>
+          </div>
+        </div>
+        <div style="overflow-y:auto; padding:12px 20px 20px; display:flex; flex-direction:column; gap:6px;">
+          <sc-for list="{{winnerRows}}" as="w" hint-placeholder-count="17">
+            <div onClick="{{w.pick}}" style="display:flex; align-items:center; gap:10px; padding:8px 10px; background:{{w.rowBg}}; border:1.5px solid {{w.rowBorder}}; border-radius:10px; flex-shrink:0;">
+              <div style="width:28px; height:28px; border-radius:8px; background:{{w.avatarColor}}; color:#fff; font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0;">{{w.initials}}</div>
+              <div style="flex:1 1 auto; font-size:13px; font-weight:500;">{{w.name}}</div>
+              <sc-if value="{{w.selected}}" hint-placeholder-val="{{false}}">
+                <div style="width:22px; height:22px; border-radius:11px; background:var(--accent); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M5 13L9.5 17.5L19 7" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </div>
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ============ RECORD PAYMENT MODAL ============ -->
+  <sc-if value="{{showPaymentModal}}" hint-placeholder-val="{{false}}">
+    <div style="position:absolute; inset:0; background:rgba(28,27,25,0.45); display:flex; align-items:flex-end; z-index:30;">
+      <div style="width:100%; max-height:84%; background:var(--surface); border-radius:20px 20px 0 0; display:flex; flex-direction:column;">
+        <div style="padding:16px 20px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:10px; flex-shrink:0;">
+          <div style="width:32px; height:32px; border-radius:9px; background:{{modalMemberColor}}; color:#fff; font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0;">{{modalMemberInitials}}</div>
+          <div style="flex:1 1 auto; min-width:0;">
+            <div style="font-size:14px; font-weight:700;">{{modalMemberName}}</div>
+            <div style="font-size:11.5px; color:var(--text-muted);">Month {{viewMonth}} &middot; ₹5,000 &middot; collected by {{currentAdminName}}</div>
+          </div>
+          <div onClick="{{closePaymentModal}}" style="width:28px; height:28px; border-radius:8px; background:var(--bg); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M6 6L18 18M18 6L6 18" stroke="var(--text)" stroke-width="2" stroke-linecap="round"/></svg>
+          </div>
+        </div>
+
+        <div style="overflow-y:auto; padding:16px 20px 20px; display:flex; flex-direction:column; gap:16px;">
+
+          <div>
+            <div style="font-size:12px; font-weight:600; color:var(--text-muted); margin-bottom:8px;">Payment mode</div>
+            <div style="display:flex; gap:8px;">
+              <button onClick="{{setModalModeCash}}" style="flex:1 1 0; padding:11px; border-radius:10px; font-size:13px; font-weight:600; background:{{modalCashBg}}; color:{{modalCashColor}}; border:1px solid var(--border);">Cash</button>
+              <button onClick="{{setModalModeOnline}}" style="flex:1 1 0; padding:11px; border-radius:10px; font-size:13px; font-weight:600; background:{{modalOnlineBg}}; color:{{modalOnlineColor}}; border:1px solid var(--border);">Online</button>
+            </div>
+          </div>
+
+          <sc-if value="{{modalIsEditing}}" hint-placeholder-val="{{false}}">
+            <div>
+              <div style="font-size:12px; font-weight:600; color:var(--text-muted); margin-bottom:8px;">Transfer history</div>
+              <div style="display:flex; flex-direction:column; gap:10px;">
+                <div style="display:flex; align-items:flex-start; gap:10px;">
+                  <div style="width:8px; height:8px; border-radius:4px; background:var(--accent); margin-top:5px; flex-shrink:0;"></div>
+                  <div style="flex:1 1 auto;">
+                    <div style="font-size:12.5px; font-weight:500;">{{modalMemberName}} &rarr; {{modalCollectorName}}</div>
+                    <div style="font-size:11px; color:var(--text-muted);">{{modalModeLabelDisplay}} &middot; {{modalPaidDateLabel}}</div>
+                  </div>
+                </div>
+                <sc-if value="{{modalHasAppliedTransfer}}" hint-placeholder-val="{{false}}">
+                  <div style="display:flex; align-items:flex-start; gap:10px;">
+                    <div style="width:8px; height:8px; border-radius:4px; background:var(--accent); margin-top:5px; flex-shrink:0;"></div>
+                    <div style="flex:1 1 auto;">
+                      <div style="font-size:12.5px; font-weight:500;">{{modalAppliedFromName}} &rarr; {{modalAppliedToName}}</div>
+                      <div style="font-size:11px; color:var(--accent);">Accepted &middot; {{modalAppliedAmountFormatted}}</div>
+                    </div>
+                  </div>
+                </sc-if>
+                <sc-if value="{{modalHasPendingTransfer}}" hint-placeholder-val="{{false}}">
+                  <div style="display:flex; align-items:flex-start; gap:10px;">
+                    <div style="width:8px; height:8px; border-radius:4px; background:var(--warning); margin-top:5px; flex-shrink:0;"></div>
+                    <div style="flex:1 1 auto;">
+                      <div style="font-size:12.5px; font-weight:500;">{{pendingFromName}} &rarr; {{pendingToName}}</div>
+                      <div style="font-size:11px; color:var(--warning);">Pending acceptance &middot; {{pendingAmountFormatted}}</div>
+                    </div>
+                  </div>
+                </sc-if>
+              </div>
+            </div>
+
+            <button onClick="{{markUnpaidFromModal}}" style="width:100%; padding:10px; border-radius:10px; background:transparent; color:var(--danger); font-size:12.5px; font-weight:600;">Mark as unpaid</button>
+          </sc-if>
+
+          <button onClick="{{savePaymentModal}}" style="width:100%; padding:13px; border-radius:10px; background:var(--accent); color:#fff; font-size:14px; font-weight:600;">Save Payment</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+</div>
+</x-dc>
+<script data-dc-script>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+
+    this.membersBase = [
+      {id:'m1',name:'Ramesh Kumar'},{id:'m2',name:'Suresh Babu'},{id:'m3',name:'Priya Nair'},
+      {id:'m4',name:'Anita Rao'},{id:'m5',name:'Vikram Shah'},{id:'m6',name:'Deepa Iyer'},
+      {id:'m7',name:'Arjun Mehta'},{id:'m8',name:'Kavya Reddy'},{id:'m9',name:'Rohit Verma'},
+      {id:'m10',name:'Sneha Pillai'},{id:'m11',name:'Manoj Joshi'},{id:'m12',name:'Divya Menon'},
+      {id:'m13',name:'Sanjay Gupta'},{id:'m14',name:'Pooja Desai'},{id:'m15',name:'Rahul Kapoor'},
+      {id:'m16',name:'Neha Bhatt'},{id:'m17',name:'Ajay Singh'},{id:'m18',name:'Meera Pillai'},
+      {id:'m19',name:'Karthik Raman'},{id:'m20',name:'Lakshmi Suresh'},{id:'m21',name:'Vijay Anand'},
+      {id:'m22',name:'Swati Kulkarni'},{id:'m23',name:'Naveen Chandra'},{id:'m24',name:'Shalini Rao'}
+    ];
+    this.palette = ['#146b52','#8a5a2b','#3b5f8a','#8a3b5a','#5a5a8a','#3b7a7a','#7a6b3b','#6b3b7a'];
+    this.monthlyDeposit = 5000;
+    this.duration = 24;
+    this.monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    this.monthAbbr = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    this.payoutSchedule = [75000,77000,79000,81000,83000,85500,88000,90500,93000,95500,98000,100500,103000,105500,108000,110000,112000,113500,115000,116000,117000,117500,118000,118500];
+
+    var openMonth = 8;
+    var closedMonths = {};
+    var winnerFor = {1:'m3',2:'m11',3:'m1',4:'m19',5:'m7',6:'m14',7:'m22'};
+    for (var m = 1; m < openMonth; m++) {
+      closedMonths[m] = {
+        winner: winnerFor[m],
+        payoutAdmin: (m % 2 === 0) ? 'A' : 'B',
+        closedLabel: this.monthNames[(m - 1) % 12] + ' ' + (2026 + Math.floor((m - 1) / 12))
+      };
+    }
+
+    var monthPayments = {};
+    for (var mm = 1; mm <= openMonth; mm++) {
+      var payments = {};
+      var paidUpTo = (mm < openMonth) ? 24 : 16;
+      for (var idx = 0; idx < this.membersBase.length; idx++) {
+        var id = this.membersBase[idx].id;
+        if (idx < paidUpTo) {
+          payments[id] = {
+            paid: true,
+            collectedBy: ((idx + mm) % 2 === 0) ? 'A' : 'B',
+            mode: ((idx + mm) % 3 === 0) ? 'online' : 'cash',
+            paidDate: this.monthAbbr[(mm - 1) % 12] + ' ' + (1 + ((idx * 3 + mm * 5) % 27))
+          };
+        } else {
+          payments[id] = { paid: false, collectedBy: null, mode: null, paidDate: null };
+        }
+      }
+      monthPayments[mm] = payments;
+    }
+
+    var monthTransfers = {};
+    for (var t = 1; t <= openMonth; t++) { monthTransfers[t] = 0; }
+    monthTransfers[3] = 10000;
+    monthTransfers[6] = -15000;
+
+    this.state = {
+      screen: 'login',
+      currentAdmin: null,
+      openMonth: openMonth,
+      viewMonth: openMonth,
+      closedMonths: closedMonths,
+      monthPayments: monthPayments,
+      monthTransfers: monthTransfers,
+      selectedWinner: null,
+      showWinnerPicker: false,
+      payoutAdmin: 'A',
+      paymentModal: null,
+      transferRequest: null,
+      newGroupName: 'Friends Chit 2027',
+      newMemberCount: 24,
+      newDuration: 24,
+      newMonthlyDeposit: 5000,
+      newPayoutStart: 75000,
+      newPayoutEnd: 118000
+    };
+
+    this.loginAsA = this.loginAsA.bind(this);
+    this.loginAsB = this.loginAsB.bind(this);
+    this.logout = this.logout.bind(this);
+    this.goDashboard = this.goDashboard.bind(this);
+    this.goLedger = this.goLedger.bind(this);
+    this.goGroup = this.goGroup.bind(this);
+    this.goCreateGroup = this.goCreateGroup.bind(this);
+    this.openPaymentModal = this.openPaymentModal.bind(this);
+    this.closePaymentModal = this.closePaymentModal.bind(this);
+    this.setModalModeCash = this.setModalModeCash.bind(this);
+    this.setModalModeOnline = this.setModalModeOnline.bind(this);
+    this.savePaymentModal = this.savePaymentModal.bind(this);
+    this.markUnpaidFromModal = this.markUnpaidFromModal.bind(this);
+    this.selectWinner = this.selectWinner.bind(this);
+    this.setPayoutA = this.setPayoutA.bind(this);
+    this.setPayoutB = this.setPayoutB.bind(this);
+    this.closeMonth = this.closeMonth.bind(this);
+    this.requestTransferToB = this.requestTransferToB.bind(this);
+    this.requestTransferToA = this.requestTransferToA.bind(this);
+    this.acceptTransferRequest = this.acceptTransferRequest.bind(this);
+    this.declineTransferRequest = this.declineTransferRequest.bind(this);
+    this.cancelTransferRequest = this.cancelTransferRequest.bind(this);
+    this.openCurrentMonth = this.openCurrentMonth.bind(this);
+    this.openWinnerPicker = this.openWinnerPicker.bind(this);
+    this.closeWinnerPicker = this.closeWinnerPicker.bind(this);
+    this.updateName = this.updateName.bind(this);
+    this.updateMemberCount = this.updateMemberCount.bind(this);
+    this.updateDuration = this.updateDuration.bind(this);
+    this.updateDeposit = this.updateDeposit.bind(this);
+    this.updatePayoutStart = this.updatePayoutStart.bind(this);
+    this.updatePayoutEnd = this.updatePayoutEnd.bind(this);
+    this.createGroup = this.createGroup.bind(this);
+  }
+
+  fmt(n) { return '₹' + Math.round(n).toLocaleString('en-IN'); }
+  initialsOf(name) { var p = name.split(' '); return (p[0][0] + (p[1] ? p[1][0] : '')).toUpperCase(); }
+  colorFor(idx) { return this.palette[idx % this.palette.length]; }
+
+  // Derives, for one month, who holds what: raw collections split by collector,
+  // the net amount ever moved between admins for that month, and (once closed)
+  // the payout deduction — this is the single source of truth balances are built from.
+  monthFinances(m) {
+    var payments = this.state.monthPayments[m] || {};
+    var paidCount = 0, rawA = 0, rawB = 0;
+    for (var i = 0; i < this.membersBase.length; i++) {
+      var p = payments[this.membersBase[i].id];
+      if (p && p.paid) {
+        paidCount++;
+        if (p.collectedBy === 'A') rawA += this.monthlyDeposit; else rawB += this.monthlyDeposit;
+      }
+    }
+    var net = this.state.monthTransfers[m] || 0;
+    var adjA = rawA - net, adjB = rawB + net;
+    var closed = this.state.closedMonths[m];
+    var payoutAmount = this.payoutSchedule[m - 1] || 0;
+    var finalA = adjA, finalB = adjB;
+    if (closed) {
+      if (closed.payoutAdmin === 'A') finalA -= payoutAmount; else finalB -= payoutAmount;
+    }
+    return { paidCount: paidCount, totalCollected: paidCount * this.monthlyDeposit, rawA: rawA, rawB: rawB, net: net, adjA: adjA, adjB: adjB, closed: closed, payoutAmount: payoutAmount, finalA: finalA, finalB: finalB };
+  }
+
+  memberName(id) { var mm = this.membersBase.find(function (x) { return x.id === id; }); return mm ? mm.name : ''; }
+
+  loginAsA() { this.setState({ screen: 'dashboard', currentAdmin: 'A' }); }
+  loginAsB() { this.setState({ screen: 'dashboard', currentAdmin: 'B' }); }
+  logout() { this.setState({ screen: 'login', currentAdmin: null }); }
+  goDashboard() { this.setState({ screen: 'dashboard' }); }
+  goLedger() { this.setState({ screen: 'ledger' }); }
+  goGroup() { this.setState({ screen: 'groupDetail' }); }
+  goCreateGroup() { this.setState({ screen: 'createGroup' }); }
+  openMonthDetail(m) { this.setState({ screen: 'monthDetail', viewMonth: m, showWinnerPicker: false }); }
+  openCurrentMonth() { this.setState({ screen: 'monthDetail', viewMonth: this.state.openMonth, showWinnerPicker: false }); }
+
+  openPaymentModal(id) {
+    var s = this.state;
+    if (s.viewMonth !== s.openMonth) return;
+    var existing = s.monthPayments[s.openMonth][id];
+    this.setState({
+      paymentModal: {
+        memberId: id,
+        mode: (existing && existing.mode) || 'cash',
+        isEditing: !!(existing && existing.paid)
+      }
+    });
+  }
+
+  closePaymentModal() { this.setState({ paymentModal: null }); }
+
+  setModalModeCash() { var pm = this.state.paymentModal; if (!pm) return; this.setState({ paymentModal: Object.assign({}, pm, { mode: 'cash' }) }); }
+  setModalModeOnline() { var pm = this.state.paymentModal; if (!pm) return; this.setState({ paymentModal: Object.assign({}, pm, { mode: 'online' }) }); }
+
+  savePaymentModal() {
+    var s = this.state;
+    var pm = s.paymentModal;
+    if (!pm) return;
+    var mp = Object.assign({}, s.monthPayments[s.openMonth]);
+    var existing = mp[pm.memberId];
+    mp[pm.memberId] = {
+      paid: true,
+      collectedBy: s.currentAdmin,
+      mode: pm.mode,
+      paidDate: (existing && existing.paidDate) || 'Today'
+    };
+    var newMonthPayments = Object.assign({}, s.monthPayments);
+    newMonthPayments[s.openMonth] = mp;
+    this.setState({ monthPayments: newMonthPayments, paymentModal: null });
+  }
+
+  markUnpaidFromModal() {
+    var s = this.state;
+    var pm = s.paymentModal;
+    if (!pm) return;
+    var mp = Object.assign({}, s.monthPayments[s.openMonth]);
+    mp[pm.memberId] = { paid: false, collectedBy: null, mode: null, paidDate: null };
+    var newMonthPayments = Object.assign({}, s.monthPayments);
+    newMonthPayments[s.openMonth] = mp;
+    this.setState({ monthPayments: newMonthPayments, paymentModal: null });
+  }
+
+  selectWinner(id) {
+    if (this.state.viewMonth !== this.state.openMonth) return;
+    this.setState({ selectedWinner: id, showWinnerPicker: false });
+  }
+
+  openWinnerPicker() {
+    if (this.state.viewMonth !== this.state.openMonth) return;
+    this.setState({ showWinnerPicker: true });
+  }
+
+  closeWinnerPicker() { this.setState({ showWinnerPicker: false }); }
+
+  setPayoutA() { this.setState({ payoutAdmin: 'A' }); }
+  setPayoutB() { this.setState({ payoutAdmin: 'B' }); }
+
+  requestTransfer(direction) {
+    var s = this.state;
+    var m = s.viewMonth;
+    if (m !== s.openMonth) return;
+    if (s.transferRequest) return;
+    var f = this.monthFinances(m);
+    var amount = direction === 'AtoB' ? f.adjA : f.adjB;
+    if (amount <= 0) return;
+    this.setState({ transferRequest: { month: m, direction: direction, amount: amount, requestedBy: s.currentAdmin } });
+  }
+  requestTransferToB() { this.requestTransfer('AtoB'); }
+  requestTransferToA() { this.requestTransfer('BtoA'); }
+
+  acceptTransferRequest() {
+    var s = this.state;
+    var req = s.transferRequest;
+    if (!req || req.requestedBy === s.currentAdmin) return;
+    var mt = Object.assign({}, s.monthTransfers);
+    mt[req.month] = (mt[req.month] || 0) + (req.direction === 'AtoB' ? req.amount : -req.amount);
+    this.setState({ monthTransfers: mt, transferRequest: null });
+  }
+
+  declineTransferRequest() {
+    var s = this.state;
+    if (!s.transferRequest || s.transferRequest.requestedBy === s.currentAdmin) return;
+    this.setState({ transferRequest: null });
+  }
+
+  cancelTransferRequest() {
+    var s = this.state;
+    if (!s.transferRequest || s.transferRequest.requestedBy !== s.currentAdmin) return;
+    this.setState({ transferRequest: null });
+  }
+
+  closeMonth() {
+    var s = this.state;
+    if (!s.selectedWinner) return;
+    var om = s.openMonth;
+    var newClosed = Object.assign({}, s.closedMonths);
+    newClosed[om] = { winner: s.selectedWinner, payoutAdmin: s.payoutAdmin, closedLabel: 'Just now' };
+    var nextOpen = Math.min(om + 1, this.duration);
+    var newMonthPayments = Object.assign({}, s.monthPayments);
+    if (!newMonthPayments[nextOpen]) {
+      var fresh = {};
+      for (var i = 0; i < this.membersBase.length; i++) { fresh[this.membersBase[i].id] = { paid: false, collectedBy: null, mode: null, paidDate: null }; }
+      newMonthPayments[nextOpen] = fresh;
+    }
+    var newMonthTransfers = Object.assign({}, s.monthTransfers);
+    if (newMonthTransfers[nextOpen] === undefined) newMonthTransfers[nextOpen] = 0;
+    this.setState({
+      closedMonths: newClosed,
+      openMonth: nextOpen,
+      viewMonth: nextOpen,
+      selectedWinner: null,
+      showWinnerPicker: false,
+      payoutAdmin: 'A',
+      monthPayments: newMonthPayments,
+      monthTransfers: newMonthTransfers,
+      screen: 'monthDetail'
+    });
+  }
+
+  updateName(e) { this.setState({ newGroupName: e.target.value }); }
+  updateMemberCount(e) { this.setState({ newMemberCount: e.target.value }); }
+  updateDuration(e) { this.setState({ newDuration: e.target.value }); }
+  updateDeposit(e) { this.setState({ newMonthlyDeposit: e.target.value }); }
+  updatePayoutStart(e) { this.setState({ newPayoutStart: e.target.value }); }
+  updatePayoutEnd(e) { this.setState({ newPayoutEnd: e.target.value }); }
+  createGroup() { this.setState({ screen: 'dashboard' }); }
+
+  renderVals() {
+    var s = this.state;
+    var self = this;
+    var isLogin = s.screen === 'login';
+    var isDashboard = s.screen === 'dashboard';
+    var isLedger = s.screen === 'ledger';
+    var isGroupDetail = s.screen === 'groupDetail';
+    var isCreateGroup = s.screen === 'createGroup';
+    var isMonthDetail = s.screen === 'monthDetail';
+    var isTopLevel = isDashboard || isLedger;
+
+    var currentAdminName = s.currentAdmin === 'B' ? 'Suresh' : 'Ramesh';
+    var currentAdminInitial = s.currentAdmin === 'B' ? 'S' : 'R';
+    var currentAdminColor = s.currentAdmin === 'B' ? '#8a5a2b' : '#146b52';
+
+    var wonIds = {};
+    for (var mk in s.closedMonths) { wonIds[s.closedMonths[mk].winner] = true; }
+
+    // ----- aggregate admin balances, derived from every month's finances -----
+    var totalA = 0, totalB = 0;
+    for (var am = 1; am <= s.openMonth; am++) {
+      var af = this.monthFinances(am);
+      totalA += af.finalA; totalB += af.finalB;
+    }
+    var totalFund = totalA + totalB;
+    var groupProgressPct = Math.round((s.openMonth / this.duration) * 100) + '%';
+
+    // ----- ledger: derived history from closed months + any month transfers -----
+    var ledgerRows = [];
+    for (var lm = s.openMonth; lm >= 1; lm--) {
+      var lf = this.monthFinances(lm);
+      if (lf.closed) {
+        ledgerRows.push({
+          isCollection: false, isPayout: true, isTransfer: false,
+          iconBg: '#fdf1e4', iconColor: '#b45309',
+          title: 'Payout — Month ' + lm + ' winner',
+          subtitle: 'Paid to ' + this.memberName(lf.closed.winner) + ' by ' + (lf.closed.payoutAdmin === 'A' ? 'Ramesh' : 'Suresh') + ' · ' + lf.closed.closedLabel,
+          amountFormatted: '−' + this.fmt(lf.payoutAmount), amountColor: '#1c1b19'
+        });
+        ledgerRows.push({
+          isCollection: true, isPayout: false, isTransfer: false,
+          iconBg: '#e6f2ec', iconColor: '#146b52',
+          title: 'Collection — Month ' + lm,
+          subtitle: lf.paidCount + ' members paid · ' + lf.closed.closedLabel,
+          amountFormatted: '+' + this.fmt(lf.totalCollected), amountColor: '#146b52'
+        });
+      } else if (lm === s.openMonth) {
+        ledgerRows.push({
+          isCollection: true, isPayout: false, isTransfer: false,
+          iconBg: '#e6f2ec', iconColor: '#146b52',
+          title: 'Collection — Month ' + lm + ' (in progress)',
+          subtitle: lf.paidCount + ' of 24 members paid so far',
+          amountFormatted: '+' + this.fmt(lf.totalCollected), amountColor: '#146b52'
+        });
+      }
+      if (lf.net && lf.net !== 0) {
+        var dir = lf.net > 0 ? 'Ramesh → Suresh' : 'Suresh → Ramesh';
+        ledgerRows.push({
+          isCollection: false, isPayout: false, isTransfer: true,
+          iconBg: '#eef0f6', iconColor: '#3b4a8a',
+          title: 'Transfer — Month ' + lm + ' funds',
+          subtitle: dir + ' · this month\'s collection',
+          amountFormatted: this.fmt(Math.abs(lf.net)), amountColor: '#3b4a8a'
+        });
+      }
+    }
+
+    // ----- group detail: months list -----
+    var monthsRows = [];
+    for (var mnum = 1; mnum <= this.duration; mnum++) {
+      var gf = this.monthFinances(mnum);
+      var isOpenRow = mnum === s.openMonth;
+      var title = 'Month ' + mnum;
+      var subtitle, statusLabel, statusColor, badgeBg, badgeColor;
+      if (gf.closed) {
+        subtitle = 'Winner: ' + this.memberName(gf.closed.winner);
+        statusLabel = this.fmt(gf.payoutAmount);
+        statusColor = '#6f6a62';
+        badgeBg = '#e6f2ec'; badgeColor = '#146b52';
+      } else if (isOpenRow) {
+        subtitle = gf.paidCount + ' / 24 paid so far';
+        statusLabel = 'In progress';
+        statusColor = '#146b52';
+        badgeBg = '#146b52'; badgeColor = '#fff';
+      } else {
+        subtitle = 'Scheduled payout';
+        statusLabel = this.fmt(this.payoutSchedule[mnum - 1]);
+        statusColor = '#a39d92';
+        badgeBg = '#efece5'; badgeColor = '#a39d92';
+      }
+      monthsRows.push({
+        number: mnum, title: title, subtitle: subtitle,
+        statusLabel: statusLabel, statusColor: statusColor,
+        badgeBg: badgeBg, badgeColor: badgeColor,
+        open: function (n) { return function () { self.openMonthDetail(n); }; }(mnum)
+      });
+    }
+
+    var collectedSoFar = 0;
+    for (var csm = 1; csm <= s.openMonth; csm++) { collectedSoFar += this.monthFinances(csm).totalCollected; }
+
+    // ----- month detail -----
+    var viewMonth = s.viewMonth;
+    var vf = this.monthFinances(viewMonth);
+    var monthIsClosed = !!vf.closed;
+    var monthIsOpen = viewMonth === s.openMonth && !monthIsClosed;
+    var monthIsUpcoming = viewMonth > s.openMonth;
+    var showPayments = monthIsClosed || monthIsOpen;
+
+    var monthStatusLabel = monthIsClosed ? 'Closed' : (monthIsOpen ? 'Open' : 'Upcoming');
+    var monthStatusBg = monthIsClosed ? '#e6f2ec' : (monthIsOpen ? '#146b52' : '#efece5');
+    var monthStatusColor = monthIsClosed ? '#146b52' : (monthIsOpen ? '#fff' : '#a39d92');
+
+    var closedWinnerName = '', closedPayoutAdminName = '', closedLabel = '';
+    if (monthIsClosed) {
+      closedWinnerName = this.memberName(vf.closed.winner);
+      closedPayoutAdminName = vf.closed.payoutAdmin === 'A' ? 'Ramesh' : 'Suresh';
+      closedLabel = vf.closed.closedLabel;
+    }
+
+    var scheduledPayoutFormatted = this.fmt(this.payoutSchedule[viewMonth - 1] || 0);
+    var hasMonthTransfer = !!(vf.net && vf.net !== 0);
+    var monthTransferNote = '';
+    if (hasMonthTransfer) {
+      monthTransferNote = this.fmt(Math.abs(vf.net)) + (vf.net > 0 ? ' moved Ramesh → Suresh' : ' moved Suresh → Ramesh') + ' this month.';
+    }
+
+    // ----- pending transfer request (needs the other admin's acceptance) -----
+    var otherAdminName = s.currentAdmin === 'A' ? 'Suresh' : 'Ramesh';
+    var req = s.transferRequest;
+    var pendingRequesterName = '', pendingApproverName = '', pendingFromName = '', pendingToName = '', pendingAmountFormatted = '', pendingMonth = '';
+    var pendingIsMine = false, pendingIsTheirs = false;
+    if (req) {
+      pendingRequesterName = req.requestedBy === 'A' ? 'Ramesh' : 'Suresh';
+      pendingApproverName = req.requestedBy === 'A' ? 'Suresh' : 'Ramesh';
+      pendingFromName = req.direction === 'AtoB' ? 'Ramesh' : 'Suresh';
+      pendingToName = req.direction === 'AtoB' ? 'Suresh' : 'Ramesh';
+      pendingAmountFormatted = this.fmt(req.amount);
+      pendingMonth = req.month;
+      pendingIsMine = req.requestedBy === s.currentAdmin;
+      pendingIsTheirs = !pendingIsMine;
+    }
+    var showNoPendingTransfer = monthIsOpen && !req;
+    var showPendingMine = monthIsOpen && !!req && pendingIsMine;
+    var showPendingTheirs = monthIsOpen && !!req && pendingIsTheirs;
+    var showApprovalBanner = !!req && pendingIsTheirs;
+
+    var paymentRows = [];
+    if (showPayments) {
+      var payments = s.monthPayments[viewMonth] || {};
+      paymentRows = this.membersBase.map(function (mm, idx) {
+        var p = payments[mm.id] || { paid: false, collectedBy: null, mode: null, paidDate: null };
+        return {
+          id: mm.id, name: mm.name, initials: self.initialsOf(mm.name), avatarColor: self.colorFor(idx),
+          paid: p.paid, notPaid: !p.paid,
+          collectorLabel: p.collectedBy === 'A' ? 'Ramesh' : (p.collectedBy === 'B' ? 'Suresh' : ''),
+          modeLabel: p.mode === 'online' ? 'Online' : 'Cash',
+          paidDateLabel: p.paidDate || '',
+          checkBg: p.paid ? '#146b52' : 'transparent',
+          checkBorder: p.paid ? '#146b52' : '#d8d4cb',
+          openModal: function (id) { return function () { self.openPaymentModal(id); }; }(mm.id)
+        };
+      });
+      // members who haven't paid yet surface first
+      paymentRows.sort(function (a, b) { if (a.paid === b.paid) return 0; return a.paid ? 1 : -1; });
+    }
+
+    var winnerRows = [];
+    if (monthIsOpen) {
+      winnerRows = this.membersBase.filter(function (mm) { return !wonIds[mm.id]; }).map(function (mm, idx) {
+        var selected = s.selectedWinner === mm.id;
+        return {
+          id: mm.id, name: mm.name, initials: self.initialsOf(mm.name), avatarColor: self.colorFor(idx),
+          selected: selected,
+          rowBg: selected ? '#e6f2ec' : '#ffffff',
+          rowBorder: selected ? '#146b52' : '#e9e5dc',
+          pick: function (id) { return function () { self.selectWinner(id); }; }(mm.id)
+        };
+      });
+    }
+
+    var hasWinnerSelected = !!s.selectedWinner;
+    var selectedWinnerName = '', selectedWinnerInitials = '', selectedWinnerColor = '';
+    if (hasWinnerSelected) {
+      var widx = this.membersBase.findIndex(function (mm) { return mm.id === s.selectedWinner; });
+      var wmem = this.membersBase[widx];
+      selectedWinnerName = wmem.name;
+      selectedWinnerInitials = this.initialsOf(wmem.name);
+      selectedWinnerColor = this.colorFor(widx);
+    }
+    var showWinnerOverlay = monthIsOpen && s.showWinnerPicker;
+
+    // ----- payment-recording modal -----
+    var pm = s.paymentModal;
+    var showPaymentModal = !!pm;
+    var modalMemberName = '', modalMemberInitials = '', modalMemberColor = '';
+    var modalCashBg = '#ffffff', modalCashColor = '#1c1b19', modalOnlineBg = '#ffffff', modalOnlineColor = '#1c1b19';
+    var modalIsEditing = false;
+    var modalCollectorName = '', modalModeLabelDisplay = '', modalPaidDateLabel = '';
+    var modalHasAppliedTransfer = false, modalAppliedFromName = '', modalAppliedToName = '', modalAppliedAmountFormatted = '';
+    var modalHasPendingTransfer = false;
+    if (pm) {
+      var pidx = this.membersBase.findIndex(function (mm) { return mm.id === pm.memberId; });
+      var pmem = this.membersBase[pidx];
+      modalMemberName = pmem.name;
+      modalMemberInitials = this.initialsOf(pmem.name);
+      modalMemberColor = this.colorFor(pidx);
+      modalCashBg = pm.mode === 'cash' ? '#146b52' : '#ffffff';
+      modalCashColor = pm.mode === 'cash' ? '#ffffff' : '#1c1b19';
+      modalOnlineBg = pm.mode === 'online' ? '#146b52' : '#ffffff';
+      modalOnlineColor = pm.mode === 'online' ? '#ffffff' : '#1c1b19';
+      modalIsEditing = pm.isEditing;
+
+      if (modalIsEditing) {
+        var existingP = s.monthPayments[s.openMonth][pm.memberId];
+        if (existingP && existingP.paid) {
+          modalCollectorName = existingP.collectedBy === 'A' ? 'Ramesh' : 'Suresh';
+          modalModeLabelDisplay = existingP.mode === 'online' ? 'Online' : 'Cash';
+          modalPaidDateLabel = existingP.paidDate || '';
+        }
+        var monthNet = s.monthTransfers[s.openMonth] || 0;
+        modalHasAppliedTransfer = monthNet !== 0;
+        if (modalHasAppliedTransfer) {
+          modalAppliedFromName = monthNet > 0 ? 'Ramesh' : 'Suresh';
+          modalAppliedToName = monthNet > 0 ? 'Suresh' : 'Ramesh';
+          modalAppliedAmountFormatted = this.fmt(Math.abs(monthNet));
+        }
+        modalHasPendingTransfer = !!req && req.month === s.openMonth;
+      }
+    }
+
+    // ----- create group payout preview -----
+    var start = parseFloat(s.newPayoutStart) || 0;
+    var end = parseFloat(s.newPayoutEnd) || 0;
+    var dur = parseInt(s.newDuration) || 24;
+    var payoutPreviewRows = [];
+    for (var i2 = 0; i2 < dur; i2++) {
+      var amt = dur > 1 ? start + (end - start) * (i2 / (dur - 1)) : start;
+      payoutPreviewRows.push({ month: i2 + 1, amountFormatted: this.fmt(amt) });
+    }
+
+    return {
+      isLogin: isLogin, isDashboard: isDashboard, isLedger: isLedger, isGroupDetail: isGroupDetail,
+      isCreateGroup: isCreateGroup, isMonthDetail: isMonthDetail, isTopLevel: isTopLevel,
+
+      loginAsA: this.loginAsA, loginAsB: this.loginAsB, logout: this.logout,
+      currentAdminName: currentAdminName, currentAdminInitial: currentAdminInitial, currentAdminColor: currentAdminColor,
+
+      goDashboard: this.goDashboard, goLedger: this.goLedger, goGroup: this.goGroup, goCreateGroup: this.goCreateGroup,
+      openCurrentMonth: this.openCurrentMonth,
+
+      dashTabColor: isDashboard ? '#146b52' : '#a39d92',
+      ledgerTabColor: isLedger ? '#146b52' : '#a39d92',
+
+      totalFundFormatted: this.fmt(totalFund),
+      adminAFormatted: this.fmt(totalA),
+      adminBFormatted: this.fmt(totalB),
+      groupProgressPct: groupProgressPct,
+      openMonth: s.openMonth,
+
+      ledgerRows: ledgerRows,
+
+      collectedSoFarFormatted: this.fmt(collectedSoFar),
+      monthsRows: monthsRows,
+
+      viewMonth: viewMonth,
+      isMonthClosed: monthIsClosed, isMonthOpen: monthIsOpen, isMonthUpcoming: monthIsUpcoming,
+      showPayments: showPayments,
+      monthStatusLabel: monthStatusLabel, monthStatusBg: monthStatusBg, monthStatusColor: monthStatusColor,
+      closedWinnerName: closedWinnerName, closedPayoutAdminName: closedPayoutAdminName, closedLabel: closedLabel,
+      previousMonth: viewMonth - 1,
+      scheduledPayoutFormatted: scheduledPayoutFormatted,
+      collectedThisMonthFormatted: this.fmt(vf.totalCollected),
+      targetThisMonthFormatted: this.fmt(24 * this.monthlyDeposit),
+      paidCount: vf.paidCount,
+      paymentRows: paymentRows,
+      winnerRows: winnerRows,
+      hasWinnerSelected: hasWinnerSelected, noWinnerSelected: !hasWinnerSelected,
+      selectedWinnerName: selectedWinnerName, selectedWinnerInitials: selectedWinnerInitials, selectedWinnerColor: selectedWinnerColor,
+      showWinnerOverlay: showWinnerOverlay, openWinnerPicker: this.openWinnerPicker, closeWinnerPicker: this.closeWinnerPicker,
+
+      showPaymentModal: showPaymentModal,
+      modalMemberName: modalMemberName, modalMemberInitials: modalMemberInitials, modalMemberColor: modalMemberColor,
+      modalCashBg: modalCashBg, modalCashColor: modalCashColor, modalOnlineBg: modalOnlineBg, modalOnlineColor: modalOnlineColor,
+      modalIsEditing: modalIsEditing,
+      modalCollectorName: modalCollectorName, modalModeLabelDisplay: modalModeLabelDisplay, modalPaidDateLabel: modalPaidDateLabel,
+      modalHasAppliedTransfer: modalHasAppliedTransfer, modalAppliedFromName: modalAppliedFromName,
+      modalAppliedToName: modalAppliedToName, modalAppliedAmountFormatted: modalAppliedAmountFormatted,
+      modalHasPendingTransfer: modalHasPendingTransfer,
+      closePaymentModal: this.closePaymentModal, setModalModeCash: this.setModalModeCash, setModalModeOnline: this.setModalModeOnline,
+      savePaymentModal: this.savePaymentModal, markUnpaidFromModal: this.markUnpaidFromModal,
+
+      monthAdjAFormatted: this.fmt(vf.adjA),
+      monthAdjBFormatted: this.fmt(vf.adjB),
+      hasMonthTransfer: hasMonthTransfer,
+      monthTransferNote: monthTransferNote,
+      otherAdminName: otherAdminName,
+      showNoPendingTransfer: showNoPendingTransfer, showPendingMine: showPendingMine, showPendingTheirs: showPendingTheirs,
+      showApprovalBanner: showApprovalBanner,
+      pendingRequesterName: pendingRequesterName, pendingApproverName: pendingApproverName,
+      pendingFromName: pendingFromName, pendingToName: pendingToName,
+      pendingAmountFormatted: pendingAmountFormatted, pendingMonth: pendingMonth,
+      requestTransferToB: this.requestTransferToB, requestTransferToA: this.requestTransferToA,
+      acceptTransferRequest: this.acceptTransferRequest, declineTransferRequest: this.declineTransferRequest,
+      cancelTransferRequest: this.cancelTransferRequest,
+
+      payoutABg: s.payoutAdmin === 'A' ? '#146b52' : '#ffffff',
+      payoutAColor: s.payoutAdmin === 'A' ? '#ffffff' : '#1c1b19',
+      payoutBBg: s.payoutAdmin === 'B' ? '#146b52' : '#ffffff',
+      payoutBColor: s.payoutAdmin === 'B' ? '#ffffff' : '#1c1b19',
+      setPayoutA: this.setPayoutA, setPayoutB: this.setPayoutB,
+      closeMonthBg: s.selectedWinner ? '#146b52' : '#c7c2b8',
+      closeMonth: this.closeMonth,
+
+      newGroupName: s.newGroupName, updateName: this.updateName,
+      newMemberCount: s.newMemberCount, updateMemberCount: this.updateMemberCount,
+      newDuration: s.newDuration, updateDuration: this.updateDuration,
+      newMonthlyDeposit: s.newMonthlyDeposit, updateDeposit: this.updateDeposit,
+      newPayoutStart: s.newPayoutStart, updatePayoutStart: this.updatePayoutStart,
+      newPayoutEnd: s.newPayoutEnd, updatePayoutEnd: this.updatePayoutEnd,
+      payoutPreviewRows: payoutPreviewRows,
+      createGroup: this.createGroup
+    };
+  }
+}
+</script>
+</body>
+</html>
