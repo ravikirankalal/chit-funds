@@ -1,6 +1,6 @@
 import { ADMINS } from '../../firebase-config.js';
 import { state, groupsById } from '../store.js';
-import { fmt, escapeHtml, adminName, adminAvatarColor, initialsOf, isSuper } from '../helpers.js';
+import { fmt, escapeHtml, adminName, adminAvatarColor, initialsOf, isSuper, monthLabel } from '../helpers.js';
 import { iconChevronRight, iconPlus } from '../icons.js';
 import { renderBottomNav } from './bottomNav.js';
 
@@ -36,7 +36,10 @@ export function renderDashboard() {
           '<div class="banner-title">Transfer needs your approval</div>' +
           '<div style="font-size:12.5px;">' + adminName(approval.requestedBy) + ' wants to send ' + fmt(approval.amount) + ' · ' +
           (approval.direction === 'AtoB' ? adminName('A') + ' → ' + adminName('B') : adminName('B') + ' → ' + adminName('A')) +
-          ' (' + escapeHtml(approval.groupName) + ', Month ' + approval.month + ')</div>' +
+          ' (' + escapeHtml(approval.groupName) + ', ' + (function () {
+            var ag = groupsById.get(approval.groupId);
+            return ag ? monthLabel(ag.startYear, ag.startMonthIndex, approval.month) : 'Month ' + approval.month;
+          })() + ')</div>' +
           '<div style="font-size:11.5px;color:var(--warning);font-weight:600;">Tap to review →</div></div>' : '') +
         '<div style="background:var(--accent); border-radius:16px; padding:20px; color:#fff;">' +
           '<div style="font-size:12px;opacity:0.85;font-weight:500;">Total fund available</div>' +
