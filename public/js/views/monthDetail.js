@@ -1,6 +1,6 @@
 import { ADMINS } from '../../firebase-config.js';
 import { state, groupsById, membersByGroup, paymentsCache, monthsCache, transferReqCache, monthKey } from '../store.js';
-import { fmt, escapeHtml, initialsOf, colorFor, adminName, otherAdmin, isSuper } from '../helpers.js';
+import { fmt, escapeHtml, initialsOf, colorFor, adminName, otherAdmin, isSuper, monthLabel } from '../helpers.js';
 import { monthFinances } from '../finance.js';
 import { iconChevronLeft, iconCheck, iconClose } from '../icons.js';
 
@@ -22,7 +22,7 @@ export function renderMonthDetail() {
   var html = '<div class="screen">' +
     '<div class="topbar">' +
       '<div class="back" data-action="nav-back">' + iconChevronLeft() + '</div>' +
-      '<div style="flex:1 1 auto;"><div class="title">Month ' + viewMonth + '</div><div class="subtitle">' + escapeHtml(group.name) + ' · of ' + group.durationMonths + '</div></div>' +
+      '<div style="flex:1 1 auto;"><div class="title">' + monthLabel(group.startYear, group.startMonthIndex, viewMonth) + '</div><div class="subtitle">' + escapeHtml(group.name) + ' · of ' + group.durationMonths + '</div></div>' +
       '<div style="font-size:11px;font-weight:700;padding:5px 10px;border-radius:8px;background:' + statusBg + ';color:' + statusColor + ';">' + statusLabel + '</div>' +
     '</div>' +
     '<div class="content">';
@@ -79,7 +79,7 @@ function renderClosedSummary(f, members) {
 
 function renderUpcomingNotice(group, viewMonth) {
   return '<div class="banner warn"><div class="banner-title">Not yet open</div>' +
-    '<div style="font-size:12.5px;color:var(--text-muted);">Opens once Month ' + (viewMonth - 1) + ' is closed. Scheduled payout: ' + fmt((group.payoutSchedule && group.payoutSchedule[viewMonth - 1]) || 0) + '.</div></div>';
+    '<div style="font-size:12.5px;color:var(--text-muted);">Opens once ' + monthLabel(group.startYear, group.startMonthIndex, viewMonth - 1) + ' is closed. Scheduled payout: ' + fmt((group.payoutSchedule && group.payoutSchedule[viewMonth - 1]) || 0) + '.</div></div>';
 }
 
 function renderOpenSummary(f, members, group) {
@@ -224,7 +224,7 @@ function renderPaymentModalOverlay(gid, viewMonth, group, members) {
     '<div class="sheet-header">' +
       '<div class="avatar sm" style="background:' + colorFor(pidx) + ';">' + initialsOf(pmem.name) + '</div>' +
       '<div style="flex:1 1 auto;min-width:0;"><div style="font-size:14px;font-weight:700;">' + escapeHtml(pmem.name) + '</div>' +
-      '<div style="font-size:11.5px;color:var(--text-muted);">Month ' + viewMonth + ' · ' + fmt(group.monthlyDeposit) + ' · collected by ' + adminName(state.currentAdmin) + '</div></div>' +
+      '<div style="font-size:11.5px;color:var(--text-muted);">' + monthLabel(group.startYear, group.startMonthIndex, viewMonth) + ' · ' + fmt(group.monthlyDeposit) + ' · collected by ' + adminName(state.currentAdmin) + '</div></div>' +
       '<div class="sheet-close" data-action="close-payment-modal">' + iconClose() + '</div>' +
     '</div>' +
     '<div class="sheet-body">' +

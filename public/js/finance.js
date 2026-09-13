@@ -10,7 +10,7 @@
 import {
   state, groupsById, membersByGroup, monthsCache, paymentsCache, transferReqCache, monthKey
 } from './store.js';
-import { fmt, adminName } from './helpers.js';
+import { fmt, adminName, monthLabel } from './helpers.js';
 
 // Derives, for one month, who holds what: raw collections split by
 // collector, the net amount ever moved between admins for that month, and
@@ -57,24 +57,26 @@ export function recompute() {
       var f = monthFinances(gid, group, m);
       totalA += f.finalA; totalB += f.finalB;
 
+      var mLabel = monthLabel(group.startYear, group.startMonthIndex, m);
+
       if (f.closed) {
         var winner = (membersByGroup.get(gid) || []).find(function (mm) { return mm.id === f.monthDoc.winnerId; });
         ledger.push({
           group: group.name, type: 'payout',
-          title: 'Payout — ' + group.name + ' Month ' + m,
+          title: 'Payout — ' + group.name + ' ' + mLabel,
           subtitle: 'Paid to ' + (winner ? winner.name : '—') + ' by ' + adminName(f.monthDoc.payoutAdmin) + ' · ' + (f.monthDoc.closedLabel || ''),
           amountFormatted: '−' + fmt(f.payoutAmount), amountColor: '#1c1b19'
         });
         ledger.push({
           group: group.name, type: 'collection',
-          title: 'Collection — ' + group.name + ' Month ' + m,
+          title: 'Collection — ' + group.name + ' ' + mLabel,
           subtitle: f.paidCount + ' members paid · ' + (f.monthDoc.closedLabel || ''),
           amountFormatted: '+' + fmt(f.totalCollected), amountColor: '#146b52'
         });
       } else if (group.currentMonth === m) {
         ledger.push({
           group: group.name, type: 'collection',
-          title: 'Collection — ' + group.name + ' Month ' + m + ' (in progress)',
+          title: 'Collection — ' + group.name + ' ' + mLabel + ' (in progress)',
           subtitle: f.paidCount + ' members paid so far',
           amountFormatted: '+' + fmt(f.totalCollected), amountColor: '#146b52'
         });
@@ -82,7 +84,7 @@ export function recompute() {
       if (f.net) {
         ledger.push({
           group: group.name, type: 'transfer',
-          title: 'Transfer — ' + group.name + ' Month ' + m,
+          title: 'Transfer — ' + group.name + ' ' + mLabel,
           subtitle: (f.net > 0 ? adminName('A') + ' → ' + adminName('B') : adminName('B') + ' → ' + adminName('A')) + ' · accepted',
           amountFormatted: fmt(Math.abs(f.net)), amountColor: '#3b4a8a'
         });

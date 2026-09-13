@@ -1,5 +1,5 @@
 import { state } from '../store.js';
-import { fmt, escapeHtml, initialsOf, colorFor } from '../helpers.js';
+import { fmt, escapeHtml, initialsOf, colorFor, monthLabel } from '../helpers.js';
 import { iconChevronLeft } from '../icons.js';
 
 export function renderCreateGroup() {
@@ -10,11 +10,12 @@ export function renderCreateGroup() {
 
 function renderStep1(g) {
   var dur = g.durationMonths, previewRows = '';
+  var now = new Date();
   for (var i = 0; i < dur; i++) {
     var t = dur > 1 ? i / (dur - 1) : 0;
     var amt = g.payoutStart + (g.payoutEnd - g.payoutStart) * t;
     previewRows += '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--border);">' +
-      '<div style="font-size:12.5px;color:var(--text-muted);">Month ' + (i + 1) + '</div><div style="font-size:13px;font-weight:600;">' + fmt(amt) + '</div></div>';
+      '<div style="font-size:12.5px;color:var(--text-muted);">' + monthLabel(now.getFullYear(), now.getMonth(), i + 1) + '</div><div style="font-size:13px;font-weight:600;">' + fmt(amt) + '</div></div>';
   }
   return '' +
     '<div class="screen">' +
@@ -30,7 +31,7 @@ function renderStep1(g) {
           '<div style="font-size:13px;font-weight:600;margin-bottom:2px;">Payout schedule</div>' +
           '<div style="font-size:11.5px;color:var(--text-muted);margin-bottom:12px;">Set the first and last month\'s payout — the months in between are generated automatically.</div>' +
           '<div class="field-row">' +
-            '<div class="field"><label>Month 1 payout (₹)</label><input data-field="payoutStart" type="number" value="' + g.payoutStart + '" /></div>' +
+            '<div class="field"><label>' + monthLabel(now.getFullYear(), now.getMonth(), 1) + ' payout (₹)</label><input data-field="payoutStart" type="number" value="' + g.payoutStart + '" /></div>' +
             '<div class="field"><label>Final month payout (₹)</label><input data-field="payoutEnd" type="number" value="' + g.payoutEnd + '" /></div>' +
           '</div>' +
           '<div style="max-height:180px;overflow-y:auto;border:1px solid var(--border);border-radius:12px;background:var(--surface);margin-top:12px;">' + previewRows + '</div>' +
