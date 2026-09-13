@@ -19,6 +19,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # need full tag history to compute the next vN
 
       - name: Write service account key
         env:
@@ -32,7 +34,9 @@ jobs:
 
       - name: Tag this deploy
         run: |
-          TAG="deploy-$(date -u +%Y%m%d-%H%M%S)"
+          LAST=$(git tag -l 'v[0-9]*' | sed 's/^v//' | sort -n | tail -1)
+          NEXT=$(( ${LAST:-0} + 1 ))
+          TAG="v$NEXT"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git tag -a "$TAG" -m "Deployed $(git rev-parse --short HEAD) to localbc-41b52"
