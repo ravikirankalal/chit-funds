@@ -1,0 +1,39 @@
+name: Deploy
+
+# Light on purpose: no build step, no test suite — just ship what's on main
+# to Firebase Hosting + Firestore rules, then tag the commit that shipped.
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: deploy-main
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Write service account key
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$RUNNER_TEMP/gcp-key.json"
+
+      - name: Deploy to Firebase (Hosting + Firestore rules)
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/gcp-key.json
+        run: npx --yes firebase-tools@14 deploy --only hosting,firestore:rules --project localbc-41b52 --non-interactive
+
+      - name: Tag this deploy
+        run: |
+          TAG="deploy-$(date -u +%Y%m%d-%H%M%S)"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "$TAG" -m "Deployed $(git rev-parse --short HEAD) to localbc-41b52"
+          git push origin "$TAG"
