@@ -1,0 +1,54 @@
+/* Reusable UI pieces used across multiple screens: cards, stat tiles, list
+   rows, avatars, buttons, pills, and form fields. */
+
+.card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 14px; padding: 14px;
+}
+
+.stat-row { display: flex; gap: 10px; }
+.stat { flex: 1 1 0; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px; }
+.stat .label { font-size: 10.5px; color: var(--text-muted); font-weight: 500; }
+.stat .value { font-family: 'Space Grotesk', sans-serif; font-size: 15px; font-weight: 700; margin-top: 2px; }
+
+.section-label { font-size: 13px; font-weight: 600; color: var(--text-muted); margin-bottom: 10px; }
+
+.row-list { display: flex; flex-direction: column; gap: 8px; }
+
+.list-row {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+  padding: 12px 14px; display: flex; align-items: center; gap: 12px; cursor: pointer;
+}
+.avatar {
+  width: 34px; height: 34px; border-radius: 10px; color: #fff; font-size: 12px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.avatar.sm { width: 28px; height: 28px; border-radius: 8px; font-size: 11px; }
+
+.btn {
+  padding: 13px; border-radius: 10px; font-size: 14px; font-weight: 600; text-align: center;
+}
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-soft { background: var(--accent-soft); color: var(--accent); }
+.btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-muted); }
+.btn-danger-text { background: transparent; color: var(--danger); }
+.btn:disabled, .btn.disabled { opacity: 0.5; pointer-events: none; }
+
+.pill-row { display: flex; gap: 8px; }
+.pill {
+  flex: 1 1 0; padding: 11px; border-radius: 10px; font-size: 13px; font-weight: 600;
+  background: #fff; color: var(--text); border: 1px solid var(--border);
+}
+.pill.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field label { font-size: 12px; font-weight: 500; color: var(--text-muted); }
+.field input {
+  width: 100%; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--border);
+  background: var(--surface); font-size: 14px; color: var(--text);
+}
+.field-row { display: flex; gap: 12px; }
+.field-row .field { flex: 1 1 0; }
+
+.progress-track { height: 6px; border-radius: 3px; background: var(--border); overflow: hidden; }
+.progress-fill { height: 100%; background: var(--accent); border-radius: 3px; }
