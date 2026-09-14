@@ -23,7 +23,8 @@
 }
 .banner.warn { background: var(--warning-soft); }
 .banner.info { background: var(--accent-soft); }
-.banner .banner-title { font-size: 12.5px; font-weight: 600; }
+.banner .banner-title { font-size: 12.5px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+.banner .banner-title svg { flex-shrink: 0; }
 .banner.warn .banner-title { color: var(--warning); }
 .banner.info .banner-title { color: var(--accent); }
 

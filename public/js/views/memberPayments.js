@@ -1,7 +1,7 @@
 import { state, groupsById, membersById, monthKey, paymentsCache } from '../store.js';
 import { fmt, escapeHtml, monthLabel, adminName, formatDateTime } from '../helpers.js';
 import { monthFinances } from '../finance.js';
-import { iconChevronLeft, iconCheck } from '../icons.js';
+import { iconChevronLeft, iconCheck, iconWallet, iconTrophy, iconCalendar, iconPeopleSmall } from '../icons.js';
 
 export function renderMemberPayments() {
   var gid = state.activeGroupId;
@@ -25,7 +25,7 @@ export function renderMemberPayments() {
       subtitle = '<span style="color:var(--danger);">Not paid</span>';
       statusBg = '#fbe9e7'; statusColor = 'var(--danger)'; statusLabel = 'Unpaid';
     }
-    if (winEntry) subtitle += ' · <span style="font-weight:600;color:var(--accent);">Won ' + fmt(winEntry.payoutAmount) + '</span>';
+    if (winEntry) subtitle += ' · <span style="display:inline-flex;align-items:center;gap:3px;font-weight:600;color:var(--accent);">' + iconTrophy('var(--accent)') + 'Won ' + fmt(winEntry.payoutAmount) + '</span>';
 
     rows.push('<div class="list-row" data-action="open-month" data-gid="' + gid + '" data-m="' + m + '">' +
       '<div class="avatar sm" style="background:var(--bg); color:var(--text-muted);">' + m + '</div>' +
@@ -39,13 +39,13 @@ export function renderMemberPayments() {
     '<div class="screen">' +
       '<div class="topbar">' +
         '<div class="back" data-action="nav-back">' + iconChevronLeft() + '</div>' +
-        '<div><div class="title">' + escapeHtml(member.name) + '</div><div class="subtitle">' + escapeHtml(group.name) + ' · Payment history</div></div>' +
+        '<div><div class="title">' + iconPeopleSmall('currentColor', 18) + escapeHtml(member.name) + '</div><div class="subtitle">' + escapeHtml(group.name) + ' · Payment history</div></div>' +
       '</div>' +
       '<div class="content">' +
         '<div class="stat-row">' +
-          '<div class="stat"><div class="label">Paid so far</div><div class="value">' + fmt(totalPaid) + '</div></div>' +
+          '<div class="stat"><div class="label">' + iconWallet() + 'Paid so far</div><div class="value">' + fmt(totalPaid) + '</div></div>' +
         '</div>' +
-        '<div><div class="section-label">Payments</div><div class="row-list">' + (rows.join('') || '<div class="card" style="color:var(--text-muted);font-size:13px;text-align:center;">No months yet.</div>') + '</div></div>' +
+        '<div><div class="section-label">' + iconCalendar() + 'Payments</div><div class="row-list">' + (rows.join('') || '<div class="card" style="color:var(--text-muted);font-size:13px;text-align:center;">No months yet.</div>') + '</div></div>' +
       '</div>' +
     '</div>';
 }

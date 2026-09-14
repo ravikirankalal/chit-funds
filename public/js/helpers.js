@@ -24,6 +24,14 @@ export function adminName(id) { return id === 'B' ? ADMINS.B.name : (id === 'SUP
 
 export function adminAvatarColor(id) { return id === 'B' ? colorFor(1) : (id === 'SUPER' ? '#3b3a36' : colorFor(0)); }
 
+// A small colored dot in the admin's own avatar color — used as a compact
+// leading glyph next to admin-specific labels ("Ramesh holds", balances,
+// ledger stat cards) so it's identifiable at a glance without repeating a
+// full avatar circle everywhere.
+export function adminDot(id) {
+  return '<span style="display:inline-block;width:7px;height:7px;border-radius:4px;background:' + adminAvatarColor(id) + ';flex-shrink:0;"></span>';
+}
+
 export function otherAdmin(id) { return id === 'A' ? 'B' : 'A'; }
 
 // Read-only oversight account: never a fund custodian, can't record
