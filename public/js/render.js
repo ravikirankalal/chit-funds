@@ -8,15 +8,29 @@ import { renderLogin } from './views/login.js';
 import { renderDashboard } from './views/dashboard.js';
 import { renderMembers } from './views/members.js';
 import { renderLedger } from './views/ledger.js';
-import { renderGroupDetail } from './views/groupDetail.js';
+import { renderGroupDetail, scrollToActiveMonth } from './views/groupDetail.js';
 import { renderGroupMembers } from './views/groupMembers.js';
 import { renderMemberPayments } from './views/memberPayments.js';
 import { renderCreateGroup } from './views/createGroup.js';
 import { renderMonthDetail } from './views/monthDetail.js';
 import { renderBootSkeleton } from './skeleton.js';
 
+// Tracks whether the group detail screen still owes its one-time scroll to
+// the active month for whatever group is currently open — reset whenever
+// we're about to render a *different* visit to that screen (a fresh nav
+// in, or switching to a different group), so a later re-render of the
+// same visit (toggling a tab, recording a payment) never re-scrolls the
+// user away from wherever they've since scrolled to.
+var groupDetailScrollGid = null;
+var groupDetailScrollDone = false;
+
 export function render() {
   var root = document.getElementById('app');
+
+  if (state.screen === 'groupDetail' && state.activeGroupId !== groupDetailScrollGid) {
+    groupDetailScrollGid = state.activeGroupId;
+    groupDetailScrollDone = false;
+  }
 
   // a background Firestore update can trigger a re-render while the user is
   // mid-typing; every input is state-controlled via data-field, so state
@@ -65,6 +79,10 @@ export function render() {
   if (hadSheet) {
     var sheetEls = root.querySelectorAll('.overlay, .sheet');
     for (var si = 0; si < sheetEls.length; si++) sheetEls[si].classList.add('no-anim');
+  }
+
+  if (state.screen === 'groupDetail' && !groupDetailScrollDone) {
+    groupDetailScrollDone = scrollToActiveMonth(root);
   }
 
   if (activeSelector) {

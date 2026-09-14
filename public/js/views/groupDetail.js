@@ -6,6 +6,19 @@ import { bar, skeletonTopbar, skeletonListRow } from '../skeleton.js';
 
 function signed(n) { return (n < 0 ? '−' : '') + fmt(Math.abs(n)); }
 
+// Called by render.js after mounting this screen, until it returns true —
+// group data (and so the row to scroll to) may still be loading on the
+// very first render, so render() keeps retrying on the renders that
+// follow rather than only trying once and giving up.
+export function scrollToActiveMonth(root) {
+  var group = groupsById.get(state.activeGroupId);
+  if (!group) return false;
+  var row = root.querySelector('.list-row[data-m="' + group.currentMonth + '"]');
+  if (!row) return false;
+  row.scrollIntoView({ block: 'center' });
+  return true;
+}
+
 function skeletonStatCell(border) {
   return '<div style="flex:1 1 0; min-width:0; padding:10px 12px;' + (border ? 'border-left:1px solid var(--color-border);' : '') + '">' +
     bar('60%', '10.5px') + bar('50%', '15px', 'margin-top:6px;') +
