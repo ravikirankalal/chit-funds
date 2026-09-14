@@ -37,12 +37,9 @@ function renderStep1(g) {
         '<div style="height:1px;background:var(--border);"></div>' +
         '<div>' +
           '<div style="font-size:13px;font-weight:600;margin-bottom:2px;">Payout schedule</div>' +
-          '<div style="font-size:11.5px;color:var(--text-muted);margin-bottom:12px;">Set the first and last month\'s payout to auto-fill the months in between, then fine-tune any individual month below. This locks once the group is created.</div>' +
-          '<div class="field-row">' +
-            '<div class="field"><label>' + monthLabel(now.getFullYear(), now.getMonth(), 1) + ' payout (₹)</label><input data-field="payoutStart" type="text" inputmode="numeric" value="' + g.payoutStart + '" /></div>' +
-            '<div class="field"><label>Final month payout (₹)</label><input data-field="payoutEnd" type="text" inputmode="numeric" value="' + g.payoutEnd + '" /></div>' +
-          '</div>' +
-          '<div style="max-height:180px;overflow-y:auto;border:1px solid var(--border);border-radius:12px;background:var(--surface);margin-top:12px;">' + previewRows + '</div>' +
+          '<div style="font-size:11.5px;color:var(--text-muted);margin-bottom:12px;">Set a starting payout to fill every month, then fine-tune any individual month below. This locks once the group is created.</div>' +
+          '<div class="field"><label>Starting payout (₹)</label><input data-field="payoutStart" type="text" inputmode="numeric" value="' + g.payoutStart + '" /></div>' +
+          '<div style="border:1px solid var(--border);border-radius:12px;background:var(--surface);margin-top:12px;">' + previewRows + '</div>' +
         '</div>' +
       '</div>' +
       '<div style="flex-shrink:0;padding:14px 20px;border-top:1px solid var(--border);background:var(--surface);">' +
