@@ -57,11 +57,11 @@ export function renderMonthDetail() {
     '<div class="content">';
 
   if (isClosed) {
-    html += renderClosedSummary(f, members, readOnly);
+    html += renderClosedSummary(f, members, readOnly, gid, viewMonth);
   } else if (isUpcoming) {
     html += renderUpcomingNotice(group, viewMonth);
   } else if (isOpen) {
-    html += renderOpenSummary(f, members, group);
+    html += renderOpenSummary(f, members, group, readOnly, gid, viewMonth);
   }
 
   if (isOpen || isClosed) {
@@ -89,7 +89,35 @@ function timelineRow(dotColor, title, status, statusStyle, amount) {
     '<div style="font-size:11px;' + statusStyle + '">' + status + (amount ? ' · ' + amount : '') + '</div></div></div>';
 }
 
-function renderClosedSummary(f, members, readOnly) {
+// One bar per member — green/full for paid, red/short for unpaid — a
+// visual index into the "X / Y paid" count above, since the count alone
+// doesn't say WHICH members are still outstanding without opening the
+// payment list below. Mirrors the collection-trend sparkline on the group
+// detail screen (public/js/views/groupDetail.js), but the per-item value
+// here is binary (paid/unpaid) rather than a percentage. Each bar reuses
+// the existing 'open-payment-modal' action so tapping one jumps straight
+// to that member, same as tapping their row in the payment list.
+function renderMemberPaymentStrip(gid, viewMonth, members, readOnly) {
+  if (!members.length) return '';
+  var payments = paymentsCache.get(monthKey(gid, viewMonth)) || {};
+  var bars = members.map(function (mm) {
+    var p = payments[mm.id];
+    var paid = !!(p && p.paid);
+    var color = paid ? 'var(--color-success)' : 'var(--color-danger)';
+    var clickable = !readOnly;
+    return '<div' + (clickable ? ' data-action="open-payment-modal" data-mid="' + mm.id + '"' : '') +
+      ' title="' + escapeHtml(mm.name) + ': ' + (paid ? 'Paid' : 'Unpaid') + '"' +
+      ' style="flex:1 1 0;min-width:2px;height:20px;display:flex;align-items:flex-end;' + (clickable ? 'cursor:pointer;' : '') + '">' +
+      '<div style="width:100%;height:' + (paid ? 20 : 6) + 'px;background:' + color + ';border-radius:2px;"></div>' +
+    '</div>';
+  }).join('');
+  return '<div>' +
+    '<div style="font-size:11px;color:var(--color-text-muted);margin-bottom:4px;">Who\'s paid</div>' +
+    '<div style="display:flex;align-items:flex-end;gap:2px;">' + bars + '</div>' +
+  '</div>';
+}
+
+function renderClosedSummary(f, members, readOnly, gid, viewMonth) {
   var unpaidCount = members.length - f.paidCount;
   // Almost always exactly one winner — this loop renders identically to the
   // old single-card layout in that case. A closed month occasionally has
@@ -119,6 +147,7 @@ function renderClosedSummary(f, members, readOnly) {
       : '') +
     winnerCards +
     (readOnly ? '' : '<button class="btn btn-primary" style="width:100%;" data-action="open-winner-picker">Add another winner</button>') +
+    '<div class="card">' + renderMemberPaymentStrip(gid, viewMonth, members, readOnly) + '</div>' +
     '<div class="card" style="display:flex;justify-content:space-between;align-items:center;">' +
       '<div><div style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--color-text-muted);">' + iconWallet() + 'Collected</div><div class="mono" style="font-size:16px;font-weight:700;color:var(--color-success);">' + fmt(f.totalCollected) + '</div></div>' +
       '<div style="text-align:right;"><div style="font-size:12px;color:var(--color-text-muted);">Paid out by</div><div style="font-size:14px;font-weight:700;">' + adminName(f.monthDoc.payoutAdmin) + '</div></div>' +
@@ -136,7 +165,7 @@ function renderUpcomingNotice(group, viewMonth) {
     '<div style="font-size:12.5px;color:var(--color-text-muted);">Opens once ' + monthLabel(group.startYear, group.startMonthIndex, viewMonth - 1) + ' is closed. Scheduled payout: ' + fmt((group.payoutSchedule && group.payoutSchedule[viewMonth - 1]) || 0) + '.</div></div>';
 }
 
-function renderOpenSummary(f, members, group) {
+function renderOpenSummary(f, members, group, readOnly, gid, viewMonth) {
   var expected = members.length * group.monthlyDeposit;
   var pct = expected > 0 ? Math.min(100, Math.round((f.totalCollected / expected) * 100)) : 0;
   return '<div class="card" style="display:flex;flex-direction:column;gap:10px;">' +
@@ -148,6 +177,7 @@ function renderOpenSummary(f, members, group) {
       '<div style="display:flex;justify-content:space-between;margin-bottom:4px;"><div style="font-size:11px;color:var(--color-text-muted);">' + f.paidCount + ' / ' + members.length + ' paid</div><div style="font-size:11px;color:var(--color-text-muted);font-weight:600;">' + pct + '%</div></div>' +
       '<div class="progress-track"><div class="progress-fill" style="width:' + pct + '%;"></div></div>' +
     '</div>' +
+    renderMemberPaymentStrip(gid, viewMonth, members, readOnly) +
     '<div class="stat-row">' +
       '<div class="stat"><div class="label">' + adminDot('A') + ADMINS.A.name + ' holds</div><div class="value" style="' + (f.adjA < 0 ? 'color:var(--color-danger);' : '') + '">' + signed(f.adjA) + '</div></div>' +
       '<div class="stat"><div class="label">' + adminDot('B') + ADMINS.B.name + ' holds</div><div class="value" style="' + (f.adjB < 0 ? 'color:var(--color-danger);' : '') + '">' + signed(f.adjB) + '</div></div>' +
