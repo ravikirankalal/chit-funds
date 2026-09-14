@@ -213,26 +213,34 @@ function renderPaymentList(gid, viewMonth, members, f, readOnly, group, canTrans
   var secondRows = currentIsB ? byARows : byBRows;
   var secondAmount = currentIsB ? f.rawA : f.rawB;
 
+  // All three tabs always show, even at 0 — hiding a tab the moment it
+  // empties out (e.g. "Unpaid" once everyone's paid) made the bar jump
+  // around as you collected; a stable set of tabs is easier to navigate
+  // than one that reflows on every save.
   var tabs = [
     { key: 'unpaid', label: 'Unpaid', rows: unpaidRows, amount: unpaidAmount, amountColor: 'var(--color-danger)', transferable: false },
     { key: firstKey, label: adminName(firstKey), rows: firstRows, amount: firstAmount, amountColor: 'var(--color-success)', transferable: canTransfer },
     { key: secondKey, label: adminName(secondKey), rows: secondRows, amount: secondAmount, amountColor: 'var(--color-success)', transferable: false }
-  ].filter(function (t) { return t.rows.length; });
+  ];
 
-  if (!tabs.length) return '<div><div class="section-label">' + iconWallet() + 'Member payments (' + f.paidCount + '/' + members.length + ')</div></div>';
+  if (!members.length) return '<div><div class="section-label">' + iconWallet() + 'Member payments (' + f.paidCount + '/' + members.length + ')</div></div>';
 
-  // Unpaid is the default focus mid-collection; once everyone's paid (no
-  // unpaid tab left), fall back to the signed-in admin's own tab.
+  // Unpaid is the default focus mid-collection; once everyone's paid, fall
+  // back to the signed-in admin's own tab.
   var defaultKey = unpaidRows.length ? 'unpaid' : firstKey;
   var activeKey = state.ui.paymentTab;
   if (!tabs.some(function (t) { return t.key === activeKey; })) activeKey = defaultKey;
   var activeTab = tabs.filter(function (t) { return t.key === activeKey; })[0];
 
+  var body = activeTab.rows.length
+    ? '<div class="row-list">' + activeTab.rows.map(function (r) { return paymentRow(r, readOnly, activeTab.transferable); }).join('') + '</div>'
+    : '<div style="text-align:center;padding:24px 0;font-size:12.5px;color:var(--color-text-muted);">Nothing here yet</div>';
+
   return '<div><div class="section-label">' + iconWallet() + 'Member payments (' + f.paidCount + '/' + members.length + ')</div>' +
     '<div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:2px;margin-bottom:10px;">' +
       tabs.map(function (t) { return paymentTabChip(t, t.key === activeKey); }).join('') +
     '</div>' +
-    '<div class="row-list">' + activeTab.rows.map(function (r) { return paymentRow(r, readOnly, activeTab.transferable); }).join('') + '</div>' +
+    body +
   '</div>';
 }
 
