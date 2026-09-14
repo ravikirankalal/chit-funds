@@ -32,6 +32,7 @@
 .btn-soft { background: var(--accent-soft); color: var(--accent); }
 .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-muted); }
 .btn-danger-text { background: transparent; color: var(--danger); }
+.btn-danger-soft { background: #fbe9e7; color: var(--danger); }
 .btn:disabled, .btn.disabled { opacity: 0.5; pointer-events: none; }
 
 .pill-row { display: flex; gap: 8px; }

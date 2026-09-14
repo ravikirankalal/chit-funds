@@ -20,7 +20,8 @@ export var state = {
     newGroup: null,        // set when entering createGroup screen
     memberForm: null,      // { id, name } — add/edit overlay on the members screen
     addMemberToGroup: null, // { gid, draftName } — "add member to this group" overlay on groupDetail
-    collapsedPaymentSections: {} // { unpaid: bool, A: bool, B: bool } — payment list subsection collapse state
+    collapsedPaymentSections: {}, // { unpaid: bool, A: bool, B: bool } — payment list subsection collapse state
+    transferSelection: null // { mids: [] } — paid entries selected (long-press to start, tap more to add) in the logged-in admin's own section, offering to hand them all to the other admin
   }
 };
 
