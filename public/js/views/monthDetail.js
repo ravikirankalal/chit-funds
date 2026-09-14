@@ -30,7 +30,7 @@ export function renderMonthDetail() {
     '<div class="content">';
 
   if (isClosed) {
-    html += renderClosedSummary(f, members);
+    html += renderClosedSummary(f, members, readOnly);
   } else if (isUpcoming) {
     html += renderUpcomingNotice(group, viewMonth);
   } else if (isOpen) {
@@ -62,12 +62,13 @@ function timelineRow(dotColor, title, status, statusStyle, amount) {
     '<div style="font-size:11px;' + statusStyle + '">' + status + (amount ? ' · ' + amount : '') + '</div></div></div>';
 }
 
-function renderClosedSummary(f, members) {
+function renderClosedSummary(f, members, readOnly) {
   var unpaidCount = members.length - f.paidCount;
   // Almost always exactly one winner — this loop renders identically to the
   // old single-card layout in that case. A closed month occasionally has
   // more than one (see getMonthWinners in finance.js), each with its own
-  // payout amount.
+  // payout amount. A closed month isn't frozen — an admin can still add a
+  // winner they missed, same as late payments are still editable post-close.
   var winnerCards = f.winners.map(function (w) {
     var winner = members.find(function (mm) { return mm.id === w.memberId; });
     var winnerIdx = winner ? members.indexOf(winner) : -1;
@@ -90,13 +91,14 @@ function renderClosedSummary(f, members) {
         '<div style="font-size:12.5px;color:var(--text-muted);">This month is closed but dues are outstanding — tap an unpaid member below to record their payment.</div></div>'
       : '') +
     winnerCards +
+    (readOnly ? '' : '<button class="btn btn-primary" style="width:100%;" data-action="open-winner-picker">Add another winner</button>') +
     '<div class="card" style="display:flex;justify-content:space-between;align-items:center;">' +
       '<div><div style="font-size:12px;color:var(--text-muted);">Collected</div><div class="mono" style="font-size:16px;font-weight:700;color:#146b52;">' + fmt(f.totalCollected) + '</div></div>' +
       '<div style="text-align:right;"><div style="font-size:12px;color:var(--text-muted);">Paid out by</div><div style="font-size:14px;font-weight:700;">' + adminName(f.monthDoc.payoutAdmin) + '</div></div>' +
     '</div>' +
     '<div class="stat-row">' +
-      '<div class="stat"><div class="label">' + ADMINS.A.name + ' holds</div><div class="value" style="' + (f.adjA < 0 ? 'color:var(--danger);' : '') + '">' + signed(f.adjA) + '</div></div>' +
-      '<div class="stat"><div class="label">' + ADMINS.B.name + ' holds</div><div class="value" style="' + (f.adjB < 0 ? 'color:var(--danger);' : '') + '">' + signed(f.adjB) + '</div></div>' +
+      '<div class="stat"><div class="label">' + ADMINS.A.name + ' holds</div><div class="value" style="' + (f.finalA < 0 ? 'color:var(--danger);' : '') + '">' + signed(f.finalA) + '</div></div>' +
+      '<div class="stat"><div class="label">' + ADMINS.B.name + ' holds</div><div class="value" style="' + (f.finalB < 0 ? 'color:var(--danger);' : '') + '">' + signed(f.finalB) + '</div></div>' +
     '</div>' +
     '<div style="font-size:11px;color:var(--text-muted);text-align:center;">Closed ' + escapeHtml(f.monthDoc.closedLabel || '') + '</div>' +
   '</div>';
