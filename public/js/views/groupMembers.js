@@ -39,7 +39,7 @@ export function renderGroupMembers() {
     '<div class="screen">' +
       '<div class="topbar">' +
         '<div class="back" data-action="nav-back">' + iconChevronLeft() + '</div>' +
-        '<div><div class="title">' + iconPeople('currentColor') + 'Members</div><div class="subtitle">' + escapeHtml(group.name) + '</div></div>' +
+        '<div><div class="title">' + iconPeople('var(--color-primary)') + 'Members</div><div class="subtitle">' + escapeHtml(group.name) + '</div></div>' +
       '</div>' +
       '<div class="content">' +
         '<div class="row-list">' + rows + '</div>' +

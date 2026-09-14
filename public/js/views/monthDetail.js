@@ -28,7 +28,7 @@ export function renderMonthDetail() {
   var html = '<div class="screen">' +
     '<div class="topbar">' +
       '<div class="back" data-action="nav-back">' + iconChevronLeft() + '</div>' +
-      '<div style="flex:1 1 auto;"><div class="title">' + iconCalendar('currentColor', 18) + monthLabel(group.startYear, group.startMonthIndex, viewMonth) + '</div><div class="subtitle">' + escapeHtml(group.name) + ' · Month ' + viewMonth + ' of ' + group.durationMonths + '</div></div>' +
+      '<div style="flex:1 1 auto;"><div class="title">' + iconCalendar('var(--color-primary)', 18) + monthLabel(group.startYear, group.startMonthIndex, viewMonth) + '</div><div class="subtitle">' + escapeHtml(group.name) + ' · Month ' + viewMonth + ' of ' + group.durationMonths + '</div></div>' +
       '<div style="display:flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:5px 10px;border-radius:8px;background:' + statusBg + ';color:' + statusColor + ';">' + statusIcon + statusLabel + '</div>' +
     '</div>' +
     '<div class="content">';

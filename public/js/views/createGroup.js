@@ -26,7 +26,7 @@ function renderStep1(g) {
   }
   return '' +
     '<div class="screen">' +
-      '<div class="topbar"><div class="back" data-action="cancel-create-group">' + iconChevronLeft() + '</div><div class="title">' + iconGroupStack('currentColor', 18) + 'New Chit Group</div></div>' +
+      '<div class="topbar"><div class="back" data-action="cancel-create-group">' + iconChevronLeft() + '</div><div class="title">' + iconGroupStack('var(--color-primary)', 18) + 'New Chit Group</div></div>' +
       '<div class="content">' +
         '<div class="field"><label>' + iconTag() + 'Group name</label><input data-field="name" value="' + escapeHtml(g.name) + '" placeholder="e.g. Friends Chit 2027" /></div>' +
         '<div class="field-row">' +
@@ -81,7 +81,7 @@ function renderStep2(g) {
 
   return '' +
     '<div class="screen">' +
-      '<div class="topbar"><div class="back" data-action="create-group-back-step1">' + iconChevronLeft() + '</div><div class="title">' + iconPeopleSmall('currentColor', 18) + 'Add Members</div></div>' +
+      '<div class="topbar"><div class="back" data-action="create-group-back-step1">' + iconChevronLeft() + '</div><div class="title">' + iconPeopleSmall('var(--color-primary)', 18) + 'Add Members</div></div>' +
       '<div class="content">' +
         '<div><div class="section-label">' + iconPeopleSmall() + 'Existing members</div><div class="row-list">' + availableRows + '</div></div>' +
         '<div class="field"><label>Or add a brand new member</label>' +

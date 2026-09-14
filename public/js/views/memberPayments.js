@@ -39,7 +39,7 @@ export function renderMemberPayments() {
     '<div class="screen">' +
       '<div class="topbar">' +
         '<div class="back" data-action="nav-back">' + iconChevronLeft() + '</div>' +
-        '<div><div class="title">' + iconPeopleSmall('currentColor', 18) + escapeHtml(member.name) + '</div><div class="subtitle">' + escapeHtml(group.name) + ' · Payment history</div></div>' +
+        '<div><div class="title">' + iconPeopleSmall('var(--color-primary)', 18) + escapeHtml(member.name) + '</div><div class="subtitle">' + escapeHtml(group.name) + ' · Payment history</div></div>' +
       '</div>' +
       '<div class="content">' +
         '<div class="stat-row">' +
