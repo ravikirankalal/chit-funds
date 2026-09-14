@@ -38,7 +38,7 @@ export function renderMonthDetail() {
   }
 
   if (isOpen || isClosed) {
-    html += renderPaymentList(gid, viewMonth, members, f, readOnly, group, isOpen);
+    html += renderPaymentList(gid, viewMonth, members, f, readOnly, group, isOpen || isClosed);
   }
 
   if (isOpen) {
@@ -65,7 +65,12 @@ function timelineRow(dotColor, title, status, statusStyle, amount) {
 function renderClosedSummary(f, members) {
   var winner = members.find(function (mm) { return mm.id === f.monthDoc.winnerId; });
   var winnerIdx = winner ? members.indexOf(winner) : -1;
+  var unpaidCount = members.length - f.paidCount;
   return '<div style="display:flex;flex-direction:column;gap:10px;">' +
+    (unpaidCount > 0
+      ? '<div class="banner warn"><div class="banner-title">' + unpaidCount + ' member' + (unpaidCount === 1 ? '' : 's') + ' still unpaid</div>' +
+        '<div style="font-size:12.5px;color:var(--text-muted);">This month is closed but dues are outstanding — tap an unpaid member below to record their payment.</div></div>'
+      : '') +
     '<div class="card" style="display:flex;align-items:center;gap:12px;background:var(--accent-soft);border-color:var(--accent);">' +
       (winner ? '<div class="avatar" style="background:' + colorFor(winnerIdx) + ';">' + initialsOf(winner.name) + '</div>' : '') +
       '<div style="flex:1 1 auto; min-width:0;">' +
@@ -151,9 +156,10 @@ function paymentSubsection(key, label, rows, amount, readOnly, transferable) {
 // collections first without having to scan past the other admin's.
 // Collapse state is keyed by admin id (not position) so it stays stable
 // regardless of which admin is currently viewing. Only the logged-in
-// admin's own section is hold-to-transfer eligible, and only while the
-// month is still open — see selectPaymentForTransfer in actions.js.
-function renderPaymentList(gid, viewMonth, members, f, readOnly, group, isOpen) {
+// admin's own section is hold-to-transfer eligible — open or closed, so a
+// late/misattributed payment can still be handed off after close, but not
+// a not-yet-open future month. See togglePaymentSelection in actions.js.
+function renderPaymentList(gid, viewMonth, members, f, readOnly, group, canTransfer) {
   var payments = paymentsCache.get(monthKey(gid, viewMonth)) || {};
   var payRows = members.map(function (mm, idx) {
     var p = payments[mm.id] || { paid: false };
@@ -177,7 +183,7 @@ function renderPaymentList(gid, viewMonth, members, f, readOnly, group, isOpen) 
 
   return '<div><div class="section-label">Member payments (' + f.paidCount + '/' + members.length + ')</div>' +
     paymentSubsection('unpaid', 'Unpaid', unpaidRows, unpaidAmount, readOnly, false) +
-    paymentSubsection(firstKey, firstLabel, firstRows, firstAmount, readOnly, isOpen) +
+    paymentSubsection(firstKey, firstLabel, firstRows, firstAmount, readOnly, canTransfer) +
     paymentSubsection(secondKey, secondLabel, secondRows, secondAmount, readOnly, false) +
   '</div>';
 }
