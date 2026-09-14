@@ -6,35 +6,47 @@ import { bar, skeletonTopbar, skeletonListRow } from '../skeleton.js';
 
 function signed(n) { return (n < 0 ? '−' : '') + fmt(Math.abs(n)); }
 
-function renderGroupDetailSkeleton() {
-  var statPair = '<div class="stat-row">' +
-    '<div class="stat">' + bar('60%', '10.5px') + bar('50%', '15px', 'margin-top:8px;') + '</div>' +
-    '<div class="stat">' + bar('60%', '10.5px') + bar('50%', '15px', 'margin-top:8px;') + '</div>' +
+function skeletonStatCell(border) {
+  return '<div style="flex:1 1 0; min-width:0; padding:10px 12px;' + (border ? 'border-left:1px solid var(--color-border);' : '') + '">' +
+    bar('60%', '10.5px') + bar('50%', '15px', 'margin-top:6px;') +
   '</div>';
-  var progressPair = '<div style="display:flex;gap:10px;">' + bar('50%', '96px', 'border-radius:14px;') + bar('50%', '96px', 'border-radius:14px;') + '</div>';
+}
+
+function skeletonStatRow(borderTop) {
+  return '<div style="display:flex;' + (borderTop ? 'border-top:1px solid var(--color-border);' : '') + '">' + skeletonStatCell(false) + skeletonStatCell(true) + '</div>';
+}
+
+function renderGroupDetailSkeleton() {
+  var statsCard = '<div class="card" style="padding:0;">' + skeletonStatRow(false) + skeletonStatRow(true) + skeletonStatRow(true) + '</div>';
   var months = [0, 1, 2].map(function () { return skeletonListRow(); }).join('');
   return '<div class="screen">' + skeletonTopbar() +
     '<div class="content">' +
-      statPair +
-      '<div>' + bar('130px', '13px', 'margin-bottom:10px;') + progressPair + '<div style="margin-top:10px;">' + statPair + '</div></div>' +
+      statsCard +
       '<div>' + bar('80px', '13px', 'margin-bottom:10px;') + '<div class="row-list">' + months + '</div></div>' +
     '</div>' +
   '</div>';
 }
 
-// A progress-bar comparison ("collected so far out of total collection")
-// reads at a glance; the plain label/value rows this replaced didn't.
-function progressCard(label, value, total, barColor) {
-  var pct = total > 0 ? Math.min(100, Math.round((value / total) * 100)) : 0;
-  return '<div class="card" style="flex:1 1 0; min-width:0; display:flex;flex-direction:column;gap:8px;">' +
-    '<div style="display:flex;justify-content:space-between;align-items:baseline;">' +
-      '<div style="font-size:11.5px;color:var(--color-text-muted);font-weight:500;">' + label + '</div>' +
-      '<div style="font-size:11px;color:var(--color-text-muted);font-weight:600;">' + pct + '%</div>' +
-    '</div>' +
-    '<div class="mono" style="font-size:17px;font-weight:700;">' + fmt(value) + '</div>' +
-    '<div style="font-size:11px;color:var(--color-text-muted);font-weight:500;">of ' + fmt(total) + '</div>' +
-    '<div class="progress-track"><div class="progress-fill" style="width:' + pct + '%; background:' + barColor + ';"></div></div>' +
+// One dense card replaces what used to be three separate stat-row/card
+// blocks (each with its own border+padding+shadow) — a single-line
+// label+value per cell, divider rules instead of per-cell chrome, and an
+// inline 3px progress sliver only where a fraction is the point (collected
+// / paid out) instead of a full-height progress card.
+function statCell(labelHtml, valueHtml, opts) {
+  opts = opts || {};
+  return '<div style="flex:1 1 0; min-width:0; padding:10px 12px;' + (opts.border ? 'border-left:1px solid var(--color-border);' : '') + (opts.style || '') + '"' + (opts.attrs || '') + '>' +
+    '<div style="font-size:10.5px;color:var(--color-text-muted);font-weight:500;display:flex;align-items:center;gap:4px;">' + labelHtml + '</div>' +
+    '<div style="font-family:var(--font-display);font-size:14px;font-weight:700;margin-top:2px;display:flex;align-items:center;justify-content:space-between;gap:6px;">' + valueHtml + '</div>' +
+    (opts.below || '') +
   '</div>';
+}
+
+function statRow(cells, borderTop) {
+  return '<div style="display:flex;' + (borderTop ? 'border-top:1px solid var(--color-border);' : '') + '">' + cells + '</div>';
+}
+
+function progressSliver(pct, barColor) {
+  return '<div class="progress-track" style="height:3px;margin-top:5px;"><div class="progress-fill" style="width:' + pct + '%; background:' + barColor + ';"></div></div>';
 }
 
 export function renderGroupDetail() {
@@ -114,15 +126,25 @@ export function renderGroupDetail() {
     }
   }
 
-  var financeCard = '<div style="display:flex;flex-direction:column;gap:10px;">' +
-    '<div style="display:flex;gap:10px;">' +
-      progressCard('Collected so far', collectedSoFar, totalCollection, 'var(--color-success)') +
-      progressCard('Payouts so far', payoutSoFar, totalPayout, 'var(--color-accent)') +
-    '</div>' +
-    '<div class="stat-row">' +
-      '<div class="stat"><div class="label">' + adminDot('A') + adminName('A') + ' holds</div><div class="value" style="' + (holdA < 0 ? 'color:var(--color-danger);' : '') + '">' + signed(holdA) + '</div></div>' +
-      '<div class="stat"><div class="label">' + adminDot('B') + adminName('B') + ' holds</div><div class="value" style="' + (holdB < 0 ? 'color:var(--color-danger);' : '') + '">' + signed(holdB) + '</div></div>' +
-    '</div>' +
+  var collectedPct = totalCollection > 0 ? Math.min(100, Math.round((collectedSoFar / totalCollection) * 100)) : 0;
+  var payoutPct = totalPayout > 0 ? Math.min(100, Math.round((payoutSoFar / totalPayout) * 100)) : 0;
+  var pctTag = function (pct) { return '<span style="font-size:10.5px;color:var(--color-text-muted);font-weight:600;flex-shrink:0;">' + pct + '%</span>'; };
+
+  var statsCard = '<div class="card" style="padding:0;">' +
+    statRow(
+      statCell(iconWallet() + 'Monthly deposit', '<span>' + fmt(group.monthlyDeposit) + '</span>') +
+      statCell(iconPeopleSmall() + 'Members', '<span>' + members.length + '</span>' + iconChevronRight(), { border: true, style: 'cursor:pointer;', attrs: ' data-action="open-group-members" data-gid="' + gid + '"' })
+    ) +
+    statRow(
+      statCell('Collected so far', '<span>' + fmt(collectedSoFar) + '</span>' + pctTag(collectedPct), { below: progressSliver(collectedPct, 'var(--color-success)') }) +
+      statCell('Payouts so far', '<span>' + fmt(payoutSoFar) + '</span>' + pctTag(payoutPct), { border: true, below: progressSliver(payoutPct, 'var(--color-accent)') }),
+      true
+    ) +
+    statRow(
+      statCell(adminDot('A') + adminName('A') + ' holds', '<span style="' + (holdA < 0 ? 'color:var(--color-danger);' : '') + '">' + signed(holdA) + '</span>') +
+      statCell(adminDot('B') + adminName('B') + ' holds', '<span style="' + (holdB < 0 ? 'color:var(--color-danger);' : '') + '">' + signed(holdB) + '</span>', { border: true }),
+      true
+    ) +
   '</div>';
 
   var html = '' +
@@ -133,14 +155,7 @@ export function renderGroupDetail() {
         '<div class="subtitle">Month ' + group.currentMonth + ' of ' + group.durationMonths + ' · started ' + monthLabel(group.startYear, group.startMonthIndex, 1) + '</div></div>' +
       '</div>' +
       '<div class="content">' +
-        '<div class="stat-row">' +
-          '<div class="stat"><div class="label">' + iconWallet() + 'Monthly deposit</div><div class="value">' + fmt(group.monthlyDeposit) + '</div></div>' +
-          '<div class="stat" data-action="open-group-members" data-gid="' + gid + '" style="cursor:pointer; display:flex; align-items:center; justify-content:space-between; gap:6px;">' +
-            '<div><div class="label">' + iconPeopleSmall() + 'Members</div><div class="value">' + members.length + '</div></div>' +
-            iconChevronRight() +
-          '</div>' +
-        '</div>' +
-        financeCard +
+        statsCard +
         '<div><div class="section-label">' + iconCalendar() + 'Months</div><div class="row-list">' + rows.join('') + '</div></div>' +
       '</div>' +
     '</div>';
