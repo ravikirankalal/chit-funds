@@ -1,6 +1,9 @@
 import { state, membersById } from '../store.js';
-import { escapeHtml, initialsOf, colorFor, monthLabel } from '../helpers.js';
+import { fmt, escapeHtml, initialsOf, colorFor, monthLabel } from '../helpers.js';
 import { iconChevronLeft } from '../icons.js';
+
+function totalPayout(g) { return g.payoutSchedule.reduce(function (a, b) { return a + b; }, 0); }
+function totalCollection(g) { return g.monthlyDeposit * g.durationMonths; }
 
 export function renderCreateGroup() {
   var g = state.ui.newGroup;
@@ -26,6 +29,10 @@ function renderStep1(g) {
         '<div class="field-row">' +
           '<div class="field"><label>Duration (months)</label><input data-field="durationMonths" type="text" inputmode="numeric" value="' + g.durationMonths + '" /></div>' +
           '<div class="field"><label>Monthly deposit (₹)</label><input data-field="monthlyDeposit" type="text" inputmode="numeric" value="' + g.monthlyDeposit + '" /></div>' +
+        '</div>' +
+        '<div class="card" style="display:flex;flex-direction:column;gap:8px;">' +
+          '<div style="display:flex;justify-content:space-between;"><div style="font-size:12px;color:var(--text-muted);">Total collection per member (' + fmt(g.monthlyDeposit) + ' × ' + g.durationMonths + ' months)</div><div style="font-size:13px;font-weight:700;">' + fmt(totalCollection(g)) + '</div></div>' +
+          '<div style="display:flex;justify-content:space-between;"><div style="font-size:12px;color:var(--text-muted);">Total payout</div><div style="font-size:13px;font-weight:700;">' + fmt(totalPayout(g)) + '</div></div>' +
         '</div>' +
         '<div style="height:1px;background:var(--border);"></div>' +
         '<div>' +
