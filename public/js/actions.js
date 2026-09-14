@@ -303,7 +303,7 @@ export async function confirmTransfer() {
 export function openWinnerPicker() {
   if (isSuper()) return;
   var group = groupsById.get(state.activeGroupId);
-  if (state.viewMonth !== group.currentMonth) return;
+  if (state.viewMonth > group.currentMonth) return; // any current-or-past month is fair game, just not a not-yet-open one
   state.ui.showWinnerPicker = true; render();
   pushNav();
 }
@@ -318,7 +318,6 @@ export async function addWinner(memberId) {
   var gid = state.activeGroupId, m = state.viewMonth;
   var group = groupsById.get(gid);
   var monthDoc = monthsCache.get(monthKey(gid, m));
-  if (monthDoc && monthDoc.status === 'closed') return; // e.g. a stale picker popped back open via browser back after close
   var scheduled = (group.payoutSchedule && group.payoutSchedule[m - 1]) || 0;
   var current = getMonthWinners(monthDoc, scheduled);
   if (current.some(function (w) { return w.memberId === memberId; })) { state.ui.showWinnerPicker = false; render(); return; }
