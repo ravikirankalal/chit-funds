@@ -6,16 +6,28 @@ import {
   iconChevronLeft, iconChevronRight, iconCheck, iconClose,
   iconTrophy, iconWallet, iconWarningTriangle, iconClock, iconCash, iconCard, iconTransfer, iconCalendar
 } from '../icons.js';
-import { bar, skeletonTopbar, skeletonListRow } from '../skeleton.js';
+import { bar, skeletonListRow } from '../skeleton.js';
 
 function signed(n) { return (n < 0 ? '−' : '') + fmt(Math.abs(n)); }
 
+// Matches the real layout's rhythm — topbar with a status-pill chip, a tall
+// summary card (renderOpenSummary/renderClosedSummary), a "Member payments"
+// section label + list, then another card (winner/payout) — rather than the
+// shared skeletonTopbar() + one plain block this used to reuse, which was
+// noticeably shorter and flatter than what actually loads in.
 function renderMonthDetailSkeleton() {
   var rows = [0, 1, 2].map(function () { return skeletonListRow(); }).join('');
-  return '<div class="screen">' + skeletonTopbar() +
+  return '<div class="screen">' +
+    '<div class="topbar">' +
+      '<div class="back" data-action="nav-back">' + iconChevronLeft() + '</div>' +
+      '<div style="flex:1 1 auto;display:flex;flex-direction:column;gap:6px;">' + bar('150px', '15px') + bar('180px', '11px', 'margin-top:1px;') + '</div>' +
+      bar('60px', '22px', 'border-radius:8px;flex-shrink:0;') +
+    '</div>' +
     '<div class="content">' +
-      bar('100%', '110px', 'border-radius:14px;') +
+      bar('100%', '140px', 'border-radius:14px;') +
+      bar('140px', '13px', 'margin:4px 0 -2px;') +
       '<div class="row-list">' + rows + '</div>' +
+      bar('100%', '90px', 'border-radius:14px;') +
     '</div>' +
   '</div>';
 }
