@@ -2,7 +2,7 @@ import { ADMINS } from '../../firebase-config.js';
 import { state, groupsById, membersByGroup } from '../store.js';
 import { fmt, escapeHtml, adminName, adminAvatarColor, adminDot, initialsOf, isSuper, monthLabel } from '../helpers.js';
 import { monthFinances } from '../finance.js';
-import { iconChevronRight, iconPlus, iconWarningTriangle, iconWallet, iconGroupStack, iconPeopleSmall, iconCalendar } from '../icons.js';
+import { iconChevronRight, iconPlus, iconWarningTriangle, iconWallet, iconGroupStack, iconPeopleSmall, iconCalendar, iconTrophy } from '../icons.js';
 import { renderBottomNav } from './bottomNav.js';
 import { bar } from '../skeleton.js';
 
@@ -50,16 +50,26 @@ export function renderDashboard() {
 
   var groupCards = groups.map(function (g) {
     var pct = Math.round((g.currentMonth / g.durationMonths) * 100);
-    var memberCount = (membersByGroup.get(g.id) || []).length;
+    var members = membersByGroup.get(g.id) || [];
+    var memberCount = members.length;
     var isCompleted = g.status === 'completed';
     // "3/5 paid" for the current month replaces the old static "In
     // progress" label — a completed group's last month is always fully
     // closed, so there's nothing collection-wise left to flag for those.
-    var f = isCompleted ? null : monthFinances(g.id, g, g.currentMonth);
-    var allPaid = f && memberCount > 0 && f.paidCount === memberCount;
+    var f = monthFinances(g.id, g, g.currentMonth);
+    var allPaid = memberCount > 0 && f.paidCount === memberCount;
     var statusBadge = isCompleted
       ? '<span style="font-size:12px;color:var(--color-primary);font-weight:600;">Completed</span>'
       : '<span style="display:flex;align-items:center;gap:4px;font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;background:' + (allPaid ? 'var(--color-success-soft)' : 'var(--color-warning-soft)') + ';color:' + (allPaid ? 'var(--color-success)' : 'var(--color-warning)') + ';">' + f.paidCount + '/' + memberCount + ' paid</span>';
+    // Winner names resolved here rather than stored — a month doc only
+    // ever holds memberIds (see getMonthWinners in finance.js).
+    var winnerNames = f.winners.map(function (w) {
+      var mm = members.find(function (x) { return x.id === w.memberId; });
+      return mm ? mm.name : '—';
+    });
+    var payoutLine = winnerNames.length
+      ? '<span style="display:flex;align-items:center;gap:4px;">' + iconTrophy('var(--color-text-faint)') + (winnerNames.length > 1 ? 'Winners: ' : 'Winner: ') + escapeHtml(winnerNames.join(', ')) + '</span>'
+      : '<span style="display:flex;align-items:center;gap:4px;">' + iconTrophy('var(--color-text-faint)') + 'Scheduled payout</span>';
     return '<div class="card" data-action="open-group" data-gid="' + g.id + '" style="display:flex;flex-direction:column;gap:10px;">' +
       '<div style="display:flex;justify-content:space-between;align-items:flex-start;">' +
         '<div><div style="font-size:15px;font-weight:600;">' + escapeHtml(g.name) + '</div>' +
@@ -67,13 +77,16 @@ export function renderDashboard() {
           '<span style="display:flex;align-items:center;gap:4px;">' + iconPeopleSmall('var(--color-text-faint)') + memberCount + '</span>' +
           '<span style="display:flex;align-items:center;gap:4px;">' + iconWallet('var(--color-text-faint)') + fmt(g.monthlyDeposit) + ' / month</span>' +
         '</div></div>' +
-        iconChevronRight() +
+        '<div style="text-align:right;flex-shrink:0;">' + iconChevronRight() +
+        '<div class="mono" style="font-size:13px;font-weight:700;color:var(--color-accent);margin-top:2px;">' + fmt(f.payoutAmount) + '</div></div>' +
       '</div>' +
       '<div><div class="progress-track"><div class="progress-fill" style="width:' + pct + '%;"></div></div>' +
       '<div style="display:flex;justify-content:space-between;margin-top:6px;">' +
         '<div style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--color-text-muted);">' + iconCalendar() + 'Month ' + g.currentMonth + ' of ' + g.durationMonths + '</div>' +
         statusBadge +
-      '</div></div>' +
+      '</div>' +
+      '<div style="font-size:11.5px;color:var(--color-text-muted);">' + payoutLine + '</div>' +
+      '</div>' +
     '</div>';
   }).join('') || '<div class="card" style="color:var(--color-text-muted); font-size:13px; text-align:center;">No groups yet — tap + to create one.</div>';
 
