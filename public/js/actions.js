@@ -22,7 +22,7 @@ export function startCreateGroup() {
   var durationMonths = 24, payoutStart = 75000;
   state.ui.newGroup = {
     step: 1,
-    name: '', durationMonths: durationMonths, monthlyDeposit: 5000,
+    name: '', durationMonths: durationMonths, totalMembers: durationMonths, monthlyDeposit: 5000,
     payoutStart: payoutStart,
     payoutSchedule: flatPayoutSchedule(payoutStart, durationMonths),
     members: [], draftMemberName: ''
