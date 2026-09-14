@@ -14,7 +14,7 @@ import { flatPayoutSchedule } from './helpers.js';
 import {
   startCreateGroup, createGroupStep2, addDraftMember, addExistingDraftMember, removeDraftMember, submitCreateGroup,
   openGroupDetail, openGroupMembers, openMemberPayments, removeMemberFromGroup, openMonth, openPaymentModal, closePaymentModal, setModalMode,
-  savePaymentModal, markUnpaidFromModal, togglePaymentSection, openWinnerPicker, closeWinnerPicker, selectWinner,
+  savePaymentModal, markUnpaidFromModal, togglePaymentSection, openWinnerPicker, closeWinnerPicker, addWinner, removeWinner, setWinnerAmount,
   closeMonthAction, requestTransferToB, requestTransferToA,
   acceptTransferRequest, declineTransferRequest, cancelTransferRequest,
   openMemberForm, closeMemberForm, saveMemberForm,
@@ -84,7 +84,8 @@ document.addEventListener('click', function (e) {
     case 'toggle-payment-section': togglePaymentSection(el.getAttribute('data-key')); break;
     case 'open-winner-picker': openWinnerPicker(); break;
     case 'close-winner-picker': closeWinnerPicker(); break;
-    case 'select-winner': selectWinner(el.getAttribute('data-mid')); break;
+    case 'add-winner': addWinner(el.getAttribute('data-mid')); break;
+    case 'remove-winner': removeWinner(el.getAttribute('data-mid')); break;
     case 'close-month': closeMonthAction(); break;
     case 'request-transfer-b': requestTransferToB(); break;
     case 'request-transfer-a': requestTransferToA(); break;
@@ -144,4 +145,13 @@ document.addEventListener('input', function (e) {
   }
   else if (field === 'draftMemberName') g.draftMemberName = e.target.value;
   render(); // render() itself preserves focus/caret on the field being typed in
+});
+
+// A winner's payout amount is already-persisted Firestore data, not local
+// draft state — commit on 'change' (blur/Enter) rather than on every
+// keystroke like the draft fields above, so it doesn't write on each digit.
+document.addEventListener('change', function (e) {
+  var mid = e.target.getAttribute && e.target.getAttribute('data-winner-amount');
+  if (!mid) return;
+  setWinnerAmount(mid, parseFloat(e.target.value) || 0);
 });

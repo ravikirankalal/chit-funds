@@ -11,7 +11,7 @@ import {
 import { db } from './firebase.js';
 import { state, groupsById, membersById, monthsCache, paymentsCache, transferReqCache, monthKey } from './store.js';
 import { isSuper, monthLabel, flatPayoutSchedule, otherAdmin } from './helpers.js';
-import { monthFinances, memberHasPaidInGroup } from './finance.js';
+import { monthFinances, memberHasPaidInGroup, getMonthWinners } from './finance.js';
 import { goTo, pushNav } from './router.js';
 import { render } from './render.js';
 
@@ -93,7 +93,7 @@ export async function submitCreateGroup() {
       createdAt: serverTimestamp()
     });
     batch.set(doc(db, 'groups', groupRef.id, 'months', '1'), {
-      status: 'open', winnerId: null, payoutAdmin: null, transferNet: 0, closedAt: null, closedLabel: null
+      status: 'open', winners: [], payoutAdmin: null, transferNet: 0, closedAt: null, closedLabel: null
     });
     await batch.commit();
     state.ui.newGroup = null;
@@ -309,22 +309,64 @@ export function openWinnerPicker() {
 }
 export function closeWinnerPicker() { history.back(); }
 
-export async function selectWinner(memberId) {
+// Almost every month has exactly one winner, but admins occasionally pay
+// out to more than one member within the same month (most often when
+// group.durationMonths < members.length) — so winners are a list, appended
+// to rather than replaced. See getMonthWinners in finance.js.
+export async function addWinner(memberId) {
   if (isSuper()) return;
   var gid = state.activeGroupId, m = state.viewMonth;
+  var group = groupsById.get(gid);
+  var monthDoc = monthsCache.get(monthKey(gid, m));
+  if (monthDoc && monthDoc.status === 'closed') return; // e.g. a stale picker popped back open via browser back after close
+  var scheduled = (group.payoutSchedule && group.payoutSchedule[m - 1]) || 0;
+  var current = getMonthWinners(monthDoc, scheduled);
+  if (current.some(function (w) { return w.memberId === memberId; })) { state.ui.showWinnerPicker = false; render(); return; }
   setBusy(true);
   try {
-    await updateDoc(doc(db, 'groups', gid, 'months', String(m)), { winnerId: memberId });
+    await updateDoc(doc(db, 'groups', gid, 'months', String(m)), { winners: current.concat([{ memberId: memberId, payoutAmount: scheduled }]) });
     state.ui.showWinnerPicker = false;
-  } catch (err) { alert('Could not set winner: ' + err.message); }
+  } catch (err) { alert('Could not add winner: ' + err.message); }
   finally { setBusy(false); }
+}
+
+export async function removeWinner(memberId) {
+  if (isSuper()) return;
+  var gid = state.activeGroupId, m = state.viewMonth;
+  var group = groupsById.get(gid);
+  var monthDoc = monthsCache.get(monthKey(gid, m));
+  if (monthDoc && monthDoc.status === 'closed') return;
+  var scheduled = (group.payoutSchedule && group.payoutSchedule[m - 1]) || 0;
+  var current = getMonthWinners(monthDoc, scheduled);
+  var updated = current.filter(function (w) { return w.memberId !== memberId; });
+  if (updated.length === current.length) return;
+  setBusy(true);
+  updateDoc(doc(db, 'groups', gid, 'months', String(m)), { winners: updated })
+    .catch(function (err) { alert('Could not remove winner: ' + err.message); })
+    .finally(function () { setBusy(false); });
+}
+
+export function setWinnerAmount(memberId, amount) {
+  if (isSuper()) return;
+  var gid = state.activeGroupId, m = state.viewMonth;
+  var group = groupsById.get(gid);
+  var monthDoc = monthsCache.get(monthKey(gid, m));
+  var scheduled = (group.payoutSchedule && group.payoutSchedule[m - 1]) || 0;
+  var current = getMonthWinners(monthDoc, scheduled);
+  var updated = current.map(function (w) { return w.memberId === memberId ? { memberId: memberId, payoutAmount: amount } : w; });
+  setBusy(true);
+  updateDoc(doc(db, 'groups', gid, 'months', String(m)), { winners: updated })
+    .catch(function (err) { alert('Could not update payout amount: ' + err.message); })
+    .finally(function () { setBusy(false); });
 }
 
 export async function closeMonthAction() {
   if (isSuper()) return;
   var gid = state.activeGroupId, m = state.viewMonth;
+  var group = groupsById.get(gid);
   var monthDoc = monthsCache.get(monthKey(gid, m));
-  if (!monthDoc || !monthDoc.winnerId) return;
+  var scheduled = (group.payoutSchedule && group.payoutSchedule[m - 1]) || 0;
+  if (!monthDoc || !getMonthWinners(monthDoc, scheduled).length) return;
   if (transferReqCache.get(monthKey(gid, m))) {
     alert('There is a pending transfer request for this month — accept, decline, or cancel it before closing.');
     return;
@@ -349,7 +391,7 @@ export async function closeMonthAction() {
       });
       if (hasNext) {
         if (!nextSnap.exists()) {
-          tx.set(nextRef, { status: 'open', winnerId: null, payoutAdmin: null, transferNet: 0, closedAt: null, closedLabel: null });
+          tx.set(nextRef, { status: 'open', winners: [], payoutAdmin: null, transferNet: 0, closedAt: null, closedLabel: null });
         }
         tx.update(groupRef, { currentMonth: nextMonth });
       } else {

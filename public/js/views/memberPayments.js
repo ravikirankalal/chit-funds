@@ -15,7 +15,7 @@ export function renderMemberPayments() {
   for (var m = 1; m <= group.currentMonth; m++) {
     var p = (paymentsCache.get(monthKey(gid, m)) || {})[mid];
     var f = monthFinances(gid, group, m);
-    var isWinner = f.closed && f.monthDoc.winnerId === mid;
+    var winEntry = f.closed && f.winners.find(function (w) { return w.memberId === mid; });
     var subtitle, statusBg, statusColor, statusLabel;
     if (p && p.paid) {
       totalPaid += group.monthlyDeposit;
@@ -25,7 +25,7 @@ export function renderMemberPayments() {
       subtitle = '<span style="color:var(--danger);">Not paid</span>';
       statusBg = '#fbe9e7'; statusColor = 'var(--danger)'; statusLabel = 'Unpaid';
     }
-    if (isWinner) subtitle += ' · <span style="font-weight:600;color:var(--accent);">Won ' + fmt(f.payoutAmount) + '</span>';
+    if (winEntry) subtitle += ' · <span style="font-weight:600;color:var(--accent);">Won ' + fmt(winEntry.payoutAmount) + '</span>';
 
     rows.push('<div class="list-row" data-action="open-month" data-gid="' + gid + '" data-m="' + m + '">' +
       '<div class="avatar sm" style="background:var(--bg); color:var(--text-muted);">' + m + '</div>' +

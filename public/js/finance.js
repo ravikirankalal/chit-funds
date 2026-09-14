@@ -12,6 +12,20 @@ import {
 } from './store.js';
 import { fmt, adminName, monthLabel } from './helpers.js';
 
+// Almost every month has exactly one winner, but admins sometimes pay out
+// more than one member within the same calendar month (most often when
+// group.durationMonths < members.length, leaving too few months for a
+// dedicated slot per member) — so a month's winners are a list. Older,
+// already-closed months only ever wrote the single winnerId field; this
+// reconstructs the equivalent one-entry list for them so every read site
+// can treat winners as a list without a data migration.
+export function getMonthWinners(monthDoc, defaultAmount) {
+  if (!monthDoc) return [];
+  if (monthDoc.winners) return monthDoc.winners;
+  if (monthDoc.winnerId) return [{ memberId: monthDoc.winnerId, payoutAmount: defaultAmount }];
+  return [];
+}
+
 // Derives, for one month, who holds what: raw collections split by
 // collector, the net amount ever moved between admins for that month, and
 // (once closed) the payout deduction — the single source of truth
@@ -30,7 +44,11 @@ export function monthFinances(gid, group, monthNum) {
   });
   var net = (monthDoc && monthDoc.transferNet) || 0;
   var adjA = rawA - net, adjB = rawB + net;
-  var payoutAmount = (group.payoutSchedule && group.payoutSchedule[monthNum - 1]) || 0;
+  var scheduledPayout = (group.payoutSchedule && group.payoutSchedule[monthNum - 1]) || 0;
+  var winners = getMonthWinners(monthDoc, scheduledPayout);
+  var payoutAmount = winners.length
+    ? winners.reduce(function (sum, w) { return sum + (w.payoutAmount || 0); }, 0)
+    : scheduledPayout;
   var finalA = adjA, finalB = adjB;
   var closed = !!monthDoc && monthDoc.status === 'closed';
   if (closed) {
@@ -39,7 +57,7 @@ export function monthFinances(gid, group, monthNum) {
   return {
     monthDoc: monthDoc, paidCount: paidCount, totalCollected: paidCount * group.monthlyDeposit,
     rawA: rawA, rawB: rawB, net: net, adjA: adjA, adjB: adjB,
-    payoutAmount: payoutAmount, closed: closed, finalA: finalA, finalB: finalB
+    winners: winners, payoutAmount: payoutAmount, closed: closed, finalA: finalA, finalB: finalB
   };
 }
 
@@ -71,11 +89,15 @@ export function recompute() {
       var mLabel = monthLabel(group.startYear, group.startMonthIndex, m);
 
       if (f.closed) {
-        var winner = (membersByGroup.get(gid) || []).find(function (mm) { return mm.id === f.monthDoc.winnerId; });
+        var groupMembers = membersByGroup.get(gid) || [];
+        var winnerNames = f.winners.map(function (w) {
+          var mm = groupMembers.find(function (x) { return x.id === w.memberId; });
+          return mm ? mm.name : '—';
+        }).join(', ') || '—';
         ledger.push({
           group: group.name, type: 'payout',
           title: 'Payout — ' + group.name + ' ' + mLabel,
-          subtitle: 'Paid to ' + (winner ? winner.name : '—') + ' by ' + adminName(f.monthDoc.payoutAdmin) + ' · ' + (f.monthDoc.closedLabel || ''),
+          subtitle: 'Paid to ' + winnerNames + ' by ' + adminName(f.monthDoc.payoutAdmin) + ' · ' + (f.monthDoc.closedLabel || ''),
           amountFormatted: '−' + fmt(f.payoutAmount), amountColor: '#1c1b19'
         });
         ledger.push({
