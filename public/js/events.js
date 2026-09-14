@@ -13,7 +13,7 @@ import { signInGoogle, doLogout } from './auth.js';
 import { flatPayoutSchedule } from './helpers.js';
 import {
   startCreateGroup, createGroupStep2, addDraftMember, addExistingDraftMember, removeDraftMember, submitCreateGroup,
-  openGroupDetail, openGroupMembers, openPaymentSchedule, openMemberPayments, removeMemberFromGroup, openMonth, openPaymentModal, closePaymentModal, setModalMode,
+  openGroupDetail, openGroupMembers, openMemberPayments, removeMemberFromGroup, openMonth, openPaymentModal, closePaymentModal, setModalMode,
   savePaymentModal, markUnpaidFromModal, togglePaymentSection, openWinnerPicker, closeWinnerPicker, selectWinner,
   closeMonthAction, requestTransferToB, requestTransferToA,
   acceptTransferRequest, declineTransferRequest, cancelTransferRequest,
@@ -70,7 +70,6 @@ document.addEventListener('click', function (e) {
     case 'submit-create-group': submitCreateGroup(); break;
     case 'open-group': openGroupDetail(el.getAttribute('data-gid')); break;
     case 'open-group-members': openGroupMembers(el.getAttribute('data-gid')); break;
-    case 'open-payment-schedule': openPaymentSchedule(el.getAttribute('data-gid')); break;
     case 'open-member-payments': openMemberPayments(el.getAttribute('data-gid'), el.getAttribute('data-mid')); break;
     case 'remove-member-from-group': removeMemberFromGroup(el.getAttribute('data-gid'), el.getAttribute('data-mid')); break;
     case 'open-month': openMonth(el.getAttribute('data-gid'), parseInt(el.getAttribute('data-m'), 10)); break;

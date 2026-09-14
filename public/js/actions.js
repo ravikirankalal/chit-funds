@@ -173,8 +173,6 @@ export function openGroupDetail(gid) { goTo('groupDetail', { activeGroupId: gid 
 
 export function openGroupMembers(gid) { goTo('groupMembers', { activeGroupId: gid }); }
 
-export function openPaymentSchedule(gid) { goTo('paymentSchedule', { activeGroupId: gid }); }
-
 export function openMemberPayments(gid, mid) { goTo('memberPayments', { activeGroupId: gid, viewMemberId: mid }); }
 
 export async function removeMemberFromGroup(gid, mid) {
