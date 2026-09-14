@@ -1,5 +1,5 @@
 import { state, groupsById, membersByGroup } from '../store.js';
-import { fmt, escapeHtml, monthLabel } from '../helpers.js';
+import { fmt, escapeHtml, monthLabel, adminName } from '../helpers.js';
 import { monthFinances } from '../finance.js';
 import { iconChevronLeft, iconChevronRight } from '../icons.js';
 
@@ -25,11 +25,12 @@ export function renderGroupDetail() {
   if (!group) return '<div class="content"><div class="card">' + (state.groupsLoaded ? 'Group not found.' : 'Loading…') + '</div></div>';
   var members = membersByGroup.get(gid) || [];
 
-  var collectedSoFar = 0, payoutSoFar = 0;
+  var collectedSoFar = 0, payoutSoFar = 0, holdA = 0, holdB = 0;
   for (var i = 1; i <= group.currentMonth; i++) {
     var mf = monthFinances(gid, group, i);
     collectedSoFar += mf.totalCollected;
     if (mf.closed) payoutSoFar += mf.payoutAmount;
+    holdA += mf.finalA; holdB += mf.finalB;
   }
   var totalCollection = members.length * group.monthlyDeposit * group.durationMonths;
   var totalPayout = (group.payoutSchedule || []).reduce(function (a, b) { return a + b; }, 0);
@@ -74,6 +75,10 @@ export function renderGroupDetail() {
     '<div class="stat-row">' +
       '<div class="stat"><div class="label">Realized profit so far</div><div class="value" style="color:' + (profitSoFar < 0 ? 'var(--danger)' : '#146b52') + ';">' + signed(profitSoFar) + '</div></div>' +
       '<div class="stat"><div class="label">Profit margin at completion</div><div class="value" style="color:' + (profitMargin < 0 ? 'var(--danger)' : '#146b52') + ';">' + signed(profitMargin) + '</div></div>' +
+    '</div>' +
+    '<div class="stat-row">' +
+      '<div class="stat"><div class="label">' + adminName('A') + ' holds</div><div class="value" style="' + (holdA < 0 ? 'color:var(--danger);' : '') + '">' + signed(holdA) + '</div></div>' +
+      '<div class="stat"><div class="label">' + adminName('B') + ' holds</div><div class="value" style="' + (holdB < 0 ? 'color:var(--danger);' : '') + '">' + signed(holdB) + '</div></div>' +
     '</div>' +
   '</div>';
 

@@ -106,6 +106,10 @@ function renderOpenSummary(f, members, group) {
       '<div style="display:flex;justify-content:space-between;margin-bottom:4px;"><div style="font-size:11px;color:var(--text-muted);">' + f.paidCount + ' / ' + members.length + ' paid</div><div style="font-size:11px;color:var(--text-muted);font-weight:600;">' + pct + '%</div></div>' +
       '<div class="progress-track"><div class="progress-fill" style="width:' + pct + '%;"></div></div>' +
     '</div>' +
+    '<div class="stat-row">' +
+      '<div class="stat"><div class="label">' + ADMINS.A.name + ' holds</div><div class="value" style="' + (f.adjA < 0 ? 'color:var(--danger);' : '') + '">' + signed(f.adjA) + '</div></div>' +
+      '<div class="stat"><div class="label">' + ADMINS.B.name + ' holds</div><div class="value" style="' + (f.adjB < 0 ? 'color:var(--danger);' : '') + '">' + signed(f.adjB) + '</div></div>' +
+    '</div>' +
   '</div>';
 }
 
