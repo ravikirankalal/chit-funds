@@ -49,13 +49,14 @@
   --color-accent-strong: #b8465a;
   --color-accent-soft: #fce7ea;
 
-  /* Winner highlight — a warm metallic gold for the "this month's winner"
+  /* Winner highlight — a bright amber gold for the "this month's winner"
      card/row specifically, kept separate from accent (still used for
      payout AMOUNT text elsewhere) because a full pink-tinted card read as
-     more alarming than celebratory. */
-  --color-gold: #96751a;
-  --color-gold-strong: #7a5e14;
-  --color-gold-soft: #fbf2d8;
+     more alarming than celebratory. Saturated to match the modern, punchy
+     feel of --color-primary rather than reading as a muted/dated gold. */
+  --color-gold: #d99a1f;
+  --color-gold-strong: #b17d15;
+  --color-gold-soft: #fcf1d8;
 
   /* Text/icon color to use on top of a solid primary/secondary/accent
      background (all three currently want the same white). */
