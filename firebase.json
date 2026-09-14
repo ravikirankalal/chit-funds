@@ -8,7 +8,7 @@
     "headers": [
       {
         "source": "**/*.@(js|css)",
-        "headers": [{ "key": "Cache-Control", "value": "no-cache" }]
+        "headers": [{ "key": "Cache-Control", "value": "max-age=120, must-revalidate" }]
       }
     ]
   },

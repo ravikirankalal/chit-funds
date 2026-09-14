@@ -11,6 +11,7 @@ export var state = {
   activeGroupId: null,
   viewMonth: null,
   balances: { A: 0, B: 0, total: 0 },
+  groupsLoaded: false, // true once the groups listener has delivered its first snapshot — lets the dashboard tell "no groups yet" apart from "still loading" instead of flashing an empty state
   ledgerEntries: [],
   pendingApprovals: [],   // [{groupId, groupName, month, direction, amount, requestedBy}]
   busy: false,
@@ -41,4 +42,5 @@ export function clearCaches() {
   monthsCache.clear();
   paymentsCache.clear();
   transferReqCache.clear();
+  state.groupsLoaded = false;
 }
