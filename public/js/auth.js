@@ -50,6 +50,6 @@ onAuthStateChanged(auth, function (user) {
   state.currentAdmin = adminId;
   startListeners();
   var snap = getRestorableSnapshot();
-  if (snap) goTo(snap.screen, { activeGroupId: snap.activeGroupId, viewMonth: snap.viewMonth });
+  if (snap) goTo(snap.screen, { activeGroupId: snap.activeGroupId, viewMonth: snap.viewMonth, viewMemberId: snap.viewMemberId });
   else goTo('dashboard');
 });

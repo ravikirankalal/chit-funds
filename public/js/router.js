@@ -21,6 +21,7 @@ function navSnapshot() {
     screen: state.screen,
     activeGroupId: state.activeGroupId,
     viewMonth: state.viewMonth,
+    viewMemberId: state.viewMemberId,
     showWinnerPicker: state.ui.showWinnerPicker,
     paymentModalMemberId: pm ? pm.memberId : null,
     paymentModalMode: pm ? pm.mode : null,
@@ -43,12 +44,12 @@ export function replaceNav() { history.replaceState(navSnapshot(), ''); }
 // Overlays aren't part of this — only the base screen + which group/month,
 // since an overlay draft (a half-typed name, a pending payment edit) isn't
 // preserved and would be misleading to reopen empty.
-var RESTORABLE_SCREENS = { dashboard: 1, members: 1, groupDetail: 1, monthDetail: 1, ledger: 1 };
+var RESTORABLE_SCREENS = { dashboard: 1, members: 1, groupDetail: 1, groupMembers: 1, paymentSchedule: 1, memberPayments: 1, monthDetail: 1, ledger: 1 };
 
 export function getRestorableSnapshot() {
   var snap = history.state;
   if (!snap || !RESTORABLE_SCREENS[snap.screen]) return null;
-  return { screen: snap.screen, activeGroupId: snap.activeGroupId, viewMonth: snap.viewMonth };
+  return { screen: snap.screen, activeGroupId: snap.activeGroupId, viewMonth: snap.viewMonth, viewMemberId: snap.viewMemberId };
 }
 
 window.addEventListener('popstate', function (e) {
@@ -57,6 +58,7 @@ window.addEventListener('popstate', function (e) {
   state.screen = snap.screen;
   state.activeGroupId = snap.activeGroupId;
   state.viewMonth = snap.viewMonth;
+  state.viewMemberId = snap.viewMemberId;
   state.ui.showWinnerPicker = !!snap.showWinnerPicker;
   state.ui.paymentModal = snap.paymentModalMemberId
     ? { memberId: snap.paymentModalMemberId, mode: snap.paymentModalMode, isEditing: !!snap.paymentModalEditing }
