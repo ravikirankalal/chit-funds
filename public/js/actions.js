@@ -10,7 +10,7 @@ import {
 } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
 import { db } from './firebase.js';
 import { state, groupsById, membersById, monthsCache, paymentsCache, transferReqCache, monthKey } from './store.js';
-import { isSuper, monthLabel, generatePayoutSchedule } from './helpers.js';
+import { isSuper, monthLabel, flatPayoutSchedule } from './helpers.js';
 import { monthFinances } from './finance.js';
 import { goTo, pushNav } from './router.js';
 import { render } from './render.js';
@@ -19,12 +19,12 @@ export function setBusy(v) { state.busy = v; render(); }
 
 export function startCreateGroup() {
   if (isSuper()) return;
-  var durationMonths = 24, payoutStart = 75000, payoutEnd = 118000;
+  var durationMonths = 24, payoutStart = 75000;
   state.ui.newGroup = {
     step: 1,
     name: '', durationMonths: durationMonths, monthlyDeposit: 5000,
-    payoutStart: payoutStart, payoutEnd: payoutEnd,
-    payoutSchedule: generatePayoutSchedule(payoutStart, payoutEnd, durationMonths),
+    payoutStart: payoutStart,
+    payoutSchedule: flatPayoutSchedule(payoutStart, durationMonths),
     members: [], draftMemberName: ''
   };
   goTo('createGroup');
