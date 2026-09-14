@@ -2,13 +2,24 @@ import { state, groupsById, membersById, monthKey, paymentsCache } from '../stor
 import { fmt, escapeHtml, monthLabel, adminName, formatDateTime } from '../helpers.js';
 import { monthFinances } from '../finance.js';
 import { iconChevronLeft, iconCheck, iconWallet, iconTrophy, iconCalendar, iconPeopleSmall } from '../icons.js';
+import { bar, skeletonTopbar, skeletonListRow } from '../skeleton.js';
+
+function renderMemberPaymentsSkeleton() {
+  var rows = [0, 1, 2].map(function () { return skeletonListRow(); }).join('');
+  return '<div class="screen">' + skeletonTopbar() +
+    '<div class="content">' +
+      '<div class="stat-row"><div class="stat">' + bar('60%', '10.5px') + bar('40%', '15px', 'margin-top:8px;') + '</div></div>' +
+      '<div class="row-list">' + rows + '</div>' +
+    '</div>' +
+  '</div>';
+}
 
 export function renderMemberPayments() {
   var gid = state.activeGroupId;
   var mid = state.viewMemberId;
   var group = groupsById.get(gid);
   var member = membersById.get(mid);
-  if (!group || !member) return '<div class="content"><div class="card">' + (state.groupsLoaded ? 'Member not found.' : 'Loading…') + '</div></div>';
+  if (!group || !member) return state.groupsLoaded ? '<div class="content"><div class="card">Member not found.</div></div>' : renderMemberPaymentsSkeleton();
 
   var rows = [];
   var totalPaid = 0;

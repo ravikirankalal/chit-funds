@@ -3,14 +3,11 @@ import { state, groupsById, membersByGroup } from '../store.js';
 import { fmt, escapeHtml, adminName, adminAvatarColor, adminDot, initialsOf, isSuper, monthLabel } from '../helpers.js';
 import { iconChevronRight, iconPlus, iconWarningTriangle, iconWallet, iconGroupStack, iconPeopleSmall, iconCalendar } from '../icons.js';
 import { renderBottomNav } from './bottomNav.js';
+import { bar } from '../skeleton.js';
 
 // Mimics the real layout (hero balance card, stat row, group cards) with
 // shimmering placeholder blocks instead of a single centered message —
 // so the page you're waiting for is recognizable while it's still loading.
-function bar(w, h, extra) {
-  return '<div class="skeleton" style="width:' + w + ';height:' + h + ';' + (extra || '') + '"></div>';
-}
-
 function renderLoadingSkeleton() {
   var hero = '<div style="background:var(--color-surface); border-radius:20px; padding:20px; display:flex; flex-direction:column; gap:10px; box-shadow:var(--shadow-sm);">' +
     bar('45%', '11px') + bar('55%', '28px', 'margin-top:2px;') + bar('70%', '11px') +

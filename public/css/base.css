@@ -11,11 +11,6 @@ html, body {
   -webkit-tap-highlight-color: transparent;
 }
 
-.boot {
-  display: flex; align-items: center; justify-content: center;
-  height: 100vh; color: var(--color-text-muted); font-size: 14px;
-}
-
 #app {
   max-width: var(--max-width);
   margin: 0 auto;

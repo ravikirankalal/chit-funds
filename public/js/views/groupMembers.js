@@ -2,11 +2,17 @@ import { state, groupsById, membersById, membersByGroup } from '../store.js';
 import { fmt, escapeHtml, monthLabel, initialsOf, colorFor, isSuper } from '../helpers.js';
 import { monthFinances, memberHasPaidInGroup } from '../finance.js';
 import { iconChevronLeft, iconChevronRight, iconPlus, iconPlusSmall, iconPeople, iconPeopleSmall, iconClose, iconTrophy, iconTrash } from '../icons.js';
+import { skeletonTopbar, skeletonListRow } from '../skeleton.js';
+
+function renderGroupMembersSkeleton() {
+  var rows = [0, 1, 2, 3].map(function () { return skeletonListRow(); }).join('');
+  return '<div class="screen">' + skeletonTopbar() + '<div class="content"><div class="row-list">' + rows + '</div></div></div>';
+}
 
 export function renderGroupMembers() {
   var gid = state.activeGroupId;
   var group = groupsById.get(gid);
-  if (!group) return '<div class="content"><div class="card">' + (state.groupsLoaded ? 'Group not found.' : 'Loading…') + '</div></div>';
+  if (!group) return state.groupsLoaded ? '<div class="content"><div class="card">Group not found.</div></div>' : renderGroupMembersSkeleton();
   var members = membersByGroup.get(gid) || [];
   var readOnly = isSuper();
 
