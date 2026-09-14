@@ -48,6 +48,23 @@ document.addEventListener('pointerdown', function (e) {
   document.addEventListener(evt, clearPressTimer);
 });
 
+// Every sheet (payment modal, member form, winner picker, add-member-to-group)
+// shares the '.overlay' backdrop + '.sheet' pair, and every one of them closes
+// via history.back() (see router.js's popstate handler). e.target === the
+// overlay div itself only when the click landed on the dimmed backdrop, not
+// on the sheet or anything in it — the sheet doesn't cover the full overlay
+// (padding above it, and to the sides above --max-width), so that's the
+// "negative space" a tap should dismiss. Exclude the busy-spinner overlay
+// (render.js's addBusyOverlay reuses the same class) — it has no history
+// entry of its own to pop, and closing it mid-action would just reopen the
+// overlay on the next render anyway.
+document.addEventListener('click', function (e) {
+  if (e.target.classList && e.target.classList.contains('overlay') && !e.target.classList.contains('busy-overlay')) {
+    history.back();
+    return;
+  }
+});
+
 document.addEventListener('click', function (e) {
   if (suppressNextClick) { suppressNextClick = false; return; }
   var el = e.target.closest('[data-action]');
