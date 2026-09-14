@@ -3,11 +3,21 @@ import { fmt, escapeHtml, monthLabel } from '../helpers.js';
 import { monthFinances } from '../finance.js';
 import { iconChevronLeft, iconChevronRight } from '../icons.js';
 
-function row(label, value, valueColor) {
-  return '<div style="display:flex;justify-content:space-between;"><div style="font-size:12px;color:var(--text-muted);">' + label + '</div><div style="font-size:13px;font-weight:700;' + (valueColor ? 'color:' + valueColor + ';' : '') + '">' + value + '</div></div>';
-}
-
 function signed(n) { return (n < 0 ? '−' : '') + fmt(Math.abs(n)); }
+
+// A progress-bar comparison ("collected so far out of total collection")
+// reads at a glance; the plain label/value rows this replaced didn't.
+function progressCard(label, value, total, barColor) {
+  var pct = total > 0 ? Math.min(100, Math.round((value / total) * 100)) : 0;
+  return '<div class="card" style="display:flex;flex-direction:column;gap:8px;">' +
+    '<div style="display:flex;justify-content:space-between;align-items:baseline;">' +
+      '<div style="font-size:12px;color:var(--text-muted);font-weight:500;">' + label + '</div>' +
+      '<div style="font-size:11px;color:var(--text-muted);font-weight:600;">' + pct + '%</div>' +
+    '</div>' +
+    '<div class="mono" style="font-size:20px;font-weight:700;">' + fmt(value) + ' <span style="font-size:12px;color:var(--text-muted);font-weight:500;">of ' + fmt(total) + '</span></div>' +
+    '<div class="progress-track"><div class="progress-fill" style="width:' + pct + '%; background:' + barColor + ';"></div></div>' +
+  '</div>';
+}
 
 export function renderGroupDetail() {
   var gid = state.activeGroupId;
@@ -58,16 +68,13 @@ export function renderGroupDetail() {
     '</div>');
   }
 
-  var financeCard = '<div class="card" style="display:flex;flex-direction:column;gap:10px;">' +
-    row('Total collection', fmt(totalCollection)) +
-    row('Total payout', fmt(totalPayout)) +
-    '<div style="height:1px;background:var(--border);"></div>' +
-    row('Collected so far', fmt(collectedSoFar)) +
-    row('Remaining to collect', fmt(totalCollection - collectedSoFar)) +
-    row('Payouts made so far', fmt(payoutSoFar)) +
-    row('Realized profit so far', signed(profitSoFar), profitSoFar < 0 ? 'var(--danger)' : '#146b52') +
-    '<div style="height:1px;background:var(--border);"></div>' +
-    row('Profit margin at completion', signed(profitMargin), profitMargin < 0 ? 'var(--danger)' : '#146b52') +
+  var financeCard = '<div style="display:flex;flex-direction:column;gap:10px;">' +
+    progressCard('Collected so far', collectedSoFar, totalCollection, 'var(--accent)') +
+    progressCard('Payouts made so far', payoutSoFar, totalPayout, 'var(--warning)') +
+    '<div class="stat-row">' +
+      '<div class="stat"><div class="label">Realized profit so far</div><div class="value" style="color:' + (profitSoFar < 0 ? 'var(--danger)' : '#146b52') + ';">' + signed(profitSoFar) + '</div></div>' +
+      '<div class="stat"><div class="label">Profit margin at completion</div><div class="value" style="color:' + (profitMargin < 0 ? 'var(--danger)' : '#146b52') + ';">' + signed(profitMargin) + '</div></div>' +
+    '</div>' +
   '</div>';
 
   var currentAmount = (group.payoutSchedule && group.payoutSchedule[group.currentMonth - 1]) || 0;
