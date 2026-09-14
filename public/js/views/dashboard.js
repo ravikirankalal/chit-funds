@@ -4,9 +4,31 @@ import { fmt, escapeHtml, adminName, adminAvatarColor, initialsOf, isSuper, mont
 import { iconChevronRight, iconPlus } from '../icons.js';
 import { renderBottomNav } from './bottomNav.js';
 
+function renderLoadingSkeleton() {
+  return '<div class="card" style="display:flex;flex-direction:column;gap:10px;align-items:center;padding:24px;">' +
+    '<div class="spinner"></div>' +
+    '<div style="font-size:12.5px;color:var(--text-muted);">Loading your groups&hellip;</div>' +
+  '</div>';
+}
+
 export function renderDashboard() {
   var groups = Array.from(groupsById.values());
   var approval = !isSuper() && state.pendingApprovals.find(function (a) { return a.requestedBy !== state.currentAdmin; });
+
+  // Until the groups listener delivers its first snapshot, `groups` is
+  // always empty and `state.balances` always zero — show a loading state
+  // instead of flashing "no groups yet" / ₹0 while real data is in flight.
+  if (!state.groupsLoaded) {
+    return '<div class="screen">' +
+      '<div style="padding:20px 20px 4px; display:flex; align-items:center; justify-content:space-between;">' +
+        '<div><div style="font-size:12px;color:var(--text-muted);font-weight:500;">Welcome back, ' + adminName(state.currentAdmin) + '</div>' +
+        '<div class="mono" style="font-size:22px;font-weight:700;">Chit Funds</div></div>' +
+        '<div data-action="logout" class="avatar" style="cursor:pointer; background:' + adminAvatarColor(state.currentAdmin) + ';">' + initialsOf(adminName(state.currentAdmin)) + '</div>' +
+      '</div>' +
+      '<div class="content">' + renderLoadingSkeleton() + '</div>' +
+      renderBottomNav('dashboard') +
+    '</div>';
+  }
 
   var groupCards = groups.map(function (g) {
     var pct = Math.round((g.currentMonth / g.durationMonths) * 100);

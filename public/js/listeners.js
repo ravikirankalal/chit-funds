@@ -5,7 +5,7 @@
 
 import { onSnapshot, collection, collectionGroup } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
 import { db } from './firebase.js';
-import { groupsById, membersById, membersByGroup, monthsCache, paymentsCache, transferReqCache, monthKey, clearCaches } from './store.js';
+import { state, groupsById, membersById, membersByGroup, monthsCache, paymentsCache, transferReqCache, monthKey, clearCaches } from './store.js';
 import { pathParts } from './helpers.js';
 import { recompute } from './finance.js';
 import { render } from './render.js';
@@ -41,6 +41,7 @@ export function startListeners() {
       if (change.type === 'removed') { groupsById.delete(change.doc.id); membersByGroup.delete(change.doc.id); }
       else { groupsById.set(change.doc.id, Object.assign({ id: change.doc.id }, change.doc.data())); }
     });
+    state.groupsLoaded = true;
     rebuildMembersByGroup();
     scheduleRecompute();
   }));
