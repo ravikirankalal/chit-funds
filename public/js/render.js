@@ -37,6 +37,16 @@ export function render() {
     }
   }
 
+  // A re-render while a sheet is already open (e.g. tapping the payment
+  // modal's Cash/Online toggle) still fully replaces root.innerHTML below,
+  // rebuilding the .overlay/.sheet nodes — which would otherwise replay
+  // their CSS entrance animation and read as a flash. Tag them 'no-anim'
+  // whenever a real (non-busy) overlay was already on screen just before
+  // this render. :not(.busy-overlay) excludes the spinner overlay, which
+  // addBusyOverlay() appends after innerHTML runs rather than rendering
+  // from html below, so its presence doesn't reflect a sheet being open.
+  var hadSheet = !!root.querySelector('.overlay:not(.busy-overlay)');
+
   var html;
   switch (state.screen) {
     case 'login': html = renderLogin(); break;
@@ -51,6 +61,11 @@ export function render() {
     default: html = renderBootSkeleton();
   }
   root.innerHTML = html;
+
+  if (hadSheet) {
+    var sheetEls = root.querySelectorAll('.overlay, .sheet');
+    for (var si = 0; si < sheetEls.length; si++) sheetEls[si].classList.add('no-anim');
+  }
 
   if (activeSelector) {
     var again = root.querySelector(activeSelector);

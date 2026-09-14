@@ -17,6 +17,11 @@
 @media (prefers-reduced-motion: reduce) {
   .overlay, .sheet { animation: none; }
 }
+/* render() adds this when a re-render happens while the sheet was already
+   open (e.g. tapping a mode toggle inside it) — the DOM node is rebuilt
+   either way, but replaying the entrance animation on an already-open
+   sheet reads as a flash rather than an appearance. */
+.overlay.no-anim, .sheet.no-anim { animation: none; }
 .sheet-header {
   padding: 16px 20px; border-bottom: 1px solid var(--color-border); display: flex; align-items: center; gap: 10px; flex-shrink: 0;
 }
