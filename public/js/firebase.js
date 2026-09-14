@@ -41,6 +41,12 @@ async function authEmulatorReachable() {
 }
 
 if (isLocalHost && (await authEmulatorReachable())) {
-  connectAuthEmulator(auth, 'http://localhost:9099', { disableWarnings: true });
-  connectFirestoreEmulator(db, 'localhost', 8080);
+  // On a reload, Auth may already be restoring a persisted session by the
+  // time this async probe resolves — connectAuthEmulator throws
+  // auth/emulator-config-failed if called after Auth's first use. That
+  // throw would otherwise propagate out of this module's top-level await
+  // and abort the whole import graph (main.js never gets to run render()),
+  // so it's caught rather than left to crash the app.
+  try { connectAuthEmulator(auth, 'http://localhost:9099', { disableWarnings: true }); } catch (e) {}
+  try { connectFirestoreEmulator(db, 'localhost', 8080); } catch (e) {}
 }
