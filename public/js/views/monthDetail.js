@@ -63,25 +63,33 @@ function timelineRow(dotColor, title, status, statusStyle, amount) {
 }
 
 function renderClosedSummary(f, members) {
-  var winner = members.find(function (mm) { return mm.id === f.monthDoc.winnerId; });
-  var winnerIdx = winner ? members.indexOf(winner) : -1;
   var unpaidCount = members.length - f.paidCount;
+  // Almost always exactly one winner — this loop renders identically to the
+  // old single-card layout in that case. A closed month occasionally has
+  // more than one (see getMonthWinners in finance.js), each with its own
+  // payout amount.
+  var winnerCards = f.winners.map(function (w) {
+    var winner = members.find(function (mm) { return mm.id === w.memberId; });
+    var winnerIdx = winner ? members.indexOf(winner) : -1;
+    return '<div class="card" style="display:flex;align-items:center;gap:12px;background:var(--accent-soft);border-color:var(--accent);">' +
+      (winner ? '<div class="avatar" style="background:' + colorFor(winnerIdx) + ';">' + initialsOf(winner.name) + '</div>' : '') +
+      '<div style="flex:1 1 auto; min-width:0;">' +
+        '<div style="font-size:11px;color:var(--accent);font-weight:600;">' + (f.winners.length > 1 ? 'Winner' : 'This month\'s winner') + '</div>' +
+        '<div style="font-size:16px;font-weight:700;">' + (winner ? escapeHtml(winner.name) : '—') + '</div>' +
+      '</div>' +
+      '<div style="text-align:right; flex-shrink:0;">' +
+        '<div style="font-size:11px;color:var(--text-muted);">Payout</div>' +
+        '<div class="mono" style="font-size:18px;font-weight:700;color:var(--accent);">' + fmt(w.payoutAmount) + '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('') || '<div class="card" style="color:var(--text-muted);font-size:13px;text-align:center;">No winner recorded.</div>';
+
   return '<div style="display:flex;flex-direction:column;gap:10px;">' +
     (unpaidCount > 0
       ? '<div class="banner warn"><div class="banner-title">' + unpaidCount + ' member' + (unpaidCount === 1 ? '' : 's') + ' still unpaid</div>' +
         '<div style="font-size:12.5px;color:var(--text-muted);">This month is closed but dues are outstanding — tap an unpaid member below to record their payment.</div></div>'
       : '') +
-    '<div class="card" style="display:flex;align-items:center;gap:12px;background:var(--accent-soft);border-color:var(--accent);">' +
-      (winner ? '<div class="avatar" style="background:' + colorFor(winnerIdx) + ';">' + initialsOf(winner.name) + '</div>' : '') +
-      '<div style="flex:1 1 auto; min-width:0;">' +
-        '<div style="font-size:11px;color:var(--accent);font-weight:600;">This month\'s winner</div>' +
-        '<div style="font-size:16px;font-weight:700;">' + (winner ? escapeHtml(winner.name) : '—') + '</div>' +
-      '</div>' +
-      '<div style="text-align:right; flex-shrink:0;">' +
-        '<div style="font-size:11px;color:var(--text-muted);">Payout</div>' +
-        '<div class="mono" style="font-size:18px;font-weight:700;color:var(--accent);">' + fmt(f.payoutAmount) + '</div>' +
-      '</div>' +
-    '</div>' +
+    winnerCards +
     '<div class="card" style="display:flex;justify-content:space-between;align-items:center;">' +
       '<div><div style="font-size:12px;color:var(--text-muted);">Collected</div><div class="mono" style="font-size:16px;font-weight:700;color:#146b52;">' + fmt(f.totalCollected) + '</div></div>' +
       '<div style="text-align:right;"><div style="font-size:12px;color:var(--text-muted);">Paid out by</div><div style="font-size:14px;font-weight:700;">' + adminName(f.monthDoc.payoutAdmin) + '</div></div>' +
@@ -105,7 +113,7 @@ function renderOpenSummary(f, members, group) {
   return '<div class="card" style="display:flex;flex-direction:column;gap:10px;">' +
     '<div style="display:flex;justify-content:space-between;align-items:center;">' +
       '<div><div style="font-size:12px;color:var(--text-muted);">Collected</div><div class="mono" style="font-size:16px;font-weight:700;">' + fmt(f.totalCollected) + ' <span style="font-size:12px;color:var(--text-muted);font-weight:400;">/ ' + fmt(expected) + '</span></div></div>' +
-      '<div style="text-align:right;"><div style="font-size:12px;color:var(--text-muted);">Scheduled payout</div><div class="mono" style="font-size:16px;font-weight:700;color:var(--accent);">' + fmt(f.payoutAmount) + '</div></div>' +
+      '<div style="text-align:right;"><div style="font-size:12px;color:var(--text-muted);">' + (f.winners.length ? 'Payout' : 'Scheduled payout') + '</div><div class="mono" style="font-size:16px;font-weight:700;color:var(--accent);">' + fmt(f.payoutAmount) + '</div></div>' +
     '</div>' +
     '<div>' +
       '<div style="display:flex;justify-content:space-between;margin-bottom:4px;"><div style="font-size:11px;color:var(--text-muted);">' + f.paidCount + ' / ' + members.length + ' paid</div><div style="font-size:11px;color:var(--text-muted);font-weight:600;">' + pct + '%</div></div>' +
@@ -188,33 +196,43 @@ function renderPaymentList(gid, viewMonth, members, f, readOnly, group, canTrans
   '</div>';
 }
 
+// Almost always exactly one winner; occasionally an admin adds more than
+// one within the same month (see getMonthWinners in finance.js), each with
+// its own editable payout amount. "Remove" + "Add another winner" covers
+// what used to be a single "Change" link.
 function renderWinnerCard(f, members, readOnly) {
-  var winnerId = f.monthDoc && f.monthDoc.winnerId;
-  var winner = winnerId && members.find(function (mm) { return mm.id === winnerId; });
   var html = '<div class="card" style="display:flex;flex-direction:column;gap:10px;">' +
-    '<div style="font-size:13px;font-weight:600;">This month\'s winner</div>';
-  if (winner) {
-    var widx = members.findIndex(function (mm) { return mm.id === winner.id; });
-    html += '<div class="list-row" style="background:var(--accent-soft); cursor:' + (readOnly ? 'default' : 'pointer') + ';" ' + (readOnly ? '' : 'data-action="open-winner-picker"') + '>' +
-      '<div class="avatar sm" style="background:' + colorFor(widx) + ';">' + initialsOf(winner.name) + '</div>' +
-      '<div style="flex:1 1 auto;font-size:13px;font-weight:600;color:var(--accent);">' + escapeHtml(winner.name) + '</div>' +
-      (readOnly ? '' : '<div style="font-size:12px;color:var(--accent);font-weight:600;">Change</div>') + '</div>';
+    '<div style="font-size:13px;font-weight:600;">' + (f.winners.length > 1 ? 'This month\'s winners' : 'This month\'s winner') + '</div>';
+  if (f.winners.length) {
+    html += f.winners.map(function (w) {
+      var winner = members.find(function (mm) { return mm.id === w.memberId; });
+      var widx = winner ? members.indexOf(winner) : -1;
+      return '<div class="list-row" style="background:var(--accent-soft);">' +
+        '<div class="avatar sm" style="background:' + colorFor(widx) + ';">' + (winner ? initialsOf(winner.name) : '?') + '</div>' +
+        '<div style="flex:1 1 auto;font-size:13px;font-weight:600;color:var(--accent);min-width:0;">' + (winner ? escapeHtml(winner.name) : '—') + '</div>' +
+        (readOnly
+          ? '<div class="mono" style="font-size:13px;font-weight:700;color:var(--accent);">' + fmt(w.payoutAmount) + '</div>'
+          : '<input data-winner-amount="' + w.memberId + '" type="text" inputmode="numeric" value="' + w.payoutAmount + '" style="width:100px;text-align:right;font-size:13px;font-weight:600;padding:6px 8px;border-radius:8px;border:1px solid var(--border);" />' +
+            '<div data-action="remove-winner" data-mid="' + w.memberId + '" style="cursor:pointer;color:var(--danger);font-size:12px;font-weight:600;margin-left:10px;">Remove</div>') +
+      '</div>';
+    }).join('');
   } else if (readOnly) {
     html += '<div style="font-size:12.5px;color:var(--text-muted);">No winner selected yet.</div>';
-  } else {
-    html += '<button class="btn btn-primary" style="width:100%;" data-action="open-winner-picker">Select Winner</button>';
+  }
+  if (!readOnly) {
+    html += '<button class="btn btn-primary" style="width:100%;" data-action="open-winner-picker">' + (f.winners.length ? 'Add another winner' : 'Select Winner') + '</button>';
   }
   html += '</div>';
   return html;
 }
 
 function renderPayoutCard(f) {
-  var winnerId = f.monthDoc && f.monthDoc.winnerId;
   var req = transferReqCache.get(monthKey(state.activeGroupId, state.viewMonth));
+  var canClose = f.winners.length && !req;
   return '<div class="card" style="display:flex;flex-direction:column;gap:12px;">' +
     '<div style="font-size:13px;font-weight:600;">Record payout</div>' +
     (req ? '<div style="font-size:11px;color:var(--warning);">Resolve the pending transfer request above before closing this month.</div>' : '') +
-    '<button class="btn btn-primary ' + (winnerId && !req ? '' : 'disabled') + '" style="width:100%; background:' + (winnerId && !req ? 'var(--accent)' : '#c7c2b8') + ';" data-action="close-month">Close Month &amp; Pay ' + fmt(f.payoutAmount) + '</button>' +
+    '<button class="btn btn-primary ' + (canClose ? '' : 'disabled') + '" style="width:100%; background:' + (canClose ? 'var(--accent)' : '#c7c2b8') + ';" data-action="close-month">Close Month &amp; Pay ' + fmt(f.payoutAmount) + '</button>' +
   '</div>';
 }
 
@@ -222,16 +240,15 @@ function renderWinnerPickerOverlay(gid, group, f, members) {
   var wonIds = {};
   for (var m2 = 1; m2 <= group.durationMonths; m2++) {
     var mf = monthFinances(gid, group, m2);
-    if (mf.closed && mf.monthDoc.winnerId) wonIds[mf.monthDoc.winnerId] = true;
+    if (mf.closed) mf.winners.forEach(function (w) { wonIds[w.memberId] = true; });
   }
+  f.winners.forEach(function (w) { wonIds[w.memberId] = true; }); // already added to this (still-open) month
   var eligible = members.filter(function (mm) { return !wonIds[mm.id]; });
   var winnerRows = eligible.map(function (mm) {
     var idx = members.indexOf(mm);
-    var selected = f.monthDoc && f.monthDoc.winnerId === mm.id;
-    return '<div class="list-row" data-action="select-winner" data-mid="' + mm.id + '" style="background:' + (selected ? 'var(--accent-soft)' : '#fff') + '; border-color:' + (selected ? 'var(--accent)' : 'var(--border)') + ';">' +
+    return '<div class="list-row" data-action="add-winner" data-mid="' + mm.id + '">' +
       '<div class="avatar sm" style="background:' + colorFor(idx) + ';">' + initialsOf(mm.name) + '</div>' +
       '<div style="flex:1 1 auto;font-size:13px;font-weight:500;">' + escapeHtml(mm.name) + '</div>' +
-      (selected ? '<div style="width:22px;height:22px;border-radius:11px;background:var(--accent);display:flex;align-items:center;justify-content:center;">' + iconCheck() + '</div>' : '') +
     '</div>';
   }).join('') || '<div style="font-size:12.5px; color:var(--text-muted); text-align:center; padding:20px;">Everyone has already won this cycle.</div>';
 

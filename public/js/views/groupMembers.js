@@ -16,7 +16,9 @@ export function renderGroupMembers() {
   var winsByMember = {};
   for (var wm = 1; wm <= group.currentMonth; wm++) {
     var wf = monthFinances(gid, group, wm);
-    if (wf.closed && wf.monthDoc.winnerId) winsByMember[wf.monthDoc.winnerId] = { month: wm, amount: wf.payoutAmount };
+    if (wf.closed) {
+      wf.winners.forEach(function (w) { winsByMember[w.memberId] = { month: wm, amount: w.payoutAmount }; });
+    }
   }
 
   var rows = members.map(function (mm, idx) {

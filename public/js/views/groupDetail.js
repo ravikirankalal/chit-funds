@@ -50,7 +50,12 @@ export function renderGroupDetail() {
     if (m <= group.currentMonth) {
       var f = monthFinances(gid, group, m);
       if (f.closed) {
-        var winner = members.find(function (mm) { return mm.id === f.monthDoc.winnerId; });
+        // Almost always one winner; occasionally more than one (see
+        // getMonthWinners in finance.js) — join their names for the subtitle.
+        var winnerNames = f.winners.map(function (w) {
+          var mm = members.find(function (x) { return x.id === w.memberId; });
+          return mm ? mm.name : '—';
+        });
         var unpaidCount = members.length - f.paidCount;
         // A closed month can still have unpaid dues (a late/missed payment) —
         // flag those with the amber "warning" palette instead of the usual
@@ -59,7 +64,7 @@ export function renderGroupDetail() {
         var hasUnpaid = unpaidCount > 0;
         var closedBg = hasUnpaid ? 'var(--warning-soft)' : '#e6f2ec';
         var closedFg = hasUnpaid ? 'var(--warning)' : '#146b52';
-        var subtitle = 'Winner: ' + (winner ? escapeHtml(winner.name) : '—') + (hasUnpaid ? ' · ' + unpaidCount + ' unpaid' : '');
+        var subtitle = (winnerNames.length > 1 ? 'Winners: ' : 'Winner: ') + (winnerNames.length ? winnerNames.map(escapeHtml).join(', ') : '—') + (hasUnpaid ? ' · ' + unpaidCount + ' unpaid' : '');
         rows.push('<div class="list-row" data-action="open-month" data-gid="' + gid + '" data-m="' + m + '"' + (hasUnpaid ? ' style="border-color:' + closedFg + ';"' : '') + '>' +
           '<div class="avatar sm" style="background:' + closedBg + '; color:' + closedFg + ';">' + m + '</div>' +
           '<div style="flex:1 1 auto; min-width:0;"><div style="font-size:13px;font-weight:600;">' + monthLabel(group.startYear, group.startMonthIndex, m) + '</div>' +
