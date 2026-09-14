@@ -210,6 +210,11 @@ export function togglePaymentSection(key) {
   render();
 }
 
+export function setLedgerFilter(type) {
+  state.ui.ledgerFilter = type;
+  render();
+}
+
 export async function savePaymentModal() {
   if (isSuper()) return;
   var pm = state.ui.paymentModal;
@@ -291,7 +296,7 @@ export async function confirmTransfer() {
     var target = otherAdmin(state.currentAdmin);
     var batch = writeBatch(db);
     mids.forEach(function (mid) {
-      batch.update(doc(db, 'groups', gid, 'months', String(m), 'payments', mid), { collectedBy: target, transferred: true });
+      batch.update(doc(db, 'groups', gid, 'months', String(m), 'payments', mid), { collectedBy: target, transferred: true, transferredAt: serverTimestamp() });
     });
     await batch.commit();
     state.ui.transferSelection = null;

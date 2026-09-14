@@ -3,8 +3,24 @@ import { state } from '../store.js';
 import { fmt, escapeHtml } from '../helpers.js';
 import { renderBottomNav } from './bottomNav.js';
 
+var FILTERS = [
+  { key: 'all', label: 'All' },
+  { key: 'collection', label: 'Collections' },
+  { key: 'payout', label: 'Payouts' },
+  { key: 'transfer', label: 'Transfers' }
+];
+
 export function renderLedger() {
-  var rows = state.ledgerEntries.map(function (r) {
+  var activeFilter = state.ui.ledgerFilter || 'all';
+  var entries = activeFilter === 'all' ? state.ledgerEntries : state.ledgerEntries.filter(function (r) { return r.type === activeFilter; });
+
+  var filterChips = FILTERS.map(function (f) {
+    var active = f.key === activeFilter;
+    return '<div data-action="set-ledger-filter" data-filter="' + f.key + '" style="cursor:pointer;flex-shrink:0;padding:8px 14px;border-radius:20px;font-size:12.5px;font-weight:600;' +
+      (active ? 'background:var(--accent);color:#fff;' : 'background:#fff;color:var(--text);border:1px solid var(--border);') + '">' + f.label + '</div>';
+  }).join('');
+
+  var rows = entries.map(function (r) {
     var iconBg = r.type === 'collection' ? '#e6f2ec' : (r.type === 'payout' ? '#fdf1e4' : '#eef0f6');
     var iconColor = r.type === 'collection' ? '#146b52' : (r.type === 'payout' ? '#b45309' : '#3b4a8a');
     var icon = r.type === 'collection'
@@ -16,9 +32,10 @@ export function renderLedger() {
       '<div class="avatar sm" style="background:' + iconBg + ';">' + icon + '</div>' +
       '<div style="flex:1 1 auto; min-width:0;"><div style="font-size:13px;font-weight:600; overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escapeHtml(r.title) + '</div>' +
       '<div style="font-size:11.5px;color:var(--text-muted);margin-top:1px; overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escapeHtml(r.subtitle) + '</div></div>' +
-      '<div style="font-size:13px;font-weight:700;color:' + r.amountColor + ';">' + r.amountFormatted + '</div>' +
+      '<div style="text-align:right;flex-shrink:0;"><div style="font-size:13px;font-weight:700;color:' + r.amountColor + ';">' + r.amountFormatted + '</div>' +
+      (r.time ? '<div style="font-size:10.5px;color:var(--text-muted);margin-top:2px;">' + escapeHtml(r.time) + '</div>' : '') + '</div>' +
     '</div>';
-  }).join('') || '<div class="card" style="color:var(--text-muted); font-size:13px; text-align:center;">No activity yet.</div>';
+  }).join('') || '<div class="card" style="color:var(--text-muted); font-size:13px; text-align:center;">' + (activeFilter === 'all' ? 'No activity yet.' : 'No ' + activeFilter + 's yet.') + '</div>';
 
   return '' +
     '<div class="screen">' +
@@ -33,6 +50,7 @@ export function renderLedger() {
           '<div style="font-size:13px;color:var(--text-muted);">Total in ledger</div><div class="mono" style="font-size:15px;font-weight:700;">' + fmt(state.balances.total) + '</div>' +
         '</div>' +
         '<div class="banner info"><div style="font-size:12px;color:var(--accent);line-height:1.4;">There\'s no direct admin-to-admin transfer here. Funds only move between admins per month, tied to what was actually collected, and need the other admin\'s acceptance — open a month to request one.</div></div>' +
+        '<div style="display:flex; gap:8px; overflow-x:auto; padding-bottom:2px;">' + filterChips + '</div>' +
         '<div><div class="section-label">Recent activity</div><div class="row-list">' + rows + '</div></div>' +
       '</div>' +
       renderBottomNav('ledger') +
