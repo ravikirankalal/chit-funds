@@ -11,11 +11,11 @@ function progressCard(label, value, total, barColor) {
   var pct = total > 0 ? Math.min(100, Math.round((value / total) * 100)) : 0;
   return '<div class="card" style="flex:1 1 0; min-width:0; display:flex;flex-direction:column;gap:8px;">' +
     '<div style="display:flex;justify-content:space-between;align-items:baseline;">' +
-      '<div style="font-size:11.5px;color:var(--text-muted);font-weight:500;">' + label + '</div>' +
-      '<div style="font-size:11px;color:var(--text-muted);font-weight:600;">' + pct + '%</div>' +
+      '<div style="font-size:11.5px;color:var(--color-text-muted);font-weight:500;">' + label + '</div>' +
+      '<div style="font-size:11px;color:var(--color-text-muted);font-weight:600;">' + pct + '%</div>' +
     '</div>' +
     '<div class="mono" style="font-size:17px;font-weight:700;">' + fmt(value) + '</div>' +
-    '<div style="font-size:11px;color:var(--text-muted);font-weight:500;">of ' + fmt(total) + '</div>' +
+    '<div style="font-size:11px;color:var(--color-text-muted);font-weight:500;">of ' + fmt(total) + '</div>' +
     '<div class="progress-track"><div class="progress-fill" style="width:' + pct + '%; background:' + barColor + ';"></div></div>' +
   '</div>';
 }
@@ -62,55 +62,55 @@ export function renderGroupDetail() {
         // green closed styling, so it's obvious at a glance which closed
         // months still need follow-up.
         var hasUnpaid = unpaidCount > 0;
-        var closedBg = hasUnpaid ? 'var(--warning-soft)' : '#e6f2ec';
-        var closedFg = hasUnpaid ? 'var(--warning)' : '#146b52';
+        var closedBg = hasUnpaid ? 'var(--color-warning-soft)' : 'var(--color-success-soft)';
+        var closedFg = hasUnpaid ? 'var(--color-warning)' : 'var(--color-success)';
         var subtitle = '<span style="display:inline-flex;align-items:center;gap:4px;">' + iconTrophy() + (winnerNames.length > 1 ? 'Winners: ' : 'Winner: ') + (winnerNames.length ? winnerNames.map(escapeHtml).join(', ') : '—') + '</span>' + (hasUnpaid ? ' · ' + unpaidCount + ' unpaid' : '');
         rows.push('<div class="list-row" data-action="open-month" data-gid="' + gid + '" data-m="' + m + '"' + (hasUnpaid ? ' style="border-color:' + closedFg + ';"' : '') + '>' +
           '<div class="avatar sm" style="background:' + closedBg + '; color:' + closedFg + ';">' + m + '</div>' +
           '<div style="flex:1 1 auto; min-width:0;"><div style="font-size:13px;font-weight:600;">' + monthLabel(group.startYear, group.startMonthIndex, m) + '</div>' +
-          '<div style="font-size:11.5px;color:' + (hasUnpaid ? closedFg : 'var(--text-muted)') + ';margin-top:1px;">' + subtitle + '</div></div>' +
+          '<div style="font-size:11.5px;color:' + (hasUnpaid ? closedFg : 'var(--color-text-muted)') + ';margin-top:1px;">' + subtitle + '</div></div>' +
           '<div style="text-align:right; flex-shrink:0;"><div style="font-size:13px;font-weight:700;color:' + closedFg + ';">' + fmt(f.payoutAmount) + '</div>' +
-          '<div style="font-size:11px;color:var(--text-muted);">won</div></div>' +
+          '<div style="font-size:11px;color:var(--color-text-muted);">won</div></div>' +
         '</div>');
       } else {
         var pct = members.length > 0 ? Math.min(100, Math.round((f.paidCount / members.length) * 100)) : 0;
         // Blue (not green — green already means "closed/paid out" elsewhere,
         // and reusing it for "in progress" would blur that distinction).
         // Same blue already used for transfer ledger entries in finance.js.
-        rows.push('<div class="list-row" data-action="open-month" data-gid="' + gid + '" data-m="' + m + '" style="border-color:#3b4a8a;background:#eef0f9;flex-direction:column;align-items:stretch;gap:6px;">' +
+        rows.push('<div class="list-row" data-action="open-month" data-gid="' + gid + '" data-m="' + m + '" style="border-color:var(--color-secondary);background:var(--color-secondary-soft);flex-direction:column;align-items:stretch;gap:6px;">' +
           '<div style="display:flex;align-items:center;gap:10px;">' +
-            '<div class="avatar sm" style="background:#3b4a8a; color:#fff;">' + m + '</div>' +
+            '<div class="avatar sm" style="background:var(--color-secondary); color:var(--on-brand);">' + m + '</div>' +
             '<div style="flex:1 1 auto; min-width:0;"><div style="font-size:13px;font-weight:600;">' + monthLabel(group.startYear, group.startMonthIndex, m) + ' · Open</div>' +
-            '<div style="font-size:11.5px;color:var(--text-muted);margin-top:1px;">' + f.paidCount + ' / ' + members.length + ' paid so far</div></div>' +
-            '<div style="text-align:right; flex-shrink:0;"><div style="font-size:13px;font-weight:700;color:#3b4a8a;">' + fmt(f.payoutAmount) + '</div>' +
-            '<div style="font-size:11px;color:var(--text-muted);">' + pct + '% collected</div></div>' +
+            '<div style="font-size:11.5px;color:var(--color-text-muted);margin-top:1px;">' + f.paidCount + ' / ' + members.length + ' paid so far</div></div>' +
+            '<div style="text-align:right; flex-shrink:0;"><div style="font-size:13px;font-weight:700;color:var(--color-secondary);">' + fmt(f.payoutAmount) + '</div>' +
+            '<div style="font-size:11px;color:var(--color-text-muted);">' + pct + '% collected</div></div>' +
           '</div>' +
-          '<div class="progress-track"><div class="progress-fill" style="width:' + pct + '%; background:#3b4a8a;"></div></div>' +
+          '<div class="progress-track"><div class="progress-fill" style="width:' + pct + '%; background:var(--color-secondary);"></div></div>' +
         '</div>');
       }
     } else {
       var scheduledAmount = (group.payoutSchedule && group.payoutSchedule[m - 1]) || 0;
       rows.push('<div class="list-row" data-action="open-month" data-gid="' + gid + '" data-m="' + m + '" style="border-style:dashed; opacity:0.65;">' +
-        '<div class="avatar sm" style="background:var(--bg); color:var(--text-muted);">' + m + '</div>' +
+        '<div class="avatar sm" style="background:var(--color-bg); color:var(--color-text-muted);">' + m + '</div>' +
         '<div style="flex:1 1 auto; min-width:0;"><div style="font-size:13px;font-weight:600;">' + monthLabel(group.startYear, group.startMonthIndex, m) + '</div>' +
-        '<div style="font-size:11.5px;color:var(--text-muted);margin-top:1px;">Not started</div></div>' +
-        '<div style="font-size:13px;font-weight:700;color:var(--text-muted);">' + fmt(scheduledAmount) + '</div>' +
+        '<div style="font-size:11.5px;color:var(--color-text-muted);margin-top:1px;">Not started</div></div>' +
+        '<div style="font-size:13px;font-weight:700;color:var(--color-text-muted);">' + fmt(scheduledAmount) + '</div>' +
       '</div>');
     }
   }
 
   var financeCard = '<div style="display:flex;flex-direction:column;gap:10px;">' +
     '<div style="display:flex;gap:10px;">' +
-      progressCard('Collected so far', collectedSoFar, totalCollection, 'var(--accent)') +
-      progressCard('Payouts so far', payoutSoFar, totalPayout, 'var(--warning)') +
+      progressCard('Collected so far', collectedSoFar, totalCollection, 'var(--color-success)') +
+      progressCard('Payouts so far', payoutSoFar, totalPayout, 'var(--color-accent)') +
     '</div>' +
     '<div class="stat-row">' +
-      '<div class="stat"><div class="label">' + iconTrendingUp() + 'Realized profit so far</div><div class="value" style="color:' + (profitSoFar < 0 ? 'var(--danger)' : '#146b52') + ';">' + signed(profitSoFar) + '</div></div>' +
-      '<div class="stat"><div class="label">' + iconTrendingUp() + 'Profit margin at completion</div><div class="value" style="color:' + (profitMargin < 0 ? 'var(--danger)' : '#146b52') + ';">' + signed(profitMargin) + '</div></div>' +
+      '<div class="stat"><div class="label">' + iconTrendingUp() + 'Realized profit so far</div><div class="value" style="color:' + (profitSoFar < 0 ? 'var(--color-danger)' : 'var(--color-success)') + ';">' + signed(profitSoFar) + '</div></div>' +
+      '<div class="stat"><div class="label">' + iconTrendingUp() + 'Profit margin at completion</div><div class="value" style="color:' + (profitMargin < 0 ? 'var(--color-danger)' : 'var(--color-success)') + ';">' + signed(profitMargin) + '</div></div>' +
     '</div>' +
     '<div class="stat-row">' +
-      '<div class="stat"><div class="label">' + adminDot('A') + adminName('A') + ' holds</div><div class="value" style="' + (holdA < 0 ? 'color:var(--danger);' : '') + '">' + signed(holdA) + '</div></div>' +
-      '<div class="stat"><div class="label">' + adminDot('B') + adminName('B') + ' holds</div><div class="value" style="' + (holdB < 0 ? 'color:var(--danger);' : '') + '">' + signed(holdB) + '</div></div>' +
+      '<div class="stat"><div class="label">' + adminDot('A') + adminName('A') + ' holds</div><div class="value" style="' + (holdA < 0 ? 'color:var(--color-danger);' : '') + '">' + signed(holdA) + '</div></div>' +
+      '<div class="stat"><div class="label">' + adminDot('B') + adminName('B') + ' holds</div><div class="value" style="' + (holdB < 0 ? 'color:var(--color-danger);' : '') + '">' + signed(holdB) + '</div></div>' +
     '</div>' +
   '</div>';
 
