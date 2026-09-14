@@ -127,15 +127,15 @@ function renderClosedSummary(f, members, readOnly, gid, viewMonth) {
   var winnerCards = f.winners.map(function (w) {
     var winner = members.find(function (mm) { return mm.id === w.memberId; });
     var winnerIdx = winner ? members.indexOf(winner) : -1;
-    return '<div class="card" style="display:flex;align-items:center;gap:12px;background:var(--color-accent-soft);border-color:var(--color-accent);">' +
+    return '<div class="card" style="display:flex;align-items:center;gap:12px;background:var(--color-gold-soft);border-color:var(--color-gold);">' +
       (winner ? '<div class="avatar" style="background:' + colorFor(winnerIdx) + ';">' + initialsOf(winner.name) + '</div>' : '') +
       '<div style="flex:1 1 auto; min-width:0;">' +
-        '<div style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--color-accent);font-weight:600;">' + iconTrophy() + (f.winners.length > 1 ? 'Winner' : 'This month\'s winner') + '</div>' +
+        '<div style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--color-gold);font-weight:600;">' + iconTrophy() + (f.winners.length > 1 ? 'Winner' : 'This month\'s winner') + '</div>' +
         '<div style="font-size:16px;font-weight:700;">' + (winner ? escapeHtml(winner.name) : '—') + '</div>' +
       '</div>' +
       '<div style="text-align:right; flex-shrink:0;">' +
         '<div style="font-size:11px;color:var(--color-text-muted);">Payout</div>' +
-        '<div class="mono" style="font-size:18px;font-weight:700;color:var(--color-accent);">' + fmt(w.payoutAmount) + '</div>' +
+        '<div class="mono" style="font-size:18px;font-weight:700;color:var(--color-gold);">' + fmt(w.payoutAmount) + '</div>' +
       '</div>' +
     '</div>';
   }).join('') || '<div class="card" style="color:var(--color-text-muted);font-size:13px;text-align:center;">No winner recorded.</div>';
@@ -285,11 +285,11 @@ function renderWinnerCard(f, members, readOnly) {
     html += f.winners.map(function (w) {
       var winner = members.find(function (mm) { return mm.id === w.memberId; });
       var widx = winner ? members.indexOf(winner) : -1;
-      return '<div class="list-row" style="background:var(--color-accent-soft);">' +
+      return '<div class="list-row" style="background:var(--color-gold-soft);">' +
         '<div class="avatar sm" style="background:' + colorFor(widx) + ';">' + (winner ? initialsOf(winner.name) : '?') + '</div>' +
-        '<div style="flex:1 1 auto;font-size:13px;font-weight:600;color:var(--color-accent);min-width:0;">' + (winner ? escapeHtml(winner.name) : '—') + '</div>' +
+        '<div style="flex:1 1 auto;font-size:13px;font-weight:600;color:var(--color-gold);min-width:0;">' + (winner ? escapeHtml(winner.name) : '—') + '</div>' +
         (readOnly
-          ? '<div class="mono" style="font-size:13px;font-weight:700;color:var(--color-accent);">' + fmt(w.payoutAmount) + '</div>'
+          ? '<div class="mono" style="font-size:13px;font-weight:700;color:var(--color-gold);">' + fmt(w.payoutAmount) + '</div>'
           : '<input data-winner-amount="' + w.memberId + '" type="text" inputmode="numeric" value="' + w.payoutAmount + '" style="width:100px;text-align:right;font-size:13px;font-weight:600;padding:6px 8px;border-radius:10px;border:1px solid var(--color-border);" />' +
             '<div data-action="remove-winner" data-mid="' + w.memberId + '" style="cursor:pointer;color:var(--color-danger);font-size:12px;font-weight:600;margin-left:10px;">Remove</div>') +
       '</div>';
