@@ -7,7 +7,7 @@ import {
 import { auth } from './firebase.js';
 import { ADMINS, SUPER_ADMIN } from '../firebase-config.js';
 import { state } from './store.js';
-import { goTo } from './router.js';
+import { goTo, getRestorableSnapshot } from './router.js';
 import { render } from './render.js';
 import { startListeners, stopListeners } from './listeners.js';
 
@@ -49,5 +49,7 @@ onAuthStateChanged(auth, function (user) {
   }
   state.currentAdmin = adminId;
   startListeners();
-  goTo('dashboard');
+  var snap = getRestorableSnapshot();
+  if (snap) goTo(snap.screen, { activeGroupId: snap.activeGroupId, viewMonth: snap.viewMonth });
+  else goTo('dashboard');
 });
