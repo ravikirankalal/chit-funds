@@ -3,7 +3,9 @@ import { fmt, escapeHtml, initialsOf, colorFor, monthLabel } from '../helpers.js
 import { iconChevronLeft } from '../icons.js';
 
 function totalPayout(g) { return g.payoutSchedule.reduce(function (a, b) { return a + b; }, 0); }
-function totalCollection(g) { return g.monthlyDeposit * g.durationMonths; }
+function totalCollection(g) { return g.totalMembers * g.monthlyDeposit * g.durationMonths; }
+function profitMargin(g) { return totalCollection(g) - totalPayout(g); }
+function profitMarginPct(g) { var tc = totalCollection(g); return tc ? (profitMargin(g) / tc * 100) : 0; }
 
 export function renderCreateGroup() {
   var g = state.ui.newGroup;
@@ -16,8 +18,9 @@ function renderStep1(g) {
   var now = new Date();
   for (var i = 0; i < dur; i++) {
     var amt = g.payoutSchedule[i] || 0;
-    previewRows += '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border);">' +
-      '<div style="font-size:12.5px;color:var(--text-muted);">' + monthLabel(now.getFullYear(), now.getMonth(), i + 1) + '</div>' +
+    previewRows += '<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border);">' +
+      '<div class="avatar sm" style="background:var(--accent-soft);color:var(--accent);flex-shrink:0;">' + (i + 1) + '</div>' +
+      '<div style="flex:1 1 auto;font-size:12.5px;color:var(--text-muted);">' + monthLabel(now.getFullYear(), now.getMonth(), i + 1) + '</div>' +
       '<input data-field="payoutMonth" data-idx="' + i + '" type="text" inputmode="numeric" value="' + amt + '" style="width:110px;text-align:right;font-size:13px;font-weight:600;padding:6px 8px;border-radius:8px;border:1px solid var(--border);" />' +
     '</div>';
   }
@@ -28,12 +31,20 @@ function renderStep1(g) {
         '<div class="field"><label>Group name</label><input data-field="name" value="' + escapeHtml(g.name) + '" placeholder="e.g. Friends Chit 2027" /></div>' +
         '<div class="field-row">' +
           '<div class="field"><label>Duration (months)</label><input data-field="durationMonths" type="text" inputmode="numeric" value="' + g.durationMonths + '" /></div>' +
-          '<div class="field"><label>Monthly deposit (₹)</label><input data-field="monthlyDeposit" type="text" inputmode="numeric" value="' + g.monthlyDeposit + '" /></div>' +
+          '<div class="field"><label>Total members</label><input data-field="totalMembers" type="text" inputmode="numeric" value="' + g.totalMembers + '" /></div>' +
         '</div>' +
-        '<div class="card" style="display:flex;flex-direction:column;gap:8px;">' +
-          '<div style="display:flex;justify-content:space-between;"><div style="font-size:12px;color:var(--text-muted);">Total collection per member (' + fmt(g.monthlyDeposit) + ' × ' + g.durationMonths + ' months)</div><div style="font-size:13px;font-weight:700;">' + fmt(totalCollection(g)) + '</div></div>' +
-          '<div style="display:flex;justify-content:space-between;"><div style="font-size:12px;color:var(--text-muted);">Total payout</div><div style="font-size:13px;font-weight:700;">' + fmt(totalPayout(g)) + '</div></div>' +
-        '</div>' +
+        '<div class="field"><label>Monthly deposit (₹)</label><input data-field="monthlyDeposit" type="text" inputmode="numeric" value="' + g.monthlyDeposit + '" /></div>' +
+        (function () {
+          var margin = profitMargin(g), pct = profitMarginPct(g);
+          var marginColor = margin < 0 ? 'var(--danger)' : 'var(--accent)';
+          var marginFormatted = (margin < 0 ? '−' : '') + fmt(Math.abs(margin));
+          return '<div class="card" style="display:flex;flex-direction:column;gap:8px;">' +
+            '<div style="display:flex;justify-content:space-between;"><div style="font-size:12px;color:var(--text-muted);">Total collection (' + g.totalMembers + ' × ' + fmt(g.monthlyDeposit) + ' × ' + g.durationMonths + ' months)</div><div style="font-size:13px;font-weight:700;">' + fmt(totalCollection(g)) + '</div></div>' +
+            '<div style="display:flex;justify-content:space-between;"><div style="font-size:12px;color:var(--text-muted);">Total payout</div><div style="font-size:13px;font-weight:700;">' + fmt(totalPayout(g)) + '</div></div>' +
+            '<div style="height:1px;background:var(--border);"></div>' +
+            '<div style="display:flex;justify-content:space-between;"><div style="font-size:12px;color:var(--text-muted);">Profit margin</div><div style="font-size:13px;font-weight:700;color:' + marginColor + ';">' + marginFormatted + ' (' + pct.toFixed(1) + '%)</div></div>' +
+          '</div>';
+        })() +
         '<div style="height:1px;background:var(--border);"></div>' +
         '<div>' +
           '<div style="font-size:13px;font-weight:600;margin-bottom:2px;">Payout schedule</div>' +

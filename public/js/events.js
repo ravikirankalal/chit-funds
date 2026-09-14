@@ -96,6 +96,7 @@ document.addEventListener('input', function (e) {
     g.durationMonths = Math.max(1, parseInt(e.target.value, 10) || 1);
     g.payoutSchedule = flatPayoutSchedule(g.payoutStart, g.durationMonths);
   }
+  else if (field === 'totalMembers') g.totalMembers = Math.max(1, parseInt(e.target.value, 10) || 1);
   else if (field === 'monthlyDeposit') g.monthlyDeposit = parseFloat(e.target.value) || 0;
   else if (field === 'payoutStart') {
     g.payoutStart = parseFloat(e.target.value) || 0;
