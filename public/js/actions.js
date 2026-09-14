@@ -5,7 +5,7 @@
 // instead of touching state — see router.js for why.
 
 import {
-  doc, setDoc, updateDoc, deleteDoc, addDoc, collection, serverTimestamp,
+  doc, setDoc, updateDoc, deleteDoc, addDoc, collection, serverTimestamp, Timestamp,
   runTransaction, writeBatch, arrayUnion, arrayRemove
 } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
 import { db } from './firebase.js';
@@ -294,9 +294,20 @@ export async function confirmTransfer() {
   setBusy(true);
   try {
     var target = otherAdmin(state.currentAdmin);
+    var now = Timestamp.now();
     var batch = writeBatch(db);
     mids.forEach(function (mid) {
-      batch.update(doc(db, 'groups', gid, 'months', String(m), 'payments', mid), { collectedBy: target, transferred: true, transferredAt: serverTimestamp() });
+      // A payment can be handed off more than once (A->B, later B->A again),
+      // and collectedBy/transferredAt only ever reflect the CURRENT holder —
+      // so each hop is also appended to transferLog, the one field that
+      // keeps every hop instead of being overwritten. serverTimestamp()
+      // can't be used inside an array element, hence the client `now`
+      // shared across this whole batch.
+      var priorLog = (payments[mid] && payments[mid].transferLog) || [];
+      var updatedLog = priorLog.concat([{ from: state.currentAdmin, to: target, at: now }]);
+      batch.update(doc(db, 'groups', gid, 'months', String(m), 'payments', mid), {
+        collectedBy: target, transferred: true, transferredAt: serverTimestamp(), transferLog: updatedLog
+      });
     });
     await batch.commit();
     state.ui.transferSelection = null;
