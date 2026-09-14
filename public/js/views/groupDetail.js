@@ -52,8 +52,6 @@ export function renderGroupDetail() {
   }
   var totalCollection = members.length * group.monthlyDeposit * group.durationMonths;
   var totalPayout = (group.payoutSchedule || []).reduce(function (a, b) { return a + b; }, 0);
-  var profitSoFar = collectedSoFar - payoutSoFar;
-  var profitMargin = totalCollection - totalPayout;
 
   var rows = [];
   // Past + current months carry real data; a few months ahead are shown too
@@ -122,10 +120,6 @@ export function renderGroupDetail() {
       progressCard('Payouts so far', payoutSoFar, totalPayout, 'var(--color-accent)') +
     '</div>' +
     '<div class="stat-row">' +
-      '<div class="stat"><div class="label">' + iconTrendingUp() + 'Realized profit so far</div><div class="value" style="color:' + (profitSoFar < 0 ? 'var(--color-danger)' : 'var(--color-success)') + ';">' + signed(profitSoFar) + '</div></div>' +
-      '<div class="stat"><div class="label">' + iconTrendingUp() + 'Profit margin at completion</div><div class="value" style="color:' + (profitMargin < 0 ? 'var(--color-danger)' : 'var(--color-success)') + ';">' + signed(profitMargin) + '</div></div>' +
-    '</div>' +
-    '<div class="stat-row">' +
       '<div class="stat"><div class="label">' + adminDot('A') + adminName('A') + ' holds</div><div class="value" style="' + (holdA < 0 ? 'color:var(--color-danger);' : '') + '">' + signed(holdA) + '</div></div>' +
       '<div class="stat"><div class="label">' + adminDot('B') + adminName('B') + ' holds</div><div class="value" style="' + (holdB < 0 ? 'color:var(--color-danger);' : '') + '">' + signed(holdB) + '</div></div>' +
     '</div>' +
@@ -146,7 +140,7 @@ export function renderGroupDetail() {
             iconChevronRight() +
           '</div>' +
         '</div>' +
-        '<div><div class="section-label">' + iconTrendingUp() + 'Fund financials</div>' + financeCard + '</div>' +
+        financeCard +
         '<div><div class="section-label">' + iconCalendar() + 'Months</div><div class="row-list">' + rows.join('') + '</div></div>' +
       '</div>' +
     '</div>';
