@@ -179,7 +179,8 @@ export function openPaymentModal(memberId) {
   var group = groupsById.get(gid);
   if (m !== group.currentMonth) return;
   var existing = (paymentsCache.get(monthKey(gid, m)) || {})[memberId];
-  state.ui.paymentModal = { memberId: memberId, mode: (existing && existing.mode) || 'cash', isEditing: !!(existing && existing.paid) };
+  var initialMode = (existing && existing.mode) || 'cash';
+  state.ui.paymentModal = { memberId: memberId, mode: initialMode, originalMode: initialMode, isEditing: !!(existing && existing.paid) };
   render();
   pushNav();
 }

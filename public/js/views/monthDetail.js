@@ -1,6 +1,6 @@
 import { ADMINS } from '../../firebase-config.js';
 import { state, groupsById, membersByGroup, paymentsCache, monthsCache, transferReqCache, monthKey } from '../store.js';
-import { fmt, escapeHtml, initialsOf, colorFor, adminName, isSuper, monthLabel } from '../helpers.js';
+import { fmt, escapeHtml, initialsOf, colorFor, adminName, isSuper, monthLabel, formatDateTime } from '../helpers.js';
 import { monthFinances } from '../finance.js';
 import { iconChevronLeft, iconChevronRight, iconCheck, iconClose } from '../icons.js';
 
@@ -89,8 +89,9 @@ function renderOpenSummary(f, members, group) {
 }
 
 function paymentRow(r, readOnly) {
+  var paidAtLabel = formatDateTime(r.paidAt);
   var subtitle = r.paid
-    ? 'Collected by <span style="font-weight:600;color:var(--accent);">' + adminName(r.collectedBy) + '</span> · ' + (r.mode === 'online' ? 'Online' : 'Cash')
+    ? 'Collected by <span style="font-weight:600;color:var(--accent);">' + adminName(r.collectedBy) + '</span> · ' + (r.mode === 'online' ? 'Online' : 'Cash') + (paidAtLabel ? ' · ' + paidAtLabel : '')
     : '<span style="color:var(--danger);">Not paid yet' + (readOnly ? '' : ' · tap to record') + '</span>';
   return '<div class="list-row" ' + (readOnly ? '' : 'data-action="open-payment-modal" data-mid="' + r.mm.id + '"') + '>' +
     '<div class="avatar sm" style="background:' + colorFor(r.idx) + ';">' + initialsOf(r.mm.name) + '</div>' +
@@ -121,7 +122,7 @@ function renderPaymentList(gid, viewMonth, members, f, readOnly, group) {
   var payments = paymentsCache.get(monthKey(gid, viewMonth)) || {};
   var payRows = members.map(function (mm, idx) {
     var p = payments[mm.id] || { paid: false };
-    return { mm: mm, idx: idx, paid: !!p.paid, collectedBy: p.collectedBy, mode: p.mode };
+    return { mm: mm, idx: idx, paid: !!p.paid, collectedBy: p.collectedBy, mode: p.mode, paidAt: p.paidAt };
   });
 
   var unpaidRows = payRows.filter(function (r) { return !r.paid; });
@@ -230,6 +231,11 @@ function renderPaymentModalOverlay(gid, viewMonth, group, members) {
       '<div class="sheet-close" data-action="close-payment-modal">' + iconClose() + '</div>' +
     '</div>' +
     '<div class="sheet-body">' +
+      '<div style="text-align:center;padding:8px 0 4px;">' +
+        '<div style="font-size:11px;color:var(--text-muted);margin-bottom:2px;">Amount</div>' +
+        '<div class="mono" style="font-size:32px;font-weight:700;">' + fmt(group.monthlyDeposit) + '</div>' +
+        (pm.isEditing && existingP && formatDateTime(existingP.paidAt) ? '<div style="font-size:11px;color:var(--text-muted);margin-top:2px;">Paid on ' + formatDateTime(existingP.paidAt) + '</div>' : '') +
+      '</div>' +
       '<div><div style="font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:8px;">Payment mode</div>' +
       '<div class="pill-row">' +
         '<button class="pill ' + (pm.mode === 'cash' ? 'active' : '') + '" data-action="set-modal-mode" data-mode="cash">Cash</button>' +
@@ -237,7 +243,7 @@ function renderPaymentModalOverlay(gid, viewMonth, group, members) {
       '</div></div>' +
       transferHistory +
       (pm.isEditing ? '<button class="btn btn-danger-text" style="width:100%;" data-action="mark-unpaid">Mark as unpaid</button>' : '') +
-      '<button class="btn btn-primary" style="width:100%;" data-action="save-payment">Save Payment</button>' +
+      (!pm.isEditing || pm.mode !== pm.originalMode ? '<button class="btn btn-primary" style="width:100%;" data-action="save-payment">Save Payment</button>' : '') +
     '</div>' +
   '</div></div>';
 }

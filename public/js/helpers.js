@@ -30,6 +30,18 @@ export function otherAdmin(id) { return id === 'A' ? 'B' : 'A'; }
 // payments/winners/transfers or create groups — see docs/firebase-project-setup.md.
 export function isSuper() { return state.currentAdmin === 'SUPER'; }
 
+// Accepts a Firestore Timestamp (has toDate()), a Date, or a ms epoch —
+// paidAt arrives as a Firestore Timestamp once synced but can briefly be
+// null right after a serverTimestamp() write is optimistically applied.
+export function formatDateTime(ts) {
+  if (!ts) return '';
+  var d = typeof ts.toDate === 'function' ? ts.toDate() : new Date(ts);
+  if (isNaN(d.getTime())) return '';
+  var datePart = d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+  var timePart = d.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', hour12: true });
+  return datePart + ', ' + timePart;
+}
+
 export function monthLabel(startYear, startMonthIndex, monthNum) {
   var total = startMonthIndex + (monthNum - 1);
   var year = startYear + Math.floor(total / 12);
