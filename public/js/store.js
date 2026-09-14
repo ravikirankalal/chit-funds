@@ -23,6 +23,7 @@ export var state = {
     memberForm: null,      // { id, name } — add/edit overlay on the members screen
     addMemberToGroup: null, // { gid, draftName } — "add member to this group" overlay on groupDetail
     collapsedPaymentSections: {}, // { unpaid: bool, A: bool, B: bool } — payment list subsection collapse state
+    ledgerFilter: 'all', // 'all' | 'collection' | 'payout' | 'transfer' — Admin & Ledger screen's type filter
     transferSelection: null // { mids: [] } — paid entries selected (long-press to start, tap more to add) in the logged-in admin's own section, offering to hand them all to the other admin
   }
 };
