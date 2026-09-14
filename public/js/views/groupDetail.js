@@ -66,14 +66,13 @@ export function renderGroupDetail() {
   var totalPayout = (group.payoutSchedule || []).reduce(function (a, b) { return a + b; }, 0);
 
   var rows = [];
-  // Past + current months carry real data; a few months ahead are shown too
-  // (scheduled amount only) so the upcoming payout order is visible at a
-  // glance without having to open the full payment schedule. Each row is
+  // Every month is listed — a full chit fund can run 20+ months, so the
+  // list scrolls in its own fixed-height region (see months markup below)
+  // rather than pushing the rest of the screen off-page. Each row is
   // visually distinct by state — closed (solid, muted amount), open
   // (accent border + live collection progress bar), or never started
   // (dashed, faded) — instead of a badge color being the only cue.
-  var lastVisibleMonth = Math.min(group.currentMonth + 2, group.durationMonths);
-  for (var m = 1; m <= lastVisibleMonth; m++) {
+  for (var m = 1; m <= group.durationMonths; m++) {
     if (m <= group.currentMonth) {
       var f = monthFinances(gid, group, m);
       if (f.closed) {
@@ -156,7 +155,16 @@ export function renderGroupDetail() {
       '</div>' +
       '<div class="content">' +
         statsCard +
-        '<div><div class="section-label">' + iconCalendar() + 'Months</div><div class="row-list">' + rows.join('') + '</div></div>' +
+        '<div>' +
+          '<div class="section-label">' + iconCalendar() + 'Months</div>' +
+          // .content/.screen grow to fit their content rather than being
+          // viewport-clipped (see base.css — #app is min-height, not
+          // height), so .content's own overflow-y:auto never actually
+          // engages; a durationMonths-long list needs an explicit
+          // max-height here to actually scroll instead of just growing
+          // the whole page.
+          '<div style="max-height:50vh;overflow-y:auto;-webkit-overflow-scrolling:touch;"><div class="row-list">' + rows.join('') + '</div></div>' +
+        '</div>' +
       '</div>' +
     '</div>';
 
