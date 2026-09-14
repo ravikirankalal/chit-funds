@@ -37,7 +37,7 @@ export function renderLedger() {
 
   return '' +
     '<div class="screen">' +
-      '<div style="padding:20px 20px 4px;"><div class="mono" style="display:flex;align-items:center;gap:7px;font-size:20px;font-weight:700;">' + iconLedger('currentColor') + 'Admin &amp; Ledger</div>' +
+      '<div style="padding:20px 20px 4px;"><div class="mono" style="display:flex;align-items:center;gap:7px;font-size:20px;font-weight:700;">' + iconLedger('var(--color-primary)') + 'Admin &amp; Ledger</div>' +
       '<div style="font-size:12px;color:var(--color-text-muted);margin-top:2px;">Balances &amp; transactions across all groups</div></div>' +
       '<div class="content">' +
         '<div style="display:flex; gap:12px;">' +

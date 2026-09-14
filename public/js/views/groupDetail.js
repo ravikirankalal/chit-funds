@@ -118,7 +118,7 @@ export function renderGroupDetail() {
     '<div class="screen">' +
       '<div class="topbar">' +
         '<div class="back" data-action="nav-back">' + iconChevronLeft() + '</div>' +
-        '<div><div class="title">' + iconGroupStack('currentColor', 18) + escapeHtml(group.name) + '</div>' +
+        '<div><div class="title">' + iconGroupStack('var(--color-primary)', 18) + escapeHtml(group.name) + '</div>' +
         '<div class="subtitle">Month ' + group.currentMonth + ' of ' + group.durationMonths + ' · started ' + monthLabel(group.startYear, group.startMonthIndex, 1) + '</div></div>' +
       '</div>' +
       '<div class="content">' +
