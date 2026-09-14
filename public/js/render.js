@@ -6,6 +6,7 @@
 import { state } from './store.js';
 import { renderLogin } from './views/login.js';
 import { renderDashboard } from './views/dashboard.js';
+import { renderMembers } from './views/members.js';
 import { renderLedger } from './views/ledger.js';
 import { renderGroupDetail } from './views/groupDetail.js';
 import { renderCreateGroup } from './views/createGroup.js';
@@ -26,7 +27,8 @@ export function render() {
   if (active && root.contains(active) && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA')) {
     var df = active.getAttribute('data-field');
     if (df) {
-      activeSelector = '[data-field="' + df + '"]';
+      var didx = active.getAttribute('data-idx');
+      activeSelector = didx != null ? '[data-field="' + df + '"][data-idx="' + didx + '"]' : '[data-field="' + df + '"]';
       activeSelStart = active.selectionStart;
       activeSelEnd = active.selectionEnd;
     }
@@ -36,6 +38,7 @@ export function render() {
   switch (state.screen) {
     case 'login': html = renderLogin(); break;
     case 'dashboard': html = renderDashboard(); break;
+    case 'members': html = renderMembers(); break;
     case 'groupDetail': html = renderGroupDetail(); break;
     case 'createGroup': html = renderCreateGroup(); break;
     case 'monthDetail': html = renderMonthDetail(); break;

@@ -10,12 +10,15 @@ import { state } from './store.js';
 import { render } from './render.js';
 import { goTo } from './router.js';
 import { signInGoogle, doLogout } from './auth.js';
+import { generatePayoutSchedule } from './helpers.js';
 import {
-  startCreateGroup, createGroupStep2, addDraftMember, removeDraftMember, submitCreateGroup,
+  startCreateGroup, createGroupStep2, addDraftMember, addExistingDraftMember, removeDraftMember, submitCreateGroup,
   openCurrentMonth, openMonth, openPaymentModal, closePaymentModal, setModalMode,
   savePaymentModal, markUnpaidFromModal, openWinnerPicker, closeWinnerPicker, selectWinner,
   setPayoutAdminChoice, closeMonthAction, requestTransferToB, requestTransferToA,
-  acceptTransferRequest, declineTransferRequest, cancelTransferRequest
+  acceptTransferRequest, declineTransferRequest, cancelTransferRequest,
+  openMemberForm, closeMemberForm, saveMemberForm,
+  openAddMemberToGroup, closeAddMemberToGroup, addExistingMemberToGroup, createAndAddMemberToGroup
 } from './actions.js';
 
 document.addEventListener('click', function (e) {
@@ -26,6 +29,7 @@ document.addEventListener('click', function (e) {
     case 'signin': signInGoogle(); break;
     case 'logout': doLogout(); break;
     case 'go-dashboard': goTo('dashboard'); break;
+    case 'go-members': goTo('members'); break;
     case 'go-ledger': goTo('ledger'); break;
     case 'nav-back': history.back(); break;
     case 'create-group': startCreateGroup(); break;
@@ -33,6 +37,7 @@ document.addEventListener('click', function (e) {
     case 'create-group-step2': createGroupStep2(); break;
     case 'create-group-back-step1': history.back(); break;
     case 'add-draft-member': addDraftMember(); break;
+    case 'add-existing-draft-member': addExistingDraftMember(el.getAttribute('data-mid')); break;
     case 'remove-draft-member': removeDraftMember(parseInt(el.getAttribute('data-idx'), 10)); break;
     case 'submit-create-group': submitCreateGroup(); break;
     case 'open-current-month': openCurrentMonth(el.getAttribute('data-gid')); break;
@@ -52,6 +57,13 @@ document.addEventListener('click', function (e) {
     case 'accept-transfer-request': acceptTransferRequest(); break;
     case 'decline-transfer-request': declineTransferRequest(); break;
     case 'cancel-transfer-request': cancelTransferRequest(); break;
+    case 'open-member-form': openMemberForm(el.getAttribute('data-id')); break;
+    case 'close-member-form': closeMemberForm(); break;
+    case 'save-member-form': saveMemberForm(); break;
+    case 'open-add-member-to-group': openAddMemberToGroup(el.getAttribute('data-gid')); break;
+    case 'close-add-member-to-group': closeAddMemberToGroup(); break;
+    case 'add-existing-member-to-group': addExistingMemberToGroup(el.getAttribute('data-gid'), el.getAttribute('data-mid')); break;
+    case 'create-and-add-member-to-group': createAndAddMemberToGroup(el.getAttribute('data-gid')); break;
   }
 });
 
@@ -64,13 +76,39 @@ document.addEventListener('keydown', function (e) {
 
 document.addEventListener('input', function (e) {
   var field = e.target.getAttribute && e.target.getAttribute('data-field');
-  if (!field || !state.ui.newGroup) return;
+  if (!field) return;
+
+  if (field === 'memberFormName' && state.ui.memberForm) {
+    state.ui.memberForm.name = e.target.value;
+    render();
+    return;
+  }
+  if (field === 'addMemberDraftName' && state.ui.addMemberToGroup) {
+    state.ui.addMemberToGroup.draftName = e.target.value;
+    render();
+    return;
+  }
+
+  if (!state.ui.newGroup) return;
   var g = state.ui.newGroup;
   if (field === 'name') g.name = e.target.value;
-  else if (field === 'durationMonths') g.durationMonths = Math.max(1, parseInt(e.target.value, 10) || 1);
+  else if (field === 'durationMonths') {
+    g.durationMonths = Math.max(1, parseInt(e.target.value, 10) || 1);
+    g.payoutSchedule = generatePayoutSchedule(g.payoutStart, g.payoutEnd, g.durationMonths);
+  }
   else if (field === 'monthlyDeposit') g.monthlyDeposit = parseFloat(e.target.value) || 0;
-  else if (field === 'payoutStart') g.payoutStart = parseFloat(e.target.value) || 0;
-  else if (field === 'payoutEnd') g.payoutEnd = parseFloat(e.target.value) || 0;
+  else if (field === 'payoutStart') {
+    g.payoutStart = parseFloat(e.target.value) || 0;
+    g.payoutSchedule = generatePayoutSchedule(g.payoutStart, g.payoutEnd, g.durationMonths);
+  }
+  else if (field === 'payoutEnd') {
+    g.payoutEnd = parseFloat(e.target.value) || 0;
+    g.payoutSchedule = generatePayoutSchedule(g.payoutStart, g.payoutEnd, g.durationMonths);
+  }
+  else if (field === 'payoutMonth') {
+    var idx = parseInt(e.target.getAttribute('data-idx'), 10);
+    if (!isNaN(idx)) g.payoutSchedule[idx] = parseFloat(e.target.value) || 0;
+  }
   else if (field === 'draftMemberName') g.draftMemberName = e.target.value;
   render(); // render() itself preserves focus/caret on the field being typed in
 });

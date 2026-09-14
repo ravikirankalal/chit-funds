@@ -37,6 +37,19 @@ export function monthLabel(startYear, startMonthIndex, monthNum) {
   return MONTH_NAMES[idx] + ' ' + year;
 }
 
+// Straight-line interpolation between a first- and last-month payout,
+// used to seed (or reset) the per-month schedule while a group is still
+// being configured — see createGroup.js. Once a group is created this
+// schedule is stored as-is and there's no UI path to regenerate it.
+export function generatePayoutSchedule(payoutStart, payoutEnd, durationMonths) {
+  var schedule = [];
+  for (var i = 0; i < durationMonths; i++) {
+    var t = durationMonths > 1 ? i / (durationMonths - 1) : 0;
+    schedule.push(Math.round(payoutStart + (payoutEnd - payoutStart) * t));
+  }
+  return schedule;
+}
+
 // Splits a Firestore doc path (e.g. "groups/GID/months/3/payments/MID")
 // into its segments — used by the collectionGroup listeners to recover
 // which group/month/member a changed document belongs to.

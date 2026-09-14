@@ -20,6 +20,9 @@ export function iconPlus() {
 export function iconHome(color) {
   return '<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 11L12 4L20 11V19A1 1 0 0 1 19 20H5A1 1 0 0 1 4 19V11Z" stroke="' + color + '" stroke-width="1.9" stroke-linejoin="round"/></svg>';
 }
+export function iconPeople(color) {
+  return '<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="9" cy="8" r="3" stroke="' + color + '" stroke-width="1.9"/><path d="M3.5 19.5C3.5 16.5 6 14.5 9 14.5C12 14.5 14.5 16.5 14.5 19.5" stroke="' + color + '" stroke-width="1.9" stroke-linecap="round"/><path d="M15.5 9A2.5 2.5 0 1 0 15.5 4" stroke="' + color + '" stroke-width="1.9" stroke-linecap="round"/><path d="M16 14.6C18.4 15 20.5 16.7 20.5 19.5" stroke="' + color + '" stroke-width="1.9" stroke-linecap="round"/></svg>';
+}
 export function iconLedger(color) {
   return '<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="4" y="8" width="16" height="11" rx="1.5" stroke="' + color + '" stroke-width="1.9"/><path d="M8 8V6.5A2.5 2.5 0 0 1 10.5 4H13.5A2.5 2.5 0 0 1 16 6.5V8" stroke="' + color + '" stroke-width="1.9"/></svg>';
 }

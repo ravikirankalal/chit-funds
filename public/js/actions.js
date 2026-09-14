@@ -6,11 +6,11 @@
 
 import {
   doc, setDoc, updateDoc, deleteDoc, addDoc, collection, serverTimestamp,
-  runTransaction, writeBatch
+  runTransaction, writeBatch, arrayUnion
 } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
 import { db } from './firebase.js';
-import { state, groupsById, monthsCache, paymentsCache, transferReqCache, monthKey } from './store.js';
-import { isSuper, monthLabel } from './helpers.js';
+import { state, groupsById, membersById, monthsCache, paymentsCache, transferReqCache, monthKey } from './store.js';
+import { isSuper, monthLabel, generatePayoutSchedule } from './helpers.js';
 import { monthFinances } from './finance.js';
 import { goTo, pushNav } from './router.js';
 import { render } from './render.js';
@@ -19,10 +19,12 @@ export function setBusy(v) { state.busy = v; render(); }
 
 export function startCreateGroup() {
   if (isSuper()) return;
+  var durationMonths = 24, payoutStart = 75000, payoutEnd = 118000;
   state.ui.newGroup = {
     step: 1,
-    name: '', durationMonths: 24, monthlyDeposit: 5000,
-    payoutStart: 75000, payoutEnd: 118000,
+    name: '', durationMonths: durationMonths, monthlyDeposit: 5000,
+    payoutStart: payoutStart, payoutEnd: payoutEnd,
+    payoutSchedule: generatePayoutSchedule(payoutStart, payoutEnd, durationMonths),
     members: [], draftMemberName: ''
   };
   goTo('createGroup');
@@ -36,12 +38,25 @@ export function createGroupStep2() {
   pushNav();
 }
 
+// Draft members during group creation carry {id, name}: id is set when
+// picking someone already in the directory (addExistingDraftMember) and
+// null for a brand-new person, who gets their own `members` doc at
+// submit time (submitCreateGroup).
 export function addDraftMember() {
   var g = state.ui.newGroup;
   var name = (g.draftMemberName || '').trim();
   if (!name) return;
-  g.members.push({ name: name });
+  g.members.push({ id: null, name: name });
   g.draftMemberName = '';
+  render();
+}
+
+export function addExistingDraftMember(memberId) {
+  var g = state.ui.newGroup;
+  if (g.members.some(function (m) { return m.id === memberId; })) return;
+  var top = membersById.get(memberId);
+  if (!top) return;
+  g.members.push({ id: memberId, name: top.name });
   render();
 }
 
@@ -55,28 +70,27 @@ export async function submitCreateGroup() {
   if (!g.members.length) return;
   setBusy(true);
   try {
-    var payoutSchedule = [];
-    for (var i = 0; i < g.durationMonths; i++) {
-      var t = g.durationMonths > 1 ? i / (g.durationMonths - 1) : 0;
-      payoutSchedule.push(Math.round(g.payoutStart + (g.payoutEnd - g.payoutStart) * t));
-    }
+    var batch = writeBatch(db);
+    var memberIds = g.members.map(function (m) {
+      if (m.id) return m.id;
+      var newMemberRef = doc(collection(db, 'members'));
+      batch.set(newMemberRef, { name: m.name.trim(), createdAt: serverTimestamp() });
+      return newMemberRef.id;
+    });
     var now = new Date();
-    var groupRef = await addDoc(collection(db, 'groups'), {
+    var groupRef = doc(collection(db, 'groups'));
+    batch.set(groupRef, {
       name: g.name.trim(),
-      memberCount: g.members.length,
       durationMonths: g.durationMonths,
       monthlyDeposit: g.monthlyDeposit,
-      payoutSchedule: payoutSchedule,
+      payoutSchedule: g.payoutSchedule,
+      memberIds: memberIds,
       currentMonth: 1,
       status: 'active',
       startYear: now.getFullYear(),
       startMonthIndex: now.getMonth(),
       createdBy: state.currentAdmin,
       createdAt: serverTimestamp()
-    });
-    var batch = writeBatch(db);
-    g.members.forEach(function (m, idx) {
-      batch.set(doc(collection(db, 'groups', groupRef.id, 'members')), { name: m.name, order: idx });
     });
     batch.set(doc(db, 'groups', groupRef.id, 'months', '1'), {
       status: 'open', winnerId: null, payoutAdmin: null, transferNet: 0, closedAt: null, closedLabel: null
@@ -89,6 +103,70 @@ export async function submitCreateGroup() {
   } finally {
     setBusy(false);
   }
+}
+
+// The shared member directory + adding an existing person to another
+// group — both independent of any single group's creation flow.
+export function openMemberForm(id) {
+  if (isSuper()) return;
+  var existing = id ? membersById.get(id) : null;
+  state.ui.memberForm = { id: id || null, name: existing ? existing.name : '' };
+  render();
+  pushNav();
+}
+export function closeMemberForm() { history.back(); }
+
+export async function saveMemberForm() {
+  if (isSuper()) return;
+  var mf = state.ui.memberForm;
+  if (!mf) return;
+  var name = (mf.name || '').trim();
+  if (!name) return;
+  setBusy(true);
+  try {
+    if (mf.id) await updateDoc(doc(db, 'members', mf.id), { name: name });
+    else await addDoc(collection(db, 'members'), { name: name, createdAt: serverTimestamp() });
+    state.ui.memberForm = null;
+  } catch (err) {
+    alert('Could not save member: ' + err.message);
+  } finally { setBusy(false); }
+}
+
+export function openAddMemberToGroup(gid) {
+  if (isSuper()) return;
+  state.ui.addMemberToGroup = { gid: gid, draftName: '' };
+  render();
+  pushNav();
+}
+export function closeAddMemberToGroup() { history.back(); }
+
+export async function addExistingMemberToGroup(gid, memberId) {
+  if (isSuper()) return;
+  setBusy(true);
+  try {
+    await updateDoc(doc(db, 'groups', gid), { memberIds: arrayUnion(memberId) });
+  } catch (err) {
+    alert('Could not add member: ' + err.message);
+  } finally { setBusy(false); }
+}
+
+export async function createAndAddMemberToGroup(gid) {
+  if (isSuper()) return;
+  var amg = state.ui.addMemberToGroup;
+  if (!amg) return;
+  var name = (amg.draftName || '').trim();
+  if (!name) return;
+  setBusy(true);
+  try {
+    var batch = writeBatch(db);
+    var newMemberRef = doc(collection(db, 'members'));
+    batch.set(newMemberRef, { name: name, createdAt: serverTimestamp() });
+    batch.update(doc(db, 'groups', gid), { memberIds: arrayUnion(newMemberRef.id) });
+    await batch.commit();
+    amg.draftName = '';
+  } catch (err) {
+    alert('Could not add member: ' + err.message);
+  } finally { setBusy(false); }
 }
 
 export function openCurrentMonth(gid) {
