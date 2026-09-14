@@ -9,6 +9,9 @@ import { renderDashboard } from './views/dashboard.js';
 import { renderMembers } from './views/members.js';
 import { renderLedger } from './views/ledger.js';
 import { renderGroupDetail } from './views/groupDetail.js';
+import { renderGroupMembers } from './views/groupMembers.js';
+import { renderPaymentSchedule } from './views/paymentSchedule.js';
+import { renderMemberPayments } from './views/memberPayments.js';
 import { renderCreateGroup } from './views/createGroup.js';
 import { renderMonthDetail } from './views/monthDetail.js';
 
@@ -40,6 +43,9 @@ export function render() {
     case 'dashboard': html = renderDashboard(); break;
     case 'members': html = renderMembers(); break;
     case 'groupDetail': html = renderGroupDetail(); break;
+    case 'groupMembers': html = renderGroupMembers(); break;
+    case 'paymentSchedule': html = renderPaymentSchedule(); break;
+    case 'memberPayments': html = renderMemberPayments(); break;
     case 'createGroup': html = renderCreateGroup(); break;
     case 'monthDetail': html = renderMonthDetail(); break;
     case 'ledger': html = renderLedger(); break;

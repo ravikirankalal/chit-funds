@@ -1,7 +1,13 @@
-import { state, groupsById, membersById, membersByGroup } from '../store.js';
-import { fmt, escapeHtml, monthLabel, initialsOf, colorFor, isSuper } from '../helpers.js';
+import { state, groupsById, membersByGroup } from '../store.js';
+import { fmt, escapeHtml, monthLabel } from '../helpers.js';
 import { monthFinances } from '../finance.js';
-import { iconChevronLeft, iconClose } from '../icons.js';
+import { iconChevronLeft, iconChevronRight } from '../icons.js';
+
+function row(label, value, valueColor) {
+  return '<div style="display:flex;justify-content:space-between;"><div style="font-size:12px;color:var(--text-muted);">' + label + '</div><div style="font-size:13px;font-weight:700;' + (valueColor ? 'color:' + valueColor + ';' : '') + '">' + value + '</div></div>';
+}
+
+function signed(n) { return (n < 0 ? '−' : '') + fmt(Math.abs(n)); }
 
 export function renderGroupDetail() {
   var gid = state.activeGroupId;
@@ -9,23 +15,40 @@ export function renderGroupDetail() {
   if (!group) return '<div class="content"><div class="card">' + (state.groupsLoaded ? 'Group not found.' : 'Loading…') + '</div></div>';
   var members = membersByGroup.get(gid) || [];
 
-  var collectedSoFar = 0;
-  for (var i = 1; i <= group.currentMonth; i++) collectedSoFar += monthFinances(gid, group, i).totalCollected;
+  var collectedSoFar = 0, payoutSoFar = 0;
+  for (var i = 1; i <= group.currentMonth; i++) {
+    var mf = monthFinances(gid, group, i);
+    collectedSoFar += mf.totalCollected;
+    if (mf.closed) payoutSoFar += mf.payoutAmount;
+  }
+  var totalCollection = group.totalMembers * group.monthlyDeposit * group.durationMonths;
+  var totalPayout = (group.payoutSchedule || []).reduce(function (a, b) { return a + b; }, 0);
+  var profitSoFar = collectedSoFar - payoutSoFar;
+  var profitMargin = totalCollection - totalPayout;
 
   var rows = [];
-  // Only past + the current month are shown — future months carry no data yet.
-  for (var m = 1; m <= group.currentMonth; m++) {
-    var f = monthFinances(gid, group, m);
+  // Past + current months carry real data; a few months ahead are shown too
+  // (scheduled amount only) so the upcoming payout order is visible at a
+  // glance without having to open the full payment schedule.
+  var lastVisibleMonth = Math.min(group.currentMonth + 2, group.durationMonths);
+  for (var m = 1; m <= lastVisibleMonth; m++) {
     var subtitle, statusLabel, statusColor, badgeBg, badgeColor;
-    if (f.closed) {
-      var winner = members.find(function (mm) { return mm.id === f.monthDoc.winnerId; });
-      subtitle = 'Winner: ' + (winner ? escapeHtml(winner.name) : '—');
-      statusLabel = fmt(f.payoutAmount); statusColor = '#6f6a62';
-      badgeBg = '#e6f2ec'; badgeColor = '#146b52';
+    if (m <= group.currentMonth) {
+      var f = monthFinances(gid, group, m);
+      if (f.closed) {
+        var winner = members.find(function (mm) { return mm.id === f.monthDoc.winnerId; });
+        subtitle = 'Winner: ' + (winner ? escapeHtml(winner.name) : '—');
+        statusLabel = fmt(f.payoutAmount); statusColor = '#6f6a62';
+        badgeBg = '#e6f2ec'; badgeColor = '#146b52';
+      } else {
+        subtitle = f.paidCount + ' / ' + members.length + ' paid so far';
+        statusLabel = 'In progress'; statusColor = '#146b52';
+        badgeBg = '#146b52'; badgeColor = '#fff';
+      }
     } else {
-      subtitle = f.paidCount + ' / ' + members.length + ' paid so far';
-      statusLabel = 'In progress'; statusColor = '#146b52';
-      badgeBg = '#146b52'; badgeColor = '#fff';
+      var scheduledAmount = (group.payoutSchedule && group.payoutSchedule[m - 1]) || 0;
+      subtitle = 'Upcoming'; statusLabel = fmt(scheduledAmount); statusColor = 'var(--text-muted)';
+      badgeBg = 'var(--bg)'; badgeColor = 'var(--text-muted)';
     }
     rows.push('<div class="list-row" data-action="open-month" data-gid="' + gid + '" data-m="' + m + '">' +
       '<div class="avatar sm" style="background:' + badgeBg + '; color:' + badgeColor + ';">' + m + '</div>' +
@@ -34,6 +57,26 @@ export function renderGroupDetail() {
       '<div style="font-size:13px;font-weight:700;color:' + statusColor + ';">' + statusLabel + '</div>' +
     '</div>');
   }
+
+  var financeCard = '<div class="card" style="display:flex;flex-direction:column;gap:10px;">' +
+    row('Total collection', fmt(totalCollection)) +
+    row('Total payout', fmt(totalPayout)) +
+    '<div style="height:1px;background:var(--border);"></div>' +
+    row('Collected so far', fmt(collectedSoFar)) +
+    row('Remaining to collect', fmt(totalCollection - collectedSoFar)) +
+    row('Payouts made so far', fmt(payoutSoFar)) +
+    row('Realized profit so far', signed(profitSoFar), profitSoFar < 0 ? 'var(--danger)' : '#146b52') +
+    '<div style="height:1px;background:var(--border);"></div>' +
+    row('Profit margin at completion', signed(profitMargin), profitMargin < 0 ? 'var(--danger)' : '#146b52') +
+  '</div>';
+
+  var currentAmount = (group.payoutSchedule && group.payoutSchedule[group.currentMonth - 1]) || 0;
+  var currentLabel = monthLabel(group.startYear, group.startMonthIndex, group.currentMonth);
+  var scheduleLink = '<div class="list-row" data-action="open-payment-schedule" data-gid="' + gid + '">' +
+    '<div style="flex:1 1 auto; min-width:0;"><div style="font-size:13px;font-weight:600;">Payment schedule</div>' +
+    '<div style="font-size:11.5px;color:var(--accent);font-weight:600;margin-top:1px;">Current: ' + currentLabel + ' · ' + fmt(currentAmount) + '</div></div>' +
+    iconChevronRight() +
+  '</div>';
 
   var html = '' +
     '<div class="screen">' +
@@ -45,43 +88,16 @@ export function renderGroupDetail() {
       '<div class="content">' +
         '<div class="stat-row">' +
           '<div class="stat"><div class="label">Monthly deposit</div><div class="value">' + fmt(group.monthlyDeposit) + '</div></div>' +
-          '<div class="stat"><div class="label">Collected so far</div><div class="value">' + fmt(collectedSoFar) + '</div></div>' +
-          '<div class="stat"><div class="label">Members</div><div class="value">' + members.length + '</div></div>' +
+          '<div class="stat" data-action="open-group-members" data-gid="' + gid + '" style="cursor:pointer; display:flex; align-items:center; justify-content:space-between; gap:6px;">' +
+            '<div><div class="label">Members</div><div class="value">' + members.length + '</div></div>' +
+            iconChevronRight() +
+          '</div>' +
         '</div>' +
-        (isSuper() ? '' : '<button class="btn btn-soft" style="width:100%;" data-action="open-add-member-to-group" data-gid="' + gid + '">+ Add member to this group</button>') +
+        '<div><div class="section-label">Fund financials</div>' + financeCard + '</div>' +
+        '<div class="row-list">' + scheduleLink + '</div>' +
         '<div><div class="section-label">Months</div><div class="row-list">' + rows.join('') + '</div></div>' +
-      '</div>';
-
-  if (state.ui.addMemberToGroup && state.ui.addMemberToGroup.gid === gid) {
-    html += renderAddMemberOverlay(gid);
-  }
-  return html;
-}
-
-function renderAddMemberOverlay(gid) {
-  var amg = state.ui.addMemberToGroup;
-  var currentIds = {};
-  (membersByGroup.get(gid) || []).forEach(function (m) { currentIds[m.id] = true; });
-  var available = Array.from(membersById.values())
-    .filter(function (m) { return !currentIds[m.id]; })
-    .sort(function (a, b) { return a.name.localeCompare(b.name); });
-
-  var rows = available.map(function (mm, idx) {
-    return '<div class="list-row" data-action="add-existing-member-to-group" data-gid="' + gid + '" data-mid="' + mm.id + '">' +
-      '<div class="avatar sm" style="background:' + colorFor(idx) + ';">' + initialsOf(mm.name) + '</div>' +
-      '<div style="flex:1 1 auto;font-size:13px;font-weight:500;">' + escapeHtml(mm.name) + '</div>' +
-      '<div style="color:var(--accent);font-size:12px;font-weight:600;">Add</div></div>';
-  }).join('') || '<div style="font-size:12px;color:var(--text-muted);padding:8px 0;">Every existing member is already in this group.</div>';
-
-  return '<div class="overlay"><div class="sheet">' +
-    '<div class="sheet-header"><div style="font-size:14px;font-weight:700;">Add member</div>' +
-    '<div class="sheet-close" data-action="close-add-member-to-group">' + iconClose() + '</div></div>' +
-    '<div class="sheet-body">' +
-      '<div><div style="font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:8px;">Existing members</div><div class="row-list">' + rows + '</div></div>' +
-      '<div class="field"><label>Or add a brand new member</label>' +
-        '<div style="display:flex;gap:8px;"><input data-field="addMemberDraftName" value="' + escapeHtml(amg.draftName) + '" placeholder="Full name" style="flex:1 1 auto;padding:12px 14px;border-radius:10px;border:1px solid var(--border);" />' +
-        '<button class="btn btn-primary" style="padding:12px 16px;" data-action="create-and-add-member-to-group" data-gid="' + gid + '">Add</button></div>' +
       '</div>' +
-    '</div>' +
-  '</div></div>';
+    '</div>';
+
+  return html;
 }

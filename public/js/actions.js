@@ -6,12 +6,12 @@
 
 import {
   doc, setDoc, updateDoc, deleteDoc, addDoc, collection, serverTimestamp,
-  runTransaction, writeBatch, arrayUnion
+  runTransaction, writeBatch, arrayUnion, arrayRemove
 } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
 import { db } from './firebase.js';
 import { state, groupsById, membersById, monthsCache, paymentsCache, transferReqCache, monthKey } from './store.js';
 import { isSuper, monthLabel, flatPayoutSchedule, otherAdmin } from './helpers.js';
-import { monthFinances } from './finance.js';
+import { monthFinances, memberHasPaidInGroup } from './finance.js';
 import { goTo, pushNav } from './router.js';
 import { render } from './render.js';
 
@@ -170,6 +170,25 @@ export async function createAndAddMemberToGroup(gid) {
 }
 
 export function openGroupDetail(gid) { goTo('groupDetail', { activeGroupId: gid }); }
+
+export function openGroupMembers(gid) { goTo('groupMembers', { activeGroupId: gid }); }
+
+export function openPaymentSchedule(gid) { goTo('paymentSchedule', { activeGroupId: gid }); }
+
+export function openMemberPayments(gid, mid) { goTo('memberPayments', { activeGroupId: gid, viewMemberId: mid }); }
+
+export async function removeMemberFromGroup(gid, mid) {
+  if (isSuper()) return;
+  var group = groupsById.get(gid);
+  if (!group) return;
+  if (memberHasPaidInGroup(gid, group, mid)) return;
+  setBusy(true);
+  try {
+    await updateDoc(doc(db, 'groups', gid), { memberIds: arrayRemove(mid) });
+  } catch (err) {
+    alert('Could not remove member: ' + err.message);
+  } finally { setBusy(false); }
+}
 
 export function openMonth(gid, m) { goTo('monthDetail', { activeGroupId: gid, viewMonth: m }); }
 
