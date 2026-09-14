@@ -9,12 +9,13 @@ function signed(n) { return (n < 0 ? '−' : '') + fmt(Math.abs(n)); }
 // reads at a glance; the plain label/value rows this replaced didn't.
 function progressCard(label, value, total, barColor) {
   var pct = total > 0 ? Math.min(100, Math.round((value / total) * 100)) : 0;
-  return '<div class="card" style="display:flex;flex-direction:column;gap:8px;">' +
+  return '<div class="card" style="flex:1 1 0; min-width:0; display:flex;flex-direction:column;gap:8px;">' +
     '<div style="display:flex;justify-content:space-between;align-items:baseline;">' +
-      '<div style="font-size:12px;color:var(--text-muted);font-weight:500;">' + label + '</div>' +
+      '<div style="font-size:11.5px;color:var(--text-muted);font-weight:500;">' + label + '</div>' +
       '<div style="font-size:11px;color:var(--text-muted);font-weight:600;">' + pct + '%</div>' +
     '</div>' +
-    '<div class="mono" style="font-size:20px;font-weight:700;">' + fmt(value) + ' <span style="font-size:12px;color:var(--text-muted);font-weight:500;">of ' + fmt(total) + '</span></div>' +
+    '<div class="mono" style="font-size:17px;font-weight:700;">' + fmt(value) + '</div>' +
+    '<div style="font-size:11px;color:var(--text-muted);font-weight:500;">of ' + fmt(total) + '</div>' +
     '<div class="progress-track"><div class="progress-fill" style="width:' + pct + '%; background:' + barColor + ';"></div></div>' +
   '</div>';
 }
@@ -40,38 +41,55 @@ export function renderGroupDetail() {
   var rows = [];
   // Past + current months carry real data; a few months ahead are shown too
   // (scheduled amount only) so the upcoming payout order is visible at a
-  // glance without having to open the full payment schedule.
+  // glance without having to open the full payment schedule. Each row is
+  // visually distinct by state — closed (solid, muted amount), open
+  // (accent border + live collection progress bar), or never started
+  // (dashed, faded) — instead of a badge color being the only cue.
   var lastVisibleMonth = Math.min(group.currentMonth + 2, group.durationMonths);
   for (var m = 1; m <= lastVisibleMonth; m++) {
-    var subtitle, statusLabel, statusColor, badgeBg, badgeColor;
     if (m <= group.currentMonth) {
       var f = monthFinances(gid, group, m);
       if (f.closed) {
         var winner = members.find(function (mm) { return mm.id === f.monthDoc.winnerId; });
-        subtitle = 'Winner: ' + (winner ? escapeHtml(winner.name) : '—');
-        statusLabel = fmt(f.payoutAmount); statusColor = '#6f6a62';
-        badgeBg = '#e6f2ec'; badgeColor = '#146b52';
+        rows.push('<div class="list-row" data-action="open-month" data-gid="' + gid + '" data-m="' + m + '">' +
+          '<div class="avatar sm" style="background:#e6f2ec; color:#146b52;">' + m + '</div>' +
+          '<div style="flex:1 1 auto; min-width:0;"><div style="font-size:13px;font-weight:600;">' + monthLabel(group.startYear, group.startMonthIndex, m) + '</div>' +
+          '<div style="font-size:11.5px;color:var(--text-muted);margin-top:1px;">Winner: ' + (winner ? escapeHtml(winner.name) : '—') + '</div></div>' +
+          '<div style="text-align:right; flex-shrink:0;"><div style="font-size:13px;font-weight:700;color:#146b52;">' + fmt(f.payoutAmount) + '</div>' +
+          '<div style="font-size:11px;color:var(--text-muted);">won</div></div>' +
+        '</div>');
       } else {
-        subtitle = f.paidCount + ' / ' + members.length + ' paid so far';
-        statusLabel = 'In progress'; statusColor = '#146b52';
-        badgeBg = '#146b52'; badgeColor = '#fff';
+        var pct = members.length > 0 ? Math.min(100, Math.round((f.paidCount / members.length) * 100)) : 0;
+        // Blue (not green — green already means "closed/paid out" elsewhere,
+        // and reusing it for "in progress" would blur that distinction).
+        // Same blue already used for transfer ledger entries in finance.js.
+        rows.push('<div class="list-row" data-action="open-month" data-gid="' + gid + '" data-m="' + m + '" style="border-color:#3b4a8a;background:#eef0f9;flex-direction:column;align-items:stretch;gap:6px;">' +
+          '<div style="display:flex;align-items:center;gap:10px;">' +
+            '<div class="avatar sm" style="background:#3b4a8a; color:#fff;">' + m + '</div>' +
+            '<div style="flex:1 1 auto; min-width:0;"><div style="font-size:13px;font-weight:600;">' + monthLabel(group.startYear, group.startMonthIndex, m) + ' · Open</div>' +
+            '<div style="font-size:11.5px;color:var(--text-muted);margin-top:1px;">' + f.paidCount + ' / ' + members.length + ' paid so far</div></div>' +
+            '<div style="text-align:right; flex-shrink:0;"><div style="font-size:13px;font-weight:700;color:#3b4a8a;">' + fmt(f.payoutAmount) + '</div>' +
+            '<div style="font-size:11px;color:var(--text-muted);">' + pct + '% collected</div></div>' +
+          '</div>' +
+          '<div class="progress-track"><div class="progress-fill" style="width:' + pct + '%; background:#3b4a8a;"></div></div>' +
+        '</div>');
       }
     } else {
       var scheduledAmount = (group.payoutSchedule && group.payoutSchedule[m - 1]) || 0;
-      subtitle = 'Upcoming'; statusLabel = fmt(scheduledAmount); statusColor = 'var(--text-muted)';
-      badgeBg = 'var(--bg)'; badgeColor = 'var(--text-muted)';
+      rows.push('<div class="list-row" data-action="open-month" data-gid="' + gid + '" data-m="' + m + '" style="border-style:dashed; opacity:0.65;">' +
+        '<div class="avatar sm" style="background:var(--bg); color:var(--text-muted);">' + m + '</div>' +
+        '<div style="flex:1 1 auto; min-width:0;"><div style="font-size:13px;font-weight:600;">' + monthLabel(group.startYear, group.startMonthIndex, m) + '</div>' +
+        '<div style="font-size:11.5px;color:var(--text-muted);margin-top:1px;">Not started</div></div>' +
+        '<div style="font-size:13px;font-weight:700;color:var(--text-muted);">' + fmt(scheduledAmount) + '</div>' +
+      '</div>');
     }
-    rows.push('<div class="list-row" data-action="open-month" data-gid="' + gid + '" data-m="' + m + '">' +
-      '<div class="avatar sm" style="background:' + badgeBg + '; color:' + badgeColor + ';">' + m + '</div>' +
-      '<div style="flex:1 1 auto; min-width:0;"><div style="font-size:13px;font-weight:600;">' + monthLabel(group.startYear, group.startMonthIndex, m) + '</div>' +
-      '<div style="font-size:11.5px;color:var(--text-muted);margin-top:1px;">' + subtitle + '</div></div>' +
-      '<div style="font-size:13px;font-weight:700;color:' + statusColor + ';">' + statusLabel + '</div>' +
-    '</div>');
   }
 
   var financeCard = '<div style="display:flex;flex-direction:column;gap:10px;">' +
-    progressCard('Collected so far', collectedSoFar, totalCollection, 'var(--accent)') +
-    progressCard('Payouts made so far', payoutSoFar, totalPayout, 'var(--warning)') +
+    '<div style="display:flex;gap:10px;">' +
+      progressCard('Collected so far', collectedSoFar, totalCollection, 'var(--accent)') +
+      progressCard('Payouts so far', payoutSoFar, totalPayout, 'var(--warning)') +
+    '</div>' +
     '<div class="stat-row">' +
       '<div class="stat"><div class="label">Realized profit so far</div><div class="value" style="color:' + (profitSoFar < 0 ? 'var(--danger)' : '#146b52') + ';">' + signed(profitSoFar) + '</div></div>' +
       '<div class="stat"><div class="label">Profit margin at completion</div><div class="value" style="color:' + (profitMargin < 0 ? 'var(--danger)' : '#146b52') + ';">' + signed(profitMargin) + '</div></div>' +
@@ -80,14 +98,6 @@ export function renderGroupDetail() {
       '<div class="stat"><div class="label">' + adminName('A') + ' holds</div><div class="value" style="' + (holdA < 0 ? 'color:var(--danger);' : '') + '">' + signed(holdA) + '</div></div>' +
       '<div class="stat"><div class="label">' + adminName('B') + ' holds</div><div class="value" style="' + (holdB < 0 ? 'color:var(--danger);' : '') + '">' + signed(holdB) + '</div></div>' +
     '</div>' +
-  '</div>';
-
-  var currentAmount = (group.payoutSchedule && group.payoutSchedule[group.currentMonth - 1]) || 0;
-  var currentLabel = monthLabel(group.startYear, group.startMonthIndex, group.currentMonth);
-  var scheduleLink = '<div class="list-row" data-action="open-payment-schedule" data-gid="' + gid + '">' +
-    '<div style="flex:1 1 auto; min-width:0;"><div style="font-size:13px;font-weight:600;">Payment schedule</div>' +
-    '<div style="font-size:11.5px;color:var(--accent);font-weight:600;margin-top:1px;">Current: ' + currentLabel + ' · ' + fmt(currentAmount) + '</div></div>' +
-    iconChevronRight() +
   '</div>';
 
   var html = '' +
@@ -106,7 +116,6 @@ export function renderGroupDetail() {
           '</div>' +
         '</div>' +
         '<div><div class="section-label">Fund financials</div>' + financeCard + '</div>' +
-        '<div class="row-list">' + scheduleLink + '</div>' +
         '<div><div class="section-label">Months</div><div class="row-list">' + rows.join('') + '</div></div>' +
       '</div>' +
     '</div>';

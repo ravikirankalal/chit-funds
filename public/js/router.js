@@ -44,7 +44,7 @@ export function replaceNav() { history.replaceState(navSnapshot(), ''); }
 // Overlays aren't part of this — only the base screen + which group/month,
 // since an overlay draft (a half-typed name, a pending payment edit) isn't
 // preserved and would be misleading to reopen empty.
-var RESTORABLE_SCREENS = { dashboard: 1, members: 1, groupDetail: 1, groupMembers: 1, paymentSchedule: 1, memberPayments: 1, monthDetail: 1, ledger: 1 };
+var RESTORABLE_SCREENS = { dashboard: 1, members: 1, groupDetail: 1, groupMembers: 1, memberPayments: 1, monthDetail: 1, ledger: 1 };
 
 export function getRestorableSnapshot() {
   var snap = history.state;
