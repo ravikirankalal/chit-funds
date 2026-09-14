@@ -186,6 +186,12 @@ export function openPaymentModal(memberId) {
 export function closePaymentModal() { history.back(); }
 export function setModalMode(mode) { if (!state.ui.paymentModal) return; state.ui.paymentModal.mode = mode; render(); }
 
+export function togglePaymentSection(key) {
+  var c = state.ui.collapsedPaymentSections;
+  c[key] = !c[key];
+  render();
+}
+
 export async function savePaymentModal() {
   if (isSuper()) return;
   var pm = state.ui.paymentModal;
@@ -239,8 +245,6 @@ export async function selectWinner(memberId) {
   finally { setBusy(false); }
 }
 
-export function setPayoutAdminChoice(id) { state.ui.payoutAdminChoice = id; render(); }
-
 export async function closeMonthAction() {
   if (isSuper()) return;
   var gid = state.activeGroupId, m = state.viewMonth;
@@ -265,7 +269,7 @@ export async function closeMonthAction() {
 
       var closedLabel = monthLabel(gData.startYear, gData.startMonthIndex, m);
       tx.update(doc(db, 'groups', gid, 'months', String(m)), {
-        status: 'closed', payoutAdmin: state.ui.payoutAdminChoice,
+        status: 'closed', payoutAdmin: state.currentAdmin,
         closedAt: serverTimestamp(), closedLabel: closedLabel
       });
       if (hasNext) {
@@ -277,7 +281,6 @@ export async function closeMonthAction() {
         tx.update(groupRef, { status: 'completed' });
       }
     });
-    state.ui.payoutAdminChoice = 'A';
     var updatedGroup = groupsById.get(gid);
     goTo('groupDetail', { activeGroupId: gid, viewMonth: updatedGroup ? updatedGroup.currentMonth : m });
   } catch (err) {
