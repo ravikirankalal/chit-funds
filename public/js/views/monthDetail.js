@@ -4,6 +4,8 @@ import { fmt, escapeHtml, initialsOf, colorFor, adminName, isSuper, monthLabel, 
 import { monthFinances } from '../finance.js';
 import { iconChevronLeft, iconChevronRight, iconCheck, iconClose } from '../icons.js';
 
+function signed(n) { return (n < 0 ? '−' : '') + fmt(Math.abs(n)); }
+
 export function renderMonthDetail() {
   var gid = state.activeGroupId, viewMonth = state.viewMonth;
   var group = groupsById.get(gid);
@@ -22,7 +24,7 @@ export function renderMonthDetail() {
   var html = '<div class="screen">' +
     '<div class="topbar">' +
       '<div class="back" data-action="nav-back">' + iconChevronLeft() + '</div>' +
-      '<div style="flex:1 1 auto;"><div class="title">' + monthLabel(group.startYear, group.startMonthIndex, viewMonth) + '</div><div class="subtitle">' + escapeHtml(group.name) + ' · of ' + group.durationMonths + '</div></div>' +
+      '<div style="flex:1 1 auto;"><div class="title">' + monthLabel(group.startYear, group.startMonthIndex, viewMonth) + '</div><div class="subtitle">' + escapeHtml(group.name) + ' · Month ' + viewMonth + ' of ' + group.durationMonths + '</div></div>' +
       '<div style="font-size:11px;font-weight:700;padding:5px 10px;border-radius:8px;background:' + statusBg + ';color:' + statusColor + ';">' + statusLabel + '</div>' +
     '</div>' +
     '<div class="content">';
@@ -53,10 +55,6 @@ export function renderMonthDetail() {
   return html;
 }
 
-function row(label, value) {
-  return '<div style="display:flex;justify-content:space-between;"><div style="font-size:12px;color:var(--text-muted);">' + label + '</div><div style="font-size:13px;font-weight:700;">' + value + '</div></div>';
-}
-
 function timelineRow(dotColor, title, status, statusStyle, amount) {
   return '<div style="display:flex;align-items:flex-start;gap:10px;">' +
     '<div style="width:8px;height:8px;border-radius:4px;background:' + dotColor + ';margin-top:5px;flex-shrink:0;"></div>' +
@@ -66,14 +64,28 @@ function timelineRow(dotColor, title, status, statusStyle, amount) {
 
 function renderClosedSummary(f, members) {
   var winner = members.find(function (mm) { return mm.id === f.monthDoc.winnerId; });
-  return '<div class="card" style="display:flex;flex-direction:column;gap:10px;">' +
-    row('Winner', winner ? escapeHtml(winner.name) : '—') +
-    row('Payout amount', fmt(f.payoutAmount)) +
-    row('Paid out by', adminName(f.monthDoc.payoutAdmin)) +
-    row('Collected', fmt(f.totalCollected)) +
-    '<div style="height:1px;background:var(--border);"></div>' +
-    row('Split after transfer', ADMINS.A.name + ' ' + fmt(f.adjA) + ' · ' + ADMINS.B.name + ' ' + fmt(f.adjB)) +
-    row('Closed', escapeHtml(f.monthDoc.closedLabel || '')) +
+  var winnerIdx = winner ? members.indexOf(winner) : -1;
+  return '<div style="display:flex;flex-direction:column;gap:10px;">' +
+    '<div class="card" style="display:flex;align-items:center;gap:12px;background:var(--accent-soft);border-color:var(--accent);">' +
+      (winner ? '<div class="avatar" style="background:' + colorFor(winnerIdx) + ';">' + initialsOf(winner.name) + '</div>' : '') +
+      '<div style="flex:1 1 auto; min-width:0;">' +
+        '<div style="font-size:11px;color:var(--accent);font-weight:600;">This month\'s winner</div>' +
+        '<div style="font-size:16px;font-weight:700;">' + (winner ? escapeHtml(winner.name) : '—') + '</div>' +
+      '</div>' +
+      '<div style="text-align:right; flex-shrink:0;">' +
+        '<div style="font-size:11px;color:var(--text-muted);">Payout</div>' +
+        '<div class="mono" style="font-size:18px;font-weight:700;color:var(--accent);">' + fmt(f.payoutAmount) + '</div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="card" style="display:flex;justify-content:space-between;align-items:center;">' +
+      '<div><div style="font-size:12px;color:var(--text-muted);">Collected</div><div class="mono" style="font-size:16px;font-weight:700;color:#146b52;">' + fmt(f.totalCollected) + '</div></div>' +
+      '<div style="text-align:right;"><div style="font-size:12px;color:var(--text-muted);">Paid out by</div><div style="font-size:14px;font-weight:700;">' + adminName(f.monthDoc.payoutAdmin) + '</div></div>' +
+    '</div>' +
+    '<div class="stat-row">' +
+      '<div class="stat"><div class="label">' + ADMINS.A.name + ' holds</div><div class="value" style="' + (f.adjA < 0 ? 'color:var(--danger);' : '') + '">' + signed(f.adjA) + '</div></div>' +
+      '<div class="stat"><div class="label">' + ADMINS.B.name + ' holds</div><div class="value" style="' + (f.adjB < 0 ? 'color:var(--danger);' : '') + '">' + signed(f.adjB) + '</div></div>' +
+    '</div>' +
+    '<div style="font-size:11px;color:var(--text-muted);text-align:center;">Closed ' + escapeHtml(f.monthDoc.closedLabel || '') + '</div>' +
   '</div>';
 }
 
@@ -83,9 +95,17 @@ function renderUpcomingNotice(group, viewMonth) {
 }
 
 function renderOpenSummary(f, members, group) {
-  return '<div class="card" style="display:flex;justify-content:space-between;align-items:center;">' +
-    '<div><div style="font-size:12px;color:var(--text-muted);">Collected</div><div class="mono" style="font-size:16px;font-weight:700;">' + fmt(f.totalCollected) + ' <span style="font-size:12px;color:var(--text-muted);font-weight:400;">/ ' + fmt(members.length * group.monthlyDeposit) + '</span></div></div>' +
-    '<div style="text-align:right;"><div style="font-size:12px;color:var(--text-muted);">Scheduled payout</div><div class="mono" style="font-size:16px;font-weight:700;color:var(--accent);">' + fmt(f.payoutAmount) + '</div></div>' +
+  var expected = members.length * group.monthlyDeposit;
+  var pct = expected > 0 ? Math.min(100, Math.round((f.totalCollected / expected) * 100)) : 0;
+  return '<div class="card" style="display:flex;flex-direction:column;gap:10px;">' +
+    '<div style="display:flex;justify-content:space-between;align-items:center;">' +
+      '<div><div style="font-size:12px;color:var(--text-muted);">Collected</div><div class="mono" style="font-size:16px;font-weight:700;">' + fmt(f.totalCollected) + ' <span style="font-size:12px;color:var(--text-muted);font-weight:400;">/ ' + fmt(expected) + '</span></div></div>' +
+      '<div style="text-align:right;"><div style="font-size:12px;color:var(--text-muted);">Scheduled payout</div><div class="mono" style="font-size:16px;font-weight:700;color:var(--accent);">' + fmt(f.payoutAmount) + '</div></div>' +
+    '</div>' +
+    '<div>' +
+      '<div style="display:flex;justify-content:space-between;margin-bottom:4px;"><div style="font-size:11px;color:var(--text-muted);">' + f.paidCount + ' / ' + members.length + ' paid</div><div style="font-size:11px;color:var(--text-muted);font-weight:600;">' + pct + '%</div></div>' +
+      '<div class="progress-track"><div class="progress-fill" style="width:' + pct + '%;"></div></div>' +
+    '</div>' +
   '</div>';
 }
 
@@ -112,10 +132,11 @@ function paymentRow(r, readOnly, transferable) {
 function paymentSubsection(key, label, rows, amount, readOnly, transferable) {
   if (!rows.length) return '';
   var collapsed = !!state.ui.collapsedPaymentSections[key];
+  var amountColor = key === 'unpaid' ? 'var(--danger)' : '#146b52';
   return '<div style="margin-top:14px;">' +
     '<div data-action="toggle-payment-section" data-key="' + key + '" style="display:flex;align-items:center;gap:4px;cursor:pointer;margin-bottom:6px;">' +
       '<div style="display:flex;transform:rotate(' + (collapsed ? '0' : '90') + 'deg);color:var(--text-muted);">' + iconChevronRight() + '</div>' +
-      '<div style="font-size:11.5px;font-weight:600;color:var(--text-muted);">' + label + ' (' + rows.length + ') · ' + fmt(amount) + '</div>' +
+      '<div style="font-size:11.5px;font-weight:600;color:var(--text-muted);">' + label + ' (' + rows.length + ') · <span style="color:' + amountColor + ';">' + fmt(amount) + '</span></div>' +
     '</div>' +
     (collapsed ? '' : '<div class="row-list">' + rows.map(function (r) { return paymentRow(r, readOnly, transferable); }).join('') + '</div>') +
   '</div>';
