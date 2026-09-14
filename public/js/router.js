@@ -60,6 +60,7 @@ export function goTo(screen, extra) {
   state.ui.paymentModal = null;
   state.ui.memberForm = null;
   state.ui.addMemberToGroup = null;
+  state.ui.transferSelection = null;
   if (extra) Object.assign(state, extra);
   render();
   if (screen === 'dashboard' || screen === 'login') replaceNav();

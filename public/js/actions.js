@@ -10,7 +10,7 @@ import {
 } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
 import { db } from './firebase.js';
 import { state, groupsById, membersById, monthsCache, paymentsCache, transferReqCache, monthKey } from './store.js';
-import { isSuper, monthLabel, flatPayoutSchedule } from './helpers.js';
+import { isSuper, monthLabel, flatPayoutSchedule, otherAdmin } from './helpers.js';
 import { monthFinances } from './finance.js';
 import { goTo, pushNav } from './router.js';
 import { render } from './render.js';
@@ -198,12 +198,16 @@ export async function savePaymentModal() {
   var pm = state.ui.paymentModal;
   if (!pm) return;
   var gid = state.activeGroupId, m = state.viewMonth;
+  var existing = (paymentsCache.get(monthKey(gid, m)) || {})[pm.memberId];
+  // Only the collector currently holding the amount may change its mode,
+  // and only before it's been handed off to the other admin.
+  if (existing && existing.paid && (existing.collectedBy !== state.currentAdmin || existing.transferred)) return;
   setBusy(true);
   try {
     var ref = doc(db, 'groups', gid, 'months', String(m), 'payments', pm.memberId);
-    var existing = (paymentsCache.get(monthKey(gid, m)) || {})[pm.memberId];
     await setDoc(ref, {
-      paid: true, collectedBy: state.currentAdmin, mode: pm.mode,
+      paid: true, collectedBy: (existing && existing.paid) ? existing.collectedBy : state.currentAdmin, mode: pm.mode,
+      transferred: !!(existing && existing.transferred),
       paidAt: (existing && existing.paidAt) || serverTimestamp()
     });
     state.ui.paymentModal = null;
@@ -217,12 +221,65 @@ export async function markUnpaidFromModal() {
   var pm = state.ui.paymentModal;
   if (!pm) return;
   var gid = state.activeGroupId, m = state.viewMonth;
+  var existing = (paymentsCache.get(monthKey(gid, m)) || {})[pm.memberId];
+  // Only whoever currently holds the amount can undo the payment.
+  if (existing && existing.collectedBy !== state.currentAdmin) return;
   setBusy(true);
   try {
     await deleteDoc(doc(db, 'groups', gid, 'months', String(m), 'payments', pm.memberId));
     state.ui.paymentModal = null;
   } catch (err) {
     alert('Could not update payment: ' + err.message);
+  } finally { setBusy(false); }
+}
+
+// Long-pressing a paid entry in the logged-in admin's own "collected by"
+// section selects it for a hand-off to the other admin — see
+// renderTransferBar in monthDetail.js. A long press starts the selection
+// with one entry; once active, a plain tap on another eligible entry in
+// the same section toggles it too (see the 'open-payment-modal' case in
+// events.js) — so this single toggle covers both the long-press and the
+// tap-to-add/remove paths.
+export function togglePaymentSelection(mid) {
+  if (isSuper()) return;
+  var gid = state.activeGroupId, m = state.viewMonth;
+  var group = groupsById.get(gid);
+  if (!group || m !== group.currentMonth) return;
+  var existing = (paymentsCache.get(monthKey(gid, m)) || {})[mid];
+  if (!existing || !existing.paid || existing.collectedBy !== state.currentAdmin) return;
+  var sel = state.ui.transferSelection || (state.ui.transferSelection = { mids: [] });
+  var idx = sel.mids.indexOf(mid);
+  if (idx === -1) sel.mids.push(mid); else sel.mids.splice(idx, 1);
+  if (!sel.mids.length) state.ui.transferSelection = null;
+  render();
+}
+
+export function cancelTransferSelection() {
+  state.ui.transferSelection = null;
+  render();
+}
+
+export async function confirmTransfer() {
+  var sel = state.ui.transferSelection;
+  if (!sel || !sel.mids.length) return;
+  var gid = state.activeGroupId, m = state.viewMonth;
+  var payments = paymentsCache.get(monthKey(gid, m)) || {};
+  var mids = sel.mids.filter(function (mid) {
+    var p = payments[mid];
+    return p && p.paid && p.collectedBy === state.currentAdmin;
+  });
+  if (!mids.length) { state.ui.transferSelection = null; render(); return; }
+  setBusy(true);
+  try {
+    var target = otherAdmin(state.currentAdmin);
+    var batch = writeBatch(db);
+    mids.forEach(function (mid) {
+      batch.update(doc(db, 'groups', gid, 'months', String(m), 'payments', mid), { collectedBy: target, transferred: true });
+    });
+    await batch.commit();
+    state.ui.transferSelection = null;
+  } catch (err) {
+    alert('Could not transfer payments: ' + err.message);
   } finally { setBusy(false); }
 }
 

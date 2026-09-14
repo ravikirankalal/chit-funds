@@ -1,6 +1,6 @@
 import { ADMINS } from '../../firebase-config.js';
 import { state, groupsById, membersByGroup, paymentsCache, monthsCache, transferReqCache, monthKey } from '../store.js';
-import { fmt, escapeHtml, initialsOf, colorFor, adminName, isSuper, monthLabel, formatDateTime } from '../helpers.js';
+import { fmt, escapeHtml, initialsOf, colorFor, adminName, isSuper, monthLabel, formatDateTime, otherAdmin } from '../helpers.js';
 import { monthFinances } from '../finance.js';
 import { iconChevronLeft, iconChevronRight, iconCheck, iconClose } from '../icons.js';
 
@@ -36,7 +36,7 @@ export function renderMonthDetail() {
   }
 
   if (isOpen || isClosed) {
-    html += renderPaymentList(gid, viewMonth, members, f, readOnly, group);
+    html += renderPaymentList(gid, viewMonth, members, f, readOnly, group, isOpen);
   }
 
   if (isOpen) {
@@ -48,6 +48,7 @@ export function renderMonthDetail() {
 
   if (state.ui.showWinnerPicker) html += renderWinnerPickerOverlay(gid, group, f, members);
   if (state.ui.paymentModal) html += renderPaymentModalOverlay(gid, viewMonth, group, members);
+  if (state.ui.transferSelection) html += renderTransferBar(gid, viewMonth, group);
 
   return html;
 }
@@ -88,12 +89,19 @@ function renderOpenSummary(f, members, group) {
   '</div>';
 }
 
-function paymentRow(r, readOnly) {
+function paymentRow(r, readOnly, transferable) {
   var paidAtLabel = formatDateTime(r.paidAt);
   var subtitle = r.paid
-    ? 'Collected by <span style="font-weight:600;color:var(--accent);">' + adminName(r.collectedBy) + '</span> · ' + (r.mode === 'online' ? 'Online' : 'Cash') + (paidAtLabel ? ' · ' + paidAtLabel : '')
+    ? 'Collected by <span style="font-weight:600;color:var(--accent);">' + adminName(r.collectedBy) + '</span> · ' + (r.mode === 'online' ? 'Online' : 'Cash') + (paidAtLabel ? ' · ' + paidAtLabel : '') + (r.transferred ? ' · Transferred' : '')
     : '<span style="color:var(--danger);">Not paid yet' + (readOnly ? '' : ' · tap to record') + '</span>';
-  return '<div class="list-row" ' + (readOnly ? '' : 'data-action="open-payment-modal" data-mid="' + r.mm.id + '"') + '>' +
+  var selection = state.ui.transferSelection;
+  var canTransfer = transferable && r.paid && !readOnly;
+  var selected = canTransfer && selection && selection.mids.indexOf(r.mm.id) !== -1;
+  var showCheckbox = canTransfer && !!selection;
+  return '<div class="list-row" style="' + (selected ? 'border-color:var(--accent);background:var(--accent-soft);' : '') + (canTransfer ? 'user-select:none;' : '') + '" ' +
+    (readOnly ? '' : 'data-action="open-payment-modal" data-mid="' + r.mm.id + '"') +
+    (canTransfer ? ' data-transferable="1"' : '') + '>' +
+    (showCheckbox ? '<div style="width:22px;height:22px;border-radius:11px;border:1.5px solid ' + (selected ? 'var(--accent)' : '#d8d4cb') + ';background:' + (selected ? 'var(--accent)' : 'transparent') + ';display:flex;align-items:center;justify-content:center;flex-shrink:0;">' + (selected ? iconCheck('#fff') : '') + '</div>' : '') +
     '<div class="avatar sm" style="background:' + colorFor(r.idx) + ';">' + initialsOf(r.mm.name) + '</div>' +
     '<div style="flex:1 1 auto;min-width:0;"><div style="font-size:13px;font-weight:500;">' + escapeHtml(r.mm.name) + '</div>' +
     '<div style="font-size:11px;color:var(--text-muted);margin-top:1px;">' + subtitle + '</div></div>' +
@@ -101,7 +109,7 @@ function paymentRow(r, readOnly) {
   '</div>';
 }
 
-function paymentSubsection(key, label, rows, amount, readOnly) {
+function paymentSubsection(key, label, rows, amount, readOnly, transferable) {
   if (!rows.length) return '';
   var collapsed = !!state.ui.collapsedPaymentSections[key];
   return '<div style="margin-top:14px;">' +
@@ -109,7 +117,7 @@ function paymentSubsection(key, label, rows, amount, readOnly) {
       '<div style="display:flex;transform:rotate(' + (collapsed ? '0' : '90') + 'deg);color:var(--text-muted);">' + iconChevronRight() + '</div>' +
       '<div style="font-size:11.5px;font-weight:600;color:var(--text-muted);">' + label + ' (' + rows.length + ') · ' + fmt(amount) + '</div>' +
     '</div>' +
-    (collapsed ? '' : '<div class="row-list">' + rows.map(function (r) { return paymentRow(r, readOnly); }).join('') + '</div>') +
+    (collapsed ? '' : '<div class="row-list">' + rows.map(function (r) { return paymentRow(r, readOnly, transferable); }).join('') + '</div>') +
   '</div>';
 }
 
@@ -117,12 +125,14 @@ function paymentSubsection(key, label, rows, amount, readOnly) {
 // own "collected by" section second, so each admin sees their own
 // collections first without having to scan past the other admin's.
 // Collapse state is keyed by admin id (not position) so it stays stable
-// regardless of which admin is currently viewing.
-function renderPaymentList(gid, viewMonth, members, f, readOnly, group) {
+// regardless of which admin is currently viewing. Only the logged-in
+// admin's own section is hold-to-transfer eligible, and only while the
+// month is still open — see selectPaymentForTransfer in actions.js.
+function renderPaymentList(gid, viewMonth, members, f, readOnly, group, isOpen) {
   var payments = paymentsCache.get(monthKey(gid, viewMonth)) || {};
   var payRows = members.map(function (mm, idx) {
     var p = payments[mm.id] || { paid: false };
-    return { mm: mm, idx: idx, paid: !!p.paid, collectedBy: p.collectedBy, mode: p.mode, paidAt: p.paidAt };
+    return { mm: mm, idx: idx, paid: !!p.paid, collectedBy: p.collectedBy, mode: p.mode, paidAt: p.paidAt, transferred: !!p.transferred };
   });
 
   var unpaidRows = payRows.filter(function (r) { return !r.paid; });
@@ -141,9 +151,9 @@ function renderPaymentList(gid, viewMonth, members, f, readOnly, group) {
   var secondAmount = currentIsB ? f.rawA : f.rawB;
 
   return '<div><div class="section-label">Member payments (' + f.paidCount + '/' + members.length + ')</div>' +
-    paymentSubsection('unpaid', 'Unpaid', unpaidRows, unpaidAmount, readOnly) +
-    paymentSubsection(firstKey, firstLabel, firstRows, firstAmount, readOnly) +
-    paymentSubsection(secondKey, secondLabel, secondRows, secondAmount, readOnly) +
+    paymentSubsection('unpaid', 'Unpaid', unpaidRows, unpaidAmount, readOnly, false) +
+    paymentSubsection(firstKey, firstLabel, firstRows, firstAmount, readOnly, isOpen) +
+    paymentSubsection(secondKey, secondLabel, secondRows, secondAmount, readOnly, false) +
   '</div>';
 }
 
@@ -206,6 +216,9 @@ function renderPaymentModalOverlay(gid, viewMonth, group, members) {
   var pmem = members.find(function (mm) { return mm.id === pm.memberId; });
   var pidx = members.indexOf(pmem);
   var existingP = (paymentsCache.get(monthKey(gid, viewMonth)) || {})[pm.memberId];
+  var holder = pm.isEditing && existingP ? existingP.collectedBy : state.currentAdmin;
+  var canEditMode = !pm.isEditing || (existingP && existingP.collectedBy === state.currentAdmin && !existingP.transferred);
+  var canMarkUnpaid = pm.isEditing && existingP && existingP.collectedBy === state.currentAdmin;
   var transferHistory = '';
   if (pm.isEditing && existingP) {
     transferHistory += '<div><div style="font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:8px;">Transfer history</div><div style="display:flex;flex-direction:column;gap:10px;">' +
@@ -227,7 +240,7 @@ function renderPaymentModalOverlay(gid, viewMonth, group, members) {
     '<div class="sheet-header">' +
       '<div class="avatar sm" style="background:' + colorFor(pidx) + ';">' + initialsOf(pmem.name) + '</div>' +
       '<div style="flex:1 1 auto;min-width:0;"><div style="font-size:14px;font-weight:700;">' + escapeHtml(pmem.name) + '</div>' +
-      '<div style="font-size:11.5px;color:var(--text-muted);">' + monthLabel(group.startYear, group.startMonthIndex, viewMonth) + ' · ' + fmt(group.monthlyDeposit) + ' · collected by ' + adminName(state.currentAdmin) + '</div></div>' +
+      '<div style="font-size:11.5px;color:var(--text-muted);">' + monthLabel(group.startYear, group.startMonthIndex, viewMonth) + ' · ' + fmt(group.monthlyDeposit) + ' · collected by ' + adminName(holder) + '</div></div>' +
       '<div class="sheet-close" data-action="close-payment-modal">' + iconClose() + '</div>' +
     '</div>' +
     '<div class="sheet-body">' +
@@ -237,13 +250,40 @@ function renderPaymentModalOverlay(gid, viewMonth, group, members) {
         (pm.isEditing && existingP && formatDateTime(existingP.paidAt) ? '<div style="font-size:11px;color:var(--text-muted);margin-top:2px;">Paid on ' + formatDateTime(existingP.paidAt) + '</div>' : '') +
       '</div>' +
       '<div><div style="font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:8px;">Payment mode</div>' +
-      '<div class="pill-row">' +
-        '<button class="pill ' + (pm.mode === 'cash' ? 'active' : '') + '" data-action="set-modal-mode" data-mode="cash">Cash</button>' +
-        '<button class="pill ' + (pm.mode === 'online' ? 'active' : '') + '" data-action="set-modal-mode" data-mode="online">Online</button>' +
-      '</div></div>' +
+      (canEditMode
+        ? '<div class="pill-row">' +
+            '<button class="pill ' + (pm.mode === 'cash' ? 'active' : '') + '" data-action="set-modal-mode" data-mode="cash">Cash</button>' +
+            '<button class="pill ' + (pm.mode === 'online' ? 'active' : '') + '" data-action="set-modal-mode" data-mode="online">Online</button>' +
+          '</div>'
+        : '<div class="pill-row"><div class="pill active" style="pointer-events:none;">' + (pm.mode === 'online' ? 'Online' : 'Cash') + '</div></div>' +
+          '<div style="font-size:11px;color:var(--text-muted);margin-top:6px;">' + (existingP && existingP.transferred ? 'Locked — this amount has been transferred and can no longer be edited.' : 'Only ' + adminName(holder) + ' can change this.') + '</div>'
+      ) + '</div>' +
       transferHistory +
-      (pm.isEditing ? '<button class="btn btn-danger-text" style="width:100%;" data-action="mark-unpaid">Mark as unpaid</button>' : '') +
-      (!pm.isEditing || pm.mode !== pm.originalMode ? '<button class="btn btn-primary" style="width:100%;" data-action="save-payment">Save Payment</button>' : '') +
+      (canMarkUnpaid ? '<button class="btn btn-danger-soft" style="width:100%;" data-action="mark-unpaid">Mark as unpaid</button>' : '') +
+      (canEditMode && (!pm.isEditing || pm.mode !== pm.originalMode) ? '<button class="btn btn-primary" style="width:100%;" data-action="save-payment">Save Payment</button>' : '') +
     '</div>' +
   '</div></div>';
+}
+
+// A floating bar, not a modal overlay — the payment list underneath must
+// stay tappable so more entries can be added to the selection. Long-press
+// starts it; a plain tap on another eligible row (see the
+// 'open-payment-modal' case in events.js) adds or removes it.
+function renderTransferBar(gid, viewMonth, group) {
+  var sel = state.ui.transferSelection;
+  var payments = paymentsCache.get(monthKey(gid, viewMonth)) || {};
+  var mids = sel.mids.filter(function (mid) { return payments[mid] && payments[mid].paid && payments[mid].collectedBy === state.currentAdmin; });
+  if (!mids.length) return '';
+  var target = otherAdmin(state.currentAdmin);
+  var total = mids.length * group.monthlyDeposit;
+  return '<div style="position:fixed;left:0;right:0;bottom:0;z-index:25;display:flex;justify-content:center;">' +
+    '<div style="width:100%;max-width:var(--max-width);background:var(--surface);border-top:1px solid var(--border);border-radius:16px 16px 0 0;padding:14px 16px;display:flex;align-items:center;gap:10px;box-shadow:0 -6px 20px rgba(0,0,0,0.12);">' +
+      '<div style="flex:1 1 auto;min-width:0;">' +
+        '<div style="font-size:11.5px;color:var(--text-muted);">' + mids.length + ' payment' + (mids.length === 1 ? '' : 's') + ' selected</div>' +
+        '<div class="mono" style="font-size:16px;font-weight:700;">' + fmt(total) + '</div>' +
+      '</div>' +
+      '<div data-action="cancel-transfer-selection" style="width:32px;height:32px;border-radius:9px;background:var(--bg);display:flex;align-items:center;justify-content:center;flex-shrink:0;">' + iconClose() + '</div>' +
+      '<button class="btn btn-primary" style="flex-shrink:0;padding:12px 16px;white-space:nowrap;" data-action="confirm-transfer">Transfer to ' + adminName(target) + '</button>' +
+    '</div>' +
+  '</div>';
 }

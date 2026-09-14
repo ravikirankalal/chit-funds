@@ -18,10 +18,38 @@ import {
   closeMonthAction, requestTransferToB, requestTransferToA,
   acceptTransferRequest, declineTransferRequest, cancelTransferRequest,
   openMemberForm, closeMemberForm, saveMemberForm,
-  openAddMemberToGroup, closeAddMemberToGroup, addExistingMemberToGroup, createAndAddMemberToGroup
+  openAddMemberToGroup, closeAddMemberToGroup, addExistingMemberToGroup, createAndAddMemberToGroup,
+  togglePaymentSelection, cancelTransferSelection, confirmTransfer
 } from './actions.js';
 
+// Holding a payment row (in the logged-in admin's own "collected by"
+// section) starts a multi-select for handing payments off to the other
+// admin — see togglePaymentSelection. Once selection is active, a plain
+// tap on another eligible row adds/removes it too (handled in the
+// 'open-payment-modal' case below); a short tap outside selection mode
+// still opens the payment modal as usual — only a press held past
+// LONG_PRESS_MS starts selecting.
+var LONG_PRESS_MS = 550;
+var pressTimer = null;
+var suppressNextClick = false;
+
+function clearPressTimer() { clearTimeout(pressTimer); pressTimer = null; }
+
+document.addEventListener('pointerdown', function (e) {
+  var el = e.target.closest('[data-transferable]');
+  if (!el) return;
+  clearPressTimer();
+  pressTimer = setTimeout(function () {
+    suppressNextClick = true;
+    togglePaymentSelection(el.getAttribute('data-mid'));
+  }, LONG_PRESS_MS);
+});
+['pointerup', 'pointerleave', 'pointercancel'].forEach(function (evt) {
+  document.addEventListener(evt, clearPressTimer);
+});
+
 document.addEventListener('click', function (e) {
+  if (suppressNextClick) { suppressNextClick = false; return; }
   var el = e.target.closest('[data-action]');
   if (!el) return;
   var action = el.getAttribute('data-action');
@@ -42,7 +70,10 @@ document.addEventListener('click', function (e) {
     case 'submit-create-group': submitCreateGroup(); break;
     case 'open-group': openGroupDetail(el.getAttribute('data-gid')); break;
     case 'open-month': openMonth(el.getAttribute('data-gid'), parseInt(el.getAttribute('data-m'), 10)); break;
-    case 'open-payment-modal': openPaymentModal(el.getAttribute('data-mid')); break;
+    case 'open-payment-modal':
+      if (state.ui.transferSelection && el.hasAttribute('data-transferable')) togglePaymentSelection(el.getAttribute('data-mid'));
+      else openPaymentModal(el.getAttribute('data-mid'));
+      break;
     case 'close-payment-modal': closePaymentModal(); break;
     case 'set-modal-mode': setModalMode(el.getAttribute('data-mode')); break;
     case 'save-payment': savePaymentModal(); break;
@@ -57,6 +88,8 @@ document.addEventListener('click', function (e) {
     case 'accept-transfer-request': acceptTransferRequest(); break;
     case 'decline-transfer-request': declineTransferRequest(); break;
     case 'cancel-transfer-request': cancelTransferRequest(); break;
+    case 'cancel-transfer-selection': cancelTransferSelection(); break;
+    case 'confirm-transfer': confirmTransfer(); break;
     case 'open-member-form': openMemberForm(el.getAttribute('data-id')); break;
     case 'close-member-form': closeMemberForm(); break;
     case 'save-member-form': saveMemberForm(); break;
