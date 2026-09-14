@@ -6,13 +6,24 @@ import {
   iconChevronLeft, iconChevronRight, iconCheck, iconClose,
   iconTrophy, iconWallet, iconWarningTriangle, iconClock, iconCash, iconCard, iconTransfer, iconCalendar
 } from '../icons.js';
+import { bar, skeletonTopbar, skeletonListRow } from '../skeleton.js';
 
 function signed(n) { return (n < 0 ? '−' : '') + fmt(Math.abs(n)); }
+
+function renderMonthDetailSkeleton() {
+  var rows = [0, 1, 2].map(function () { return skeletonListRow(); }).join('');
+  return '<div class="screen">' + skeletonTopbar() +
+    '<div class="content">' +
+      bar('100%', '110px', 'border-radius:14px;') +
+      '<div class="row-list">' + rows + '</div>' +
+    '</div>' +
+  '</div>';
+}
 
 export function renderMonthDetail() {
   var gid = state.activeGroupId, viewMonth = state.viewMonth;
   var group = groupsById.get(gid);
-  if (!group) return '<div class="content"><div class="card">Loading…</div></div>';
+  if (!group) return state.groupsLoaded ? '<div class="content"><div class="card">Group not found.</div></div>' : renderMonthDetailSkeleton();
   var readOnly = isSuper();
   var members = membersByGroup.get(gid) || [];
   var f = monthFinances(gid, group, viewMonth);

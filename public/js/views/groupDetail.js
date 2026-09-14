@@ -2,8 +2,25 @@ import { state, groupsById, membersByGroup } from '../store.js';
 import { fmt, escapeHtml, monthLabel, adminName, adminDot } from '../helpers.js';
 import { monthFinances } from '../finance.js';
 import { iconChevronLeft, iconChevronRight, iconWallet, iconPeopleSmall, iconTrendingUp, iconCalendar, iconTrophy, iconGroupStack } from '../icons.js';
+import { bar, skeletonTopbar, skeletonListRow } from '../skeleton.js';
 
 function signed(n) { return (n < 0 ? '−' : '') + fmt(Math.abs(n)); }
+
+function renderGroupDetailSkeleton() {
+  var statPair = '<div class="stat-row">' +
+    '<div class="stat">' + bar('60%', '10.5px') + bar('50%', '15px', 'margin-top:8px;') + '</div>' +
+    '<div class="stat">' + bar('60%', '10.5px') + bar('50%', '15px', 'margin-top:8px;') + '</div>' +
+  '</div>';
+  var progressPair = '<div style="display:flex;gap:10px;">' + bar('50%', '96px', 'border-radius:14px;') + bar('50%', '96px', 'border-radius:14px;') + '</div>';
+  var months = [0, 1, 2].map(function () { return skeletonListRow(); }).join('');
+  return '<div class="screen">' + skeletonTopbar() +
+    '<div class="content">' +
+      statPair +
+      '<div>' + bar('130px', '13px', 'margin-bottom:10px;') + progressPair + '<div style="margin-top:10px;">' + statPair + '</div></div>' +
+      '<div>' + bar('80px', '13px', 'margin-bottom:10px;') + '<div class="row-list">' + months + '</div></div>' +
+    '</div>' +
+  '</div>';
+}
 
 // A progress-bar comparison ("collected so far out of total collection")
 // reads at a glance; the plain label/value rows this replaced didn't.
@@ -23,7 +40,7 @@ function progressCard(label, value, total, barColor) {
 export function renderGroupDetail() {
   var gid = state.activeGroupId;
   var group = groupsById.get(gid);
-  if (!group) return '<div class="content"><div class="card">' + (state.groupsLoaded ? 'Group not found.' : 'Loading…') + '</div></div>';
+  if (!group) return state.groupsLoaded ? '<div class="content"><div class="card">Group not found.</div></div>' : renderGroupDetailSkeleton();
   var members = membersByGroup.get(gid) || [];
 
   var collectedSoFar = 0, payoutSoFar = 0, holdA = 0, holdB = 0;

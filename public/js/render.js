@@ -13,6 +13,7 @@ import { renderGroupMembers } from './views/groupMembers.js';
 import { renderMemberPayments } from './views/memberPayments.js';
 import { renderCreateGroup } from './views/createGroup.js';
 import { renderMonthDetail } from './views/monthDetail.js';
+import { renderBootSkeleton } from './skeleton.js';
 
 export function render() {
   var root = document.getElementById('app');
@@ -47,7 +48,7 @@ export function render() {
     case 'createGroup': html = renderCreateGroup(); break;
     case 'monthDetail': html = renderMonthDetail(); break;
     case 'ledger': html = renderLedger(); break;
-    default: html = '<div class="boot">Loading Chit Funds…</div>';
+    default: html = renderBootSkeleton();
   }
   root.innerHTML = html;
 
