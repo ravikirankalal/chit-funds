@@ -1,38 +1,23 @@
 #!/usr/bin/env bash
 # Helper for developing against the local Firebase Emulator Suite instead of
-# production. Wraps the three manual steps that testing against the emulator
-# otherwise needs: flipping USE_EMULATORS in public/firebase-config.js,
-# starting auth+firestore+hosting together, and seeding a fixture worth
-# looking at (a group with a closed month that still has unpaid dues).
+# production. public/js/firebase.js auto-detects the emulator at runtime
+# (localhost/127.0.0.1 + the Auth emulator actually answering) — there is no
+# flag in firebase-config.js to flip anymore, in either direction.
 #
 # Usage:
-#   scripts/dev-emulator.sh up      # flip USE_EMULATORS=true, start emulators (foreground)
+#   scripts/dev-emulator.sh up      # start emulators (foreground)
 #   scripts/dev-emulator.sh seed    # seed a demo group into the running emulator
 #   scripts/dev-emulator.sh signin  # print a browser-console snippet to sign in without the Google popup
-#   scripts/dev-emulator.sh down    # flip USE_EMULATORS=false back (run after stopping the emulator)
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-CONFIG=public/firebase-config.js
 PROJECT=localbc-41b52
 BASE="http://127.0.0.1:8080/v1/projects/$PROJECT/databases/(default)/documents"
 
-set_emulators() {
-  sed -i.bak "s/export const USE_EMULATORS = .*/export const USE_EMULATORS = $1;/" "$CONFIG"
-  rm -f "$CONFIG.bak"
-}
-
 cmd_up() {
-  set_emulators true
-  echo "USE_EMULATORS set to true in $CONFIG"
   echo "Starting emulators — auth :9099, firestore :8080, hosting :5050 (Ctrl+C to stop)..."
+  echo "public/js/firebase.js will pick these up automatically once they're reachable — nothing to edit."
   firebase emulators:start --only auth,firestore,hosting --project "$PROJECT"
-}
-
-cmd_down() {
-  set_emulators false
-  echo "USE_EMULATORS reverted to false in $CONFIG"
-  echo "(If the emulator is still running in another terminal, stop it there with Ctrl+C.)"
 }
 
 # Firestore emulator writes/reads normally go through firestore.rules like a
@@ -119,11 +104,13 @@ JS
 
 case "${1:-}" in
   up) cmd_up ;;
-  down) cmd_down ;;
   seed) cmd_seed ;;
   signin) cmd_signin ;;
+  down)
+    echo "Nothing to revert — the emulator is auto-detected at runtime now, no flag to flip back."
+    ;;
   *)
-    echo "Usage: $0 {up|down|seed|signin}" >&2
+    echo "Usage: $0 {up|seed|signin}" >&2
     exit 1
     ;;
 esac

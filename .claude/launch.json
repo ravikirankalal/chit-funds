@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "chit-funds-hosting",
+      "runtimeExecutable": "firebase",
+      "runtimeArgs": ["emulators:start", "--only", "hosting", "--project", "localbc-41b52"],
+      "port": 5050
+    },
+    {
+      "name": "chit-funds-full-emulator",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["-c", "ulimit -u 4096; firebase emulators:start --only auth,firestore,hosting --project localbc-41b52"],
+      "port": 5050
+    }
+  ]
+}

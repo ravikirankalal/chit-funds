@@ -1,13 +1,19 @@
 /* Reusable UI pieces used across multiple screens: cards, stat tiles, list
-   rows, avatars, buttons, pills, and form fields. */
+   rows, avatars, buttons, pills, and form fields.
+
+   Elevation: surfaces lean on --shadow-* + a hairline border rather than a
+   heavier border alone, so the app reads as layered instead of outlined. */
 
 .card {
   background: var(--color-surface); border: 1px solid var(--color-border);
-  border-radius: 14px; padding: 14px;
+  border-radius: 16px; padding: 14px; box-shadow: var(--shadow-sm);
 }
 
 .stat-row { display: flex; gap: 10px; }
-.stat { flex: 1 1 0; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 12px; padding: 12px; }
+.stat {
+  flex: 1 1 0; background: var(--color-surface); border: 1px solid var(--color-border);
+  border-radius: 14px; padding: 12px; box-shadow: var(--shadow-xs);
+}
 .stat .label { font-size: 10.5px; color: var(--color-text-muted); font-weight: 500; display: flex; align-items: center; gap: 4px; }
 .stat .label svg { flex-shrink: 0; opacity: 0.85; }
 .stat .value { font-family: var(--font-display); font-size: 15px; font-weight: 700; margin-top: 2px; }
@@ -18,47 +24,60 @@
 .row-list { display: flex; flex-direction: column; gap: 8px; }
 
 .list-row {
-  background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 12px;
+  background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 14px;
   padding: 12px 14px; display: flex; align-items: center; gap: 12px; cursor: pointer;
+  box-shadow: var(--shadow-xs); transition: transform 0.12s ease, box-shadow 0.12s ease;
 }
+.list-row:active { transform: scale(0.985); box-shadow: none; }
+
 .avatar {
-  width: 34px; height: 34px; border-radius: 10px; color: var(--on-brand); font-size: 12px; font-weight: 700;
+  width: 34px; height: 34px; border-radius: 12px; color: var(--on-brand); font-size: 12px; font-weight: 700;
   display: flex; align-items: center; justify-content: center; flex-shrink: 0;
 }
-.avatar.sm { width: 28px; height: 28px; border-radius: 8px; font-size: 11px; }
+.avatar.sm { width: 28px; height: 28px; border-radius: 10px; font-size: 11px; }
 
 .btn {
-  padding: 13px; border-radius: 10px; font-size: 14px; font-weight: 600; text-align: center;
+  padding: 13px; border-radius: 12px; font-size: 14px; font-weight: 600; text-align: center;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
 }
-.btn-primary { background: var(--color-primary); color: var(--on-brand); }
+.btn:active { transform: scale(0.98); }
+.btn-primary {
+  background: linear-gradient(155deg, var(--color-primary) 0%, var(--color-primary-strong) 100%);
+  color: var(--on-brand); box-shadow: var(--shadow-sm);
+}
+.btn-primary:active { filter: brightness(0.96); }
 .btn-soft { background: var(--color-primary-soft); color: var(--color-primary); }
 .btn-outline { background: transparent; border: 1px solid var(--color-border); color: var(--color-text-muted); }
 .btn-danger-text { background: transparent; color: var(--color-danger); }
 .btn-danger-soft { background: var(--color-danger-soft); color: var(--color-danger); }
-.btn:disabled, .btn.disabled { opacity: 0.5; pointer-events: none; }
+.btn:disabled, .btn.disabled { opacity: 0.5; pointer-events: none; box-shadow: none; }
 
 .pill-row { display: flex; gap: 8px; }
 .pill {
-  flex: 1 1 0; padding: 11px; border-radius: 10px; font-size: 13px; font-weight: 600;
+  flex: 1 1 0; padding: 11px; border-radius: 12px; font-size: 13px; font-weight: 600;
   background: var(--color-surface); color: var(--color-text); border: 1px solid var(--color-border);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
 }
-.pill.active { background: var(--color-primary); color: var(--on-brand); border-color: var(--color-primary); }
+.pill:active { transform: scale(0.98); }
+.pill.active { background: var(--color-primary); color: var(--on-brand); border-color: var(--color-primary); box-shadow: var(--shadow-xs); }
 
 .field { display: flex; flex-direction: column; gap: 6px; }
 .field label { font-size: 12px; font-weight: 500; color: var(--color-text-muted); display: flex; align-items: center; gap: 5px; }
 .field label svg { flex-shrink: 0; opacity: 0.8; }
 .field input {
-  width: 100%; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--color-border);
+  width: 100%; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--color-border);
   background: var(--color-surface); font-size: 14px; color: var(--color-text);
+  transition: box-shadow 0.12s ease, border-color 0.12s ease;
 }
+.field input:focus { box-shadow: 0 0 0 3px var(--color-primary-soft); }
 .field-row { display: flex; gap: 12px; }
 .field-row .field { flex: 1 1 0; }
 
-.progress-track { height: 6px; border-radius: 3px; background: var(--color-border); overflow: hidden; }
-.progress-fill { height: 100%; background: var(--color-primary); border-radius: 3px; }
+.progress-track { height: 6px; border-radius: 4px; background: var(--color-border); overflow: hidden; }
+.progress-fill { height: 100%; background: var(--color-primary); border-radius: 4px; transition: width 0.25s ease; }
 
 .skeleton {
-  border-radius: 6px; background: linear-gradient(90deg, var(--color-border) 25%, var(--color-bg) 37%, var(--color-border) 63%);
+  border-radius: 8px; background: linear-gradient(90deg, var(--color-border) 25%, var(--color-bg) 37%, var(--color-border) 63%);
   background-size: 400% 100%; animation: skeleton-shimmer 1.4s ease infinite;
 }
 @keyframes skeleton-shimmer { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }

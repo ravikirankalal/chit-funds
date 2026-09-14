@@ -21,7 +21,7 @@ function renderStep1(g) {
     previewRows += '<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--color-border);">' +
       '<div class="avatar sm" style="background:var(--color-primary-soft);color:var(--color-primary);flex-shrink:0;">' + (i + 1) + '</div>' +
       '<div style="flex:1 1 auto;font-size:12.5px;color:var(--color-text-muted);">' + monthLabel(now.getFullYear(), now.getMonth(), i + 1) + '</div>' +
-      '<input data-field="payoutMonth" data-idx="' + i + '" type="text" inputmode="numeric" value="' + amt + '" style="width:110px;text-align:right;font-size:13px;font-weight:600;padding:6px 8px;border-radius:8px;border:1px solid var(--color-border);" />' +
+      '<input data-field="payoutMonth" data-idx="' + i + '" type="text" inputmode="numeric" value="' + amt + '" style="width:110px;text-align:right;font-size:13px;font-weight:600;padding:6px 8px;border-radius:10px;border:1px solid var(--color-border);" />' +
     '</div>';
   }
   return '' +
@@ -50,7 +50,7 @@ function renderStep1(g) {
           '<div style="display:flex;align-items:center;gap:5px;font-size:13px;font-weight:600;margin-bottom:2px;">' + iconTrophy() + 'Payout schedule</div>' +
           '<div style="font-size:11.5px;color:var(--color-text-muted);margin-bottom:12px;">Set a starting payout to fill every month, then fine-tune any individual month below. This locks once the group is created.</div>' +
           '<div class="field"><label>' + iconWallet() + 'Starting payout (₹)</label><input data-field="payoutStart" type="text" inputmode="numeric" value="' + g.payoutStart + '" /></div>' +
-          '<div style="border:1px solid var(--color-border);border-radius:12px;background:var(--color-surface);margin-top:12px;">' + previewRows + '</div>' +
+          '<div style="border:1px solid var(--color-border);border-radius:16px;background:var(--color-surface);margin-top:12px;box-shadow:var(--shadow-xs);overflow:hidden;">' + previewRows + '</div>' +
         '</div>' +
       '</div>' +
       '<div style="flex-shrink:0;padding:14px 20px;border-top:1px solid var(--color-border);background:var(--color-surface);">' +
@@ -85,7 +85,7 @@ function renderStep2(g) {
       '<div class="content">' +
         '<div><div class="section-label">' + iconPeopleSmall() + 'Existing members</div><div class="row-list">' + availableRows + '</div></div>' +
         '<div class="field"><label>Or add a brand new member</label>' +
-          '<div style="display:flex; gap:8px;"><input data-field="draftMemberName" value="' + escapeHtml(g.draftMemberName) + '" placeholder="Full name" style="flex:1 1 auto; padding:12px 14px; border-radius:10px; border:1px solid var(--color-border);" />' +
+          '<div style="display:flex; gap:8px;"><input data-field="draftMemberName" value="' + escapeHtml(g.draftMemberName) + '" placeholder="Full name" style="flex:1 1 auto; padding:12px 14px; border-radius:12px; border:1px solid var(--color-border);" />' +
           '<button class="btn btn-primary" style="padding:12px 16px;" data-action="add-draft-member">Add</button></div>' +
         '</div>' +
         '<div><div class="section-label">' + iconPeopleSmall() + g.members.length + ' member' + (g.members.length === 1 ? '' : 's') + ' added</div><div class="row-list">' + memberRows + '</div></div>' +

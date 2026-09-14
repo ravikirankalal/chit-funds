@@ -24,7 +24,7 @@ html, body {
   display: flex;
   flex-direction: column;
   position: relative;
-  box-shadow: 0 0 0 1px var(--color-border);
+  box-shadow: 0 0 0 1px var(--color-border), 0 24px 64px rgba(28,26,22,0.10);
 }
 
 a { color: var(--color-primary); text-decoration: none; }
