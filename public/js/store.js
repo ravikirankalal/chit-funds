@@ -17,10 +17,10 @@ export var state = {
   ui: {
     showWinnerPicker: false,
     paymentModal: null,   // { memberId, mode, isEditing }
-    payoutAdminChoice: 'A',
     newGroup: null,        // set when entering createGroup screen
     memberForm: null,      // { id, name } — add/edit overlay on the members screen
-    addMemberToGroup: null // { gid, draftName } — "add member to this group" overlay on groupDetail
+    addMemberToGroup: null, // { gid, draftName } — "add member to this group" overlay on groupDetail
+    collapsedPaymentSections: {} // { unpaid: bool, A: bool, B: bool } — payment list subsection collapse state
   }
 };
 

@@ -14,8 +14,8 @@ import { flatPayoutSchedule } from './helpers.js';
 import {
   startCreateGroup, createGroupStep2, addDraftMember, addExistingDraftMember, removeDraftMember, submitCreateGroup,
   openGroupDetail, openMonth, openPaymentModal, closePaymentModal, setModalMode,
-  savePaymentModal, markUnpaidFromModal, openWinnerPicker, closeWinnerPicker, selectWinner,
-  setPayoutAdminChoice, closeMonthAction, requestTransferToB, requestTransferToA,
+  savePaymentModal, markUnpaidFromModal, togglePaymentSection, openWinnerPicker, closeWinnerPicker, selectWinner,
+  closeMonthAction, requestTransferToB, requestTransferToA,
   acceptTransferRequest, declineTransferRequest, cancelTransferRequest,
   openMemberForm, closeMemberForm, saveMemberForm,
   openAddMemberToGroup, closeAddMemberToGroup, addExistingMemberToGroup, createAndAddMemberToGroup
@@ -47,10 +47,10 @@ document.addEventListener('click', function (e) {
     case 'set-modal-mode': setModalMode(el.getAttribute('data-mode')); break;
     case 'save-payment': savePaymentModal(); break;
     case 'mark-unpaid': markUnpaidFromModal(); break;
+    case 'toggle-payment-section': togglePaymentSection(el.getAttribute('data-key')); break;
     case 'open-winner-picker': openWinnerPicker(); break;
     case 'close-winner-picker': closeWinnerPicker(); break;
     case 'select-winner': selectWinner(el.getAttribute('data-mid')); break;
-    case 'set-payout-admin': setPayoutAdminChoice(el.getAttribute('data-id')); break;
     case 'close-month': closeMonthAction(); break;
     case 'request-transfer-b': requestTransferToB(); break;
     case 'request-transfer-a': requestTransferToA(); break;

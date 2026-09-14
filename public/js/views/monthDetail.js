@@ -1,8 +1,8 @@
 import { ADMINS } from '../../firebase-config.js';
 import { state, groupsById, membersByGroup, paymentsCache, monthsCache, transferReqCache, monthKey } from '../store.js';
-import { fmt, escapeHtml, initialsOf, colorFor, adminName, otherAdmin, isSuper, monthLabel } from '../helpers.js';
+import { fmt, escapeHtml, initialsOf, colorFor, adminName, isSuper, monthLabel, formatDateTime } from '../helpers.js';
 import { monthFinances } from '../finance.js';
-import { iconChevronLeft, iconCheck, iconClose } from '../icons.js';
+import { iconChevronLeft, iconChevronRight, iconCheck, iconClose } from '../icons.js';
 
 export function renderMonthDetail() {
   var gid = state.activeGroupId, viewMonth = state.viewMonth;
@@ -36,11 +36,10 @@ export function renderMonthDetail() {
   }
 
   if (isOpen || isClosed) {
-    html += renderPaymentList(gid, viewMonth, members, f, readOnly);
+    html += renderPaymentList(gid, viewMonth, members, f, readOnly, group);
   }
 
   if (isOpen) {
-    html += renderFundPosition(f, readOnly);
     html += renderWinnerCard(f, members, readOnly);
     if (!readOnly) html += renderPayoutCard(f);
   }
@@ -89,55 +88,63 @@ function renderOpenSummary(f, members, group) {
   '</div>';
 }
 
-function renderPaymentList(gid, viewMonth, members, f, readOnly) {
+function paymentRow(r, readOnly) {
+  var paidAtLabel = formatDateTime(r.paidAt);
+  var subtitle = r.paid
+    ? 'Collected by <span style="font-weight:600;color:var(--accent);">' + adminName(r.collectedBy) + '</span> · ' + (r.mode === 'online' ? 'Online' : 'Cash') + (paidAtLabel ? ' · ' + paidAtLabel : '')
+    : '<span style="color:var(--danger);">Not paid yet' + (readOnly ? '' : ' · tap to record') + '</span>';
+  return '<div class="list-row" ' + (readOnly ? '' : 'data-action="open-payment-modal" data-mid="' + r.mm.id + '"') + '>' +
+    '<div class="avatar sm" style="background:' + colorFor(r.idx) + ';">' + initialsOf(r.mm.name) + '</div>' +
+    '<div style="flex:1 1 auto;min-width:0;"><div style="font-size:13px;font-weight:500;">' + escapeHtml(r.mm.name) + '</div>' +
+    '<div style="font-size:11px;color:var(--text-muted);margin-top:1px;">' + subtitle + '</div></div>' +
+    '<div style="flex-shrink:0;display:flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;padding:5px 10px;border-radius:20px;background:' + (r.paid ? 'var(--accent-soft)' : '#fbe9e7') + ';color:' + (r.paid ? 'var(--accent)' : 'var(--danger)') + ';">' + (r.paid ? iconCheck('var(--accent)') + 'Paid' : 'Unpaid') + '</div>' +
+  '</div>';
+}
+
+function paymentSubsection(key, label, rows, amount, readOnly) {
+  if (!rows.length) return '';
+  var collapsed = !!state.ui.collapsedPaymentSections[key];
+  return '<div style="margin-top:14px;">' +
+    '<div data-action="toggle-payment-section" data-key="' + key + '" style="display:flex;align-items:center;gap:4px;cursor:pointer;margin-bottom:6px;">' +
+      '<div style="display:flex;transform:rotate(' + (collapsed ? '0' : '90') + 'deg);color:var(--text-muted);">' + iconChevronRight() + '</div>' +
+      '<div style="font-size:11.5px;font-weight:600;color:var(--text-muted);">' + label + ' (' + rows.length + ') · ' + fmt(amount) + '</div>' +
+    '</div>' +
+    (collapsed ? '' : '<div class="row-list">' + rows.map(function (r) { return paymentRow(r, readOnly); }).join('') + '</div>') +
+  '</div>';
+}
+
+// Unpaid always leads; whichever admin is currently signed in gets their
+// own "collected by" section second, so each admin sees their own
+// collections first without having to scan past the other admin's.
+// Collapse state is keyed by admin id (not position) so it stays stable
+// regardless of which admin is currently viewing.
+function renderPaymentList(gid, viewMonth, members, f, readOnly, group) {
   var payments = paymentsCache.get(monthKey(gid, viewMonth)) || {};
   var payRows = members.map(function (mm, idx) {
     var p = payments[mm.id] || { paid: false };
-    return { mm: mm, idx: idx, paid: !!p.paid, collectedBy: p.collectedBy, mode: p.mode };
+    return { mm: mm, idx: idx, paid: !!p.paid, collectedBy: p.collectedBy, mode: p.mode, paidAt: p.paidAt };
   });
-  payRows.sort(function (a, b) { if (a.paid === b.paid) return 0; return a.paid ? 1 : -1; });
-  var rowsHtml = payRows.map(function (r) {
-    var subtitle = r.paid
-      ? 'Collected by <span style="font-weight:600;color:var(--accent);">' + adminName(r.collectedBy) + '</span> · ' + (r.mode === 'online' ? 'Online' : 'Cash')
-      : '<span style="color:var(--danger);">Not paid yet' + (readOnly ? '' : ' · tap to record') + '</span>';
-    return '<div class="list-row" ' + (readOnly ? '' : 'data-action="open-payment-modal" data-mid="' + r.mm.id + '"') + '>' +
-      '<div class="avatar sm" style="background:' + colorFor(r.idx) + ';">' + initialsOf(r.mm.name) + '</div>' +
-      '<div style="flex:1 1 auto;min-width:0;"><div style="font-size:13px;font-weight:500;">' + escapeHtml(r.mm.name) + '</div>' +
-      '<div style="font-size:11px;color:var(--text-muted);margin-top:1px;">' + subtitle + '</div></div>' +
-      '<div style="width:24px;height:24px;border-radius:7px;background:' + (r.paid ? 'var(--accent)' : 'transparent') + ';border:1.5px solid ' + (r.paid ? 'var(--accent)' : '#d8d4cb') + ';display:flex;align-items:center;justify-content:center;flex-shrink:0;">' + (r.paid ? iconCheck('#fff') : '') + '</div>' +
-    '</div>';
-  }).join('');
-  return '<div><div class="section-label">Member payments (' + f.paidCount + '/' + members.length + ')</div><div class="row-list">' + rowsHtml + '</div></div>';
-}
 
-function renderFundPosition(f, readOnly) {
-  var req = transferReqCache.get(monthKey(state.activeGroupId, state.viewMonth));
-  var html = '<div class="card" style="display:flex;flex-direction:column;gap:12px;">' +
-    '<div style="font-size:13px;font-weight:600;">This month\'s fund position</div>' +
-    '<div style="display:flex;gap:12px;">' +
-      '<div style="flex:1 1 0;"><div style="font-size:11px;color:var(--text-muted);">' + ADMINS.A.name + ' holds</div><div class="mono" style="font-size:15px;font-weight:700;">' + fmt(f.adjA) + '</div></div>' +
-      '<div style="flex:1 1 0;text-align:right;"><div style="font-size:11px;color:var(--text-muted);">' + ADMINS.B.name + ' holds</div><div class="mono" style="font-size:15px;font-weight:700;">' + fmt(f.adjB) + '</div></div>' +
-    '</div>';
-  if (readOnly) {
-    if (req) {
-      html += '<div style="font-size:11.5px;color:var(--warning);">' + adminName(req.requestedBy) + ' requested to send ' + fmt(req.amount) + ' (' + (req.direction === 'AtoB' ? ADMINS.A.name + ' → ' + ADMINS.B.name : ADMINS.B.name + ' → ' + ADMINS.A.name) + ') — pending acceptance.</div>';
-    }
-  } else if (!req) {
-    html += '<div class="pill-row"><button class="btn btn-soft" style="flex:1 1 0;" data-action="request-transfer-b">Send all to ' + ADMINS.B.name + ' →</button>' +
-      '<button class="btn btn-soft" style="flex:1 1 0;" data-action="request-transfer-a">← Send all to ' + ADMINS.A.name + '</button></div>' +
-      '<div style="font-size:11px;color:var(--text-muted);line-height:1.4;">No free-amount transfers — sending funds still needs ' + adminName(otherAdmin(state.currentAdmin)) + ' to accept before it counts.</div>';
-  } else if (req.requestedBy === state.currentAdmin) {
-    html += '<div class="banner warn"><div class="banner-title">Waiting for ' + adminName(otherAdmin(req.requestedBy)) + ' to accept</div>' +
-      '<div style="font-size:12px;">' + fmt(req.amount) + ' · ' + (req.direction === 'AtoB' ? ADMINS.A.name + ' → ' + ADMINS.B.name : ADMINS.B.name + ' → ' + ADMINS.A.name) + '</div>' +
-      '<button class="btn btn-outline" style="width:100%;" data-action="cancel-transfer-request">Cancel request</button></div>';
-  } else {
-    html += '<div class="banner warn"><div class="banner-title">' + adminName(req.requestedBy) + ' wants to send ' + fmt(req.amount) + '</div>' +
-      '<div style="font-size:12px;">' + (req.direction === 'AtoB' ? ADMINS.A.name + ' → ' + ADMINS.B.name : ADMINS.B.name + ' → ' + ADMINS.A.name) + '</div>' +
-      '<div class="pill-row"><button class="btn btn-outline" style="flex:1 1 0;" data-action="decline-transfer-request">Decline</button>' +
-      '<button class="btn btn-primary" style="flex:1 1 0;" data-action="accept-transfer-request">Accept</button></div></div>';
-  }
-  html += '</div>';
-  return html;
+  var unpaidRows = payRows.filter(function (r) { return !r.paid; });
+  var byARows = payRows.filter(function (r) { return r.paid && r.collectedBy === 'A'; });
+  var byBRows = payRows.filter(function (r) { return r.paid && r.collectedBy === 'B'; });
+  var unpaidAmount = unpaidRows.length * group.monthlyDeposit;
+
+  var currentIsB = state.currentAdmin === 'B';
+  var firstKey = currentIsB ? 'B' : 'A';
+  var firstLabel = 'Collected by ' + adminName(currentIsB ? 'B' : 'A');
+  var firstRows = currentIsB ? byBRows : byARows;
+  var firstAmount = currentIsB ? f.rawB : f.rawA;
+  var secondKey = currentIsB ? 'A' : 'B';
+  var secondLabel = 'Collected by ' + adminName(currentIsB ? 'A' : 'B');
+  var secondRows = currentIsB ? byARows : byBRows;
+  var secondAmount = currentIsB ? f.rawA : f.rawB;
+
+  return '<div><div class="section-label">Member payments (' + f.paidCount + '/' + members.length + ')</div>' +
+    paymentSubsection('unpaid', 'Unpaid', unpaidRows, unpaidAmount, readOnly) +
+    paymentSubsection(firstKey, firstLabel, firstRows, firstAmount, readOnly) +
+    paymentSubsection(secondKey, secondLabel, secondRows, secondAmount, readOnly) +
+  '</div>';
 }
 
 function renderWinnerCard(f, members, readOnly) {
@@ -165,10 +172,6 @@ function renderPayoutCard(f) {
   var req = transferReqCache.get(monthKey(state.activeGroupId, state.viewMonth));
   return '<div class="card" style="display:flex;flex-direction:column;gap:12px;">' +
     '<div style="font-size:13px;font-weight:600;">Record payout</div>' +
-    '<div class="pill-row">' +
-      '<button class="pill ' + (state.ui.payoutAdminChoice === 'A' ? 'active' : '') + '" data-action="set-payout-admin" data-id="A">Paid by ' + ADMINS.A.name + '</button>' +
-      '<button class="pill ' + (state.ui.payoutAdminChoice === 'B' ? 'active' : '') + '" data-action="set-payout-admin" data-id="B">Paid by ' + ADMINS.B.name + '</button>' +
-    '</div>' +
     (req ? '<div style="font-size:11px;color:var(--warning);">Resolve the pending transfer request above before closing this month.</div>' : '') +
     '<button class="btn btn-primary ' + (winnerId && !req ? '' : 'disabled') + '" style="width:100%; background:' + (winnerId && !req ? 'var(--accent)' : '#c7c2b8') + ';" data-action="close-month">Close Month &amp; Pay ' + fmt(f.payoutAmount) + '</button>' +
   '</div>';
@@ -228,6 +231,11 @@ function renderPaymentModalOverlay(gid, viewMonth, group, members) {
       '<div class="sheet-close" data-action="close-payment-modal">' + iconClose() + '</div>' +
     '</div>' +
     '<div class="sheet-body">' +
+      '<div style="text-align:center;padding:8px 0 4px;">' +
+        '<div style="font-size:11px;color:var(--text-muted);margin-bottom:2px;">Amount</div>' +
+        '<div class="mono" style="font-size:32px;font-weight:700;">' + fmt(group.monthlyDeposit) + '</div>' +
+        (pm.isEditing && existingP && formatDateTime(existingP.paidAt) ? '<div style="font-size:11px;color:var(--text-muted);margin-top:2px;">Paid on ' + formatDateTime(existingP.paidAt) + '</div>' : '') +
+      '</div>' +
       '<div><div style="font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:8px;">Payment mode</div>' +
       '<div class="pill-row">' +
         '<button class="pill ' + (pm.mode === 'cash' ? 'active' : '') + '" data-action="set-modal-mode" data-mode="cash">Cash</button>' +
@@ -235,7 +243,7 @@ function renderPaymentModalOverlay(gid, viewMonth, group, members) {
       '</div></div>' +
       transferHistory +
       (pm.isEditing ? '<button class="btn btn-danger-text" style="width:100%;" data-action="mark-unpaid">Mark as unpaid</button>' : '') +
-      '<button class="btn btn-primary" style="width:100%;" data-action="save-payment">Save Payment</button>' +
+      (!pm.isEditing || pm.mode !== pm.originalMode ? '<button class="btn btn-primary" style="width:100%;" data-action="save-payment">Save Payment</button>' : '') +
     '</div>' +
   '</div></div>';
 }
