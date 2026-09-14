@@ -6,16 +6,16 @@ export function iconChevronLeft() {
   return '<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M15 6L9 12L15 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 }
 export function iconChevronRight() {
-  return '<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="#a39d92" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  return '<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="var(--color-text-faint)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 }
 export function iconCheck(color) {
-  return '<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M5 13L9.5 17.5L19 7" stroke="' + (color || '#fff') + '" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  return '<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M5 13L9.5 17.5L19 7" stroke="' + (color || 'var(--on-brand)') + '" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 }
 export function iconClose() {
   return '<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M6 6L18 18M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
 }
 export function iconPlus() {
-  return '<svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 5V19M5 12H19" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></svg>';
+  return '<svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 5V19M5 12H19" stroke="var(--on-brand)" stroke-width="2.2" stroke-linecap="round"/></svg>';
 }
 export function iconHome(color) {
   return '<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 11L12 4L20 11V19A1 1 0 0 1 19 20H5A1 1 0 0 1 4 19V11Z" stroke="' + (color || 'currentColor') + '" stroke-width="1.9" stroke-linejoin="round"/></svg>';

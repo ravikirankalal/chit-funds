@@ -28,12 +28,12 @@ export function renderGroupMembers() {
       '<div class="avatar sm" style="background:' + colorFor(idx) + ';">' + initialsOf(mm.name) + '</div>' +
       '<div style="flex:1 1 auto; min-width:0;">' +
         '<div style="font-size:13px;font-weight:500;">' + escapeHtml(mm.name) + '</div>' +
-        (win ? '<div style="display:flex;align-items:center;gap:4px;font-size:11px;color:#146b52;margin-top:1px;">' + iconTrophy('#146b52') + 'Received ' + fmt(win.amount) + ' · ' + monthLabel(group.startYear, group.startMonthIndex, win.month) + '</div>' : '') +
+        (win ? '<div style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--color-success);margin-top:1px;">' + iconTrophy('var(--color-success)') + 'Received ' + fmt(win.amount) + ' · ' + monthLabel(group.startYear, group.startMonthIndex, win.month) + '</div>' : '') +
       '</div>' +
-      (canRemove ? '<div data-action="remove-member-from-group" data-gid="' + gid + '" data-mid="' + mm.id + '" style="display:flex;align-items:center;gap:4px;cursor:pointer;color:var(--danger);font-size:12px;font-weight:600;">' + iconTrash('var(--danger)') + 'Remove</div>' : '') +
+      (canRemove ? '<div data-action="remove-member-from-group" data-gid="' + gid + '" data-mid="' + mm.id + '" style="display:flex;align-items:center;gap:4px;cursor:pointer;color:var(--color-danger);font-size:12px;font-weight:600;">' + iconTrash('var(--color-danger)') + 'Remove</div>' : '') +
       iconChevronRight() +
     '</div>';
-  }).join('') || '<div class="card" style="color:var(--text-muted);font-size:13px;text-align:center;">No members yet.</div>';
+  }).join('') || '<div class="card" style="color:var(--color-text-muted);font-size:13px;text-align:center;">No members yet.</div>';
 
   var html = '' +
     '<div class="screen">' +
@@ -65,16 +65,16 @@ function renderAddMemberOverlay(gid) {
     return '<div class="list-row" data-action="add-existing-member-to-group" data-gid="' + gid + '" data-mid="' + mm.id + '">' +
       '<div class="avatar sm" style="background:' + colorFor(idx) + ';">' + initialsOf(mm.name) + '</div>' +
       '<div style="flex:1 1 auto;font-size:13px;font-weight:500;">' + escapeHtml(mm.name) + '</div>' +
-      '<div style="display:flex;align-items:center;gap:3px;color:var(--accent);font-size:12px;font-weight:600;">' + iconPlusSmall('var(--accent)') + 'Add</div></div>';
-  }).join('') || '<div style="font-size:12px;color:var(--text-muted);padding:8px 0;">Every existing member is already in this group.</div>';
+      '<div style="display:flex;align-items:center;gap:3px;color:var(--color-primary);font-size:12px;font-weight:600;">' + iconPlusSmall('var(--color-primary)') + 'Add</div></div>';
+  }).join('') || '<div style="font-size:12px;color:var(--color-text-muted);padding:8px 0;">Every existing member is already in this group.</div>';
 
   return '<div class="overlay"><div class="sheet">' +
     '<div class="sheet-header"><div style="display:flex;align-items:center;gap:6px;font-size:14px;font-weight:700;">' + iconPlusSmall() + 'Add member</div>' +
     '<div class="sheet-close" data-action="close-add-member-to-group">' + iconClose() + '</div></div>' +
     '<div class="sheet-body">' +
-      '<div><div style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:8px;">' + iconPeopleSmall() + 'Existing members</div><div class="row-list">' + rows + '</div></div>' +
+      '<div><div style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--color-text-muted);margin-bottom:8px;">' + iconPeopleSmall() + 'Existing members</div><div class="row-list">' + rows + '</div></div>' +
       '<div class="field"><label>Or add a brand new member</label>' +
-        '<div style="display:flex;gap:8px;"><input data-field="addMemberDraftName" value="' + escapeHtml(amg.draftName) + '" placeholder="Full name" style="flex:1 1 auto;padding:12px 14px;border-radius:10px;border:1px solid var(--border);" />' +
+        '<div style="display:flex;gap:8px;"><input data-field="addMemberDraftName" value="' + escapeHtml(amg.draftName) + '" placeholder="Full name" style="flex:1 1 auto;padding:12px 14px;border-radius:10px;border:1px solid var(--color-border);" />' +
         '<button class="btn btn-primary" style="padding:12px 16px;" data-action="create-and-add-member-to-group" data-gid="' + gid + '">Add</button></div>' +
       '</div>' +
     '</div>' +

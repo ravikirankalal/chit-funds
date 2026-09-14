@@ -1,57 +1,45 @@
-/* Design tokens, resets, and the page shell (#app) — loaded first so every
-   other stylesheet can rely on the custom properties defined here. */
-
-:root {
-  --bg: #faf9f6;
-  --surface: #ffffff;
-  --border: #e9e5dc;
-  --text: #1c1b19;
-  --text-muted: #6f6a62;
-  --accent: #146b52;
-  --accent-soft: #e6f2ec;
-  --warning: #b45309;
-  --warning-soft: #fdf1e4;
-  --danger: #b3261e;
-  --max-width: 480px;
-}
+/* Resets and the page shell (#app). Design tokens now live in theme.css,
+   loaded before this file so every rule here can rely on them. */
 
 * { box-sizing: border-box; }
 
 html, body {
   margin: 0;
-  background: #d8d4cb;
-  font-family: 'IBM Plex Sans', system-ui, sans-serif;
-  color: var(--text);
+  background: var(--color-backdrop);
+  font-family: var(--font-sans);
+  color: var(--color-text);
   -webkit-tap-highlight-color: transparent;
 }
 
 .boot {
   display: flex; align-items: center; justify-content: center;
-  height: 100vh; color: var(--text-muted); font-size: 14px;
+  height: 100vh; color: var(--color-text-muted); font-size: 14px;
 }
 
 #app {
   max-width: var(--max-width);
   margin: 0 auto;
   min-height: 100vh;
-  background: var(--bg);
+  background: var(--color-bg);
   display: flex;
   flex-direction: column;
   position: relative;
-  box-shadow: 0 0 0 1px var(--border);
+  box-shadow: 0 0 0 1px var(--color-border);
 }
 
-a { color: var(--accent); text-decoration: none; }
-a:hover { color: #0d4d3a; }
+a { color: var(--color-primary); text-decoration: none; }
+a:hover { color: var(--color-primary-strong); }
 
 input, select, textarea, button {
-  font-family: 'IBM Plex Sans', system-ui, sans-serif;
+  font-family: var(--font-sans);
 }
-input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent) !important; }
+input:focus, select:focus, textarea:focus { outline: none; border-color: var(--color-primary) !important; }
 button { cursor: pointer; border: none; }
 
 .hidden { display: none !important; }
 
-.mono { font-family: 'Space Grotesk', system-ui, sans-serif; }
+/* Despite the name, this is a DISPLAY face (headings, money amounts), not
+   an actual monospace font — kept for the many call sites already using it. */
+.mono { font-family: var(--font-display); }
 
 ::-webkit-scrollbar { width: 0; height: 0; }

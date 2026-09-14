@@ -2,27 +2,27 @@
    rows, avatars, buttons, pills, and form fields. */
 
 .card {
-  background: var(--surface); border: 1px solid var(--border);
+  background: var(--color-surface); border: 1px solid var(--color-border);
   border-radius: 14px; padding: 14px;
 }
 
 .stat-row { display: flex; gap: 10px; }
-.stat { flex: 1 1 0; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px; }
-.stat .label { font-size: 10.5px; color: var(--text-muted); font-weight: 500; display: flex; align-items: center; gap: 4px; }
+.stat { flex: 1 1 0; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 12px; padding: 12px; }
+.stat .label { font-size: 10.5px; color: var(--color-text-muted); font-weight: 500; display: flex; align-items: center; gap: 4px; }
 .stat .label svg { flex-shrink: 0; opacity: 0.85; }
-.stat .value { font-family: 'Space Grotesk', sans-serif; font-size: 15px; font-weight: 700; margin-top: 2px; }
+.stat .value { font-family: var(--font-display); font-size: 15px; font-weight: 700; margin-top: 2px; }
 
-.section-label { font-size: 13px; font-weight: 600; color: var(--text-muted); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+.section-label { font-size: 13px; font-weight: 600; color: var(--color-text-muted); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
 .section-label svg { flex-shrink: 0; opacity: 0.8; }
 
 .row-list { display: flex; flex-direction: column; gap: 8px; }
 
 .list-row {
-  background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+  background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 12px;
   padding: 12px 14px; display: flex; align-items: center; gap: 12px; cursor: pointer;
 }
 .avatar {
-  width: 34px; height: 34px; border-radius: 10px; color: #fff; font-size: 12px; font-weight: 700;
+  width: 34px; height: 34px; border-radius: 10px; color: var(--on-brand); font-size: 12px; font-weight: 700;
   display: flex; align-items: center; justify-content: center; flex-shrink: 0;
 }
 .avatar.sm { width: 28px; height: 28px; border-radius: 8px; font-size: 11px; }
@@ -30,35 +30,35 @@
 .btn {
   padding: 13px; border-radius: 10px; font-size: 14px; font-weight: 600; text-align: center;
 }
-.btn-primary { background: var(--accent); color: #fff; }
-.btn-soft { background: var(--accent-soft); color: var(--accent); }
-.btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-muted); }
-.btn-danger-text { background: transparent; color: var(--danger); }
-.btn-danger-soft { background: #fbe9e7; color: var(--danger); }
+.btn-primary { background: var(--color-primary); color: var(--on-brand); }
+.btn-soft { background: var(--color-primary-soft); color: var(--color-primary); }
+.btn-outline { background: transparent; border: 1px solid var(--color-border); color: var(--color-text-muted); }
+.btn-danger-text { background: transparent; color: var(--color-danger); }
+.btn-danger-soft { background: var(--color-danger-soft); color: var(--color-danger); }
 .btn:disabled, .btn.disabled { opacity: 0.5; pointer-events: none; }
 
 .pill-row { display: flex; gap: 8px; }
 .pill {
   flex: 1 1 0; padding: 11px; border-radius: 10px; font-size: 13px; font-weight: 600;
-  background: #fff; color: var(--text); border: 1px solid var(--border);
+  background: var(--color-surface); color: var(--color-text); border: 1px solid var(--color-border);
 }
-.pill.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+.pill.active { background: var(--color-primary); color: var(--on-brand); border-color: var(--color-primary); }
 
 .field { display: flex; flex-direction: column; gap: 6px; }
-.field label { font-size: 12px; font-weight: 500; color: var(--text-muted); display: flex; align-items: center; gap: 5px; }
+.field label { font-size: 12px; font-weight: 500; color: var(--color-text-muted); display: flex; align-items: center; gap: 5px; }
 .field label svg { flex-shrink: 0; opacity: 0.8; }
 .field input {
-  width: 100%; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--border);
-  background: var(--surface); font-size: 14px; color: var(--text);
+  width: 100%; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--color-border);
+  background: var(--color-surface); font-size: 14px; color: var(--color-text);
 }
 .field-row { display: flex; gap: 12px; }
 .field-row .field { flex: 1 1 0; }
 
-.progress-track { height: 6px; border-radius: 3px; background: var(--border); overflow: hidden; }
-.progress-fill { height: 100%; background: var(--accent); border-radius: 3px; }
+.progress-track { height: 6px; border-radius: 3px; background: var(--color-border); overflow: hidden; }
+.progress-fill { height: 100%; background: var(--color-primary); border-radius: 3px; }
 
 .skeleton {
-  border-radius: 6px; background: linear-gradient(90deg, var(--border) 25%, var(--bg) 37%, var(--border) 63%);
+  border-radius: 6px; background: linear-gradient(90deg, var(--color-border) 25%, var(--color-bg) 37%, var(--color-border) 63%);
   background-size: 400% 100%; animation: skeleton-shimmer 1.4s ease infinite;
 }
 @keyframes skeleton-shimmer { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }

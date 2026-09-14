@@ -124,14 +124,14 @@ export function recompute() {
           group: group.name, type: 'payout',
           title: 'Payout — ' + group.name + ' ' + mLabel,
           subtitle: 'Paid to ' + winnerNames + ' by ' + adminName(f.monthDoc.payoutAdmin) + ' · ' + (f.monthDoc.closedLabel || ''),
-          amountFormatted: '−' + fmt(f.payoutAmount), amountColor: '#1c1b19',
+          amountFormatted: '−' + fmt(f.payoutAmount), amountColor: 'var(--color-text)',
           atRaw: f.monthDoc.closedAt, time: formatDateTime(f.monthDoc.closedAt)
         });
         ledger.push({
           group: group.name, type: 'collection',
           title: 'Collection — ' + group.name + ' ' + mLabel,
           subtitle: f.paidCount + ' members paid · ' + (f.monthDoc.closedLabel || ''),
-          amountFormatted: '+' + fmt(f.totalCollected), amountColor: '#146b52',
+          amountFormatted: '+' + fmt(f.totalCollected), amountColor: 'var(--color-success)',
           atRaw: latestPaidAt, time: formatDateTime(latestPaidAt)
         });
       } else if (group.currentMonth === m) {
@@ -139,7 +139,7 @@ export function recompute() {
           group: group.name, type: 'collection',
           title: 'Collection — ' + group.name + ' ' + mLabel + ' (in progress)',
           subtitle: f.paidCount + ' members paid so far',
-          amountFormatted: '+' + fmt(f.totalCollected), amountColor: '#146b52',
+          amountFormatted: '+' + fmt(f.totalCollected), amountColor: 'var(--color-success)',
           atRaw: latestPaidAt, time: formatDateTime(latestPaidAt)
         });
       }
@@ -166,7 +166,7 @@ export function recompute() {
           group: group.name, type: 'transfer',
           title: 'Transfer — ' + group.name + ' ' + mLabel,
           subtitle: combinedNet > 0 ? adminName('A') + ' → ' + adminName('B') : adminName('B') + ' → ' + adminName('A'),
-          amountFormatted: fmt(Math.abs(combinedNet)), amountColor: '#3b4a8a',
+          amountFormatted: fmt(Math.abs(combinedNet)), amountColor: 'var(--color-secondary)',
           atRaw: latestTransferredAt, time: formatDateTime(latestTransferredAt)
         });
       }

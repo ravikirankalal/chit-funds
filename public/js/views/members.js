@@ -21,14 +21,14 @@ export function renderMembers() {
     return '<div class="list-row" ' + (isSuper() ? '' : 'data-action="open-member-form" data-id="' + mm.id + '"') + '>' +
       '<div class="avatar sm" style="background:' + colorFor(idx) + ';">' + initialsOf(mm.name) + '</div>' +
       '<div style="flex:1 1 auto;min-width:0;"><div style="font-size:13px;font-weight:600;">' + escapeHtml(mm.name) + '</div>' +
-      '<div style="display:flex;align-items:center;gap:4px;font-size:11.5px;color:var(--text-muted);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + (groupNames.length ? iconGroupStack() : '') + escapeHtml(subtitle) + '</div></div>' +
+      '<div style="display:flex;align-items:center;gap:4px;font-size:11.5px;color:var(--color-text-muted);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + (groupNames.length ? iconGroupStack() : '') + escapeHtml(subtitle) + '</div></div>' +
     '</div>';
-  }).join('') || '<div class="card" style="color:var(--text-muted);font-size:13px;text-align:center;">No members yet — tap + to add one.</div>';
+  }).join('') || '<div class="card" style="color:var(--color-text-muted);font-size:13px;text-align:center;">No members yet — tap + to add one.</div>';
 
   var html = '' +
     '<div class="screen">' +
       '<div style="padding:20px 20px 4px;"><div class="mono" style="display:flex;align-items:center;gap:7px;font-size:20px;font-weight:700;">' + iconPeople('currentColor') + 'Members</div>' +
-      '<div style="font-size:12px;color:var(--text-muted);margin-top:2px;">Everyone across all groups — add once, use in any group</div></div>' +
+      '<div style="font-size:12px;color:var(--color-text-muted);margin-top:2px;">Everyone across all groups — add once, use in any group</div></div>' +
       '<div class="content">' +
         '<div class="row-list">' + rows + '</div>' +
       '</div>' +

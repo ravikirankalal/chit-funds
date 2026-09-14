@@ -1,0 +1,77 @@
+/* ============================================================================
+   THEME — the one file to edit to re-skin this app.
+
+   Every color and font used anywhere in the app (CSS files and the inline
+   styles the view modules render) is a `var(--...)` pointing back here.
+   Change a value below and the whole app updates — no other file needs to
+   change.
+
+   The three "brand" colors (primary/secondary/accent) are what you'll want
+   to tweak for a different look. The "semantic" colors are deliberately
+   independent of them: a profit figure stays green and a warning stays
+   amber even if you swap the brand palette out entirely, because "paid" /
+   "warning" / "danger" are meanings, not brand decisions.
+   ============================================================================ */
+
+:root {
+  /* ---- Fonts -------------------------------------------------------- */
+  /* --font-display is used for headings, money amounts and anything set
+     with the `.mono` class (a legacy name — it's a display face, not an
+     actual monospace font). */
+  --font-sans: 'IBM Plex Sans', system-ui, sans-serif;
+  --font-display: 'Space Grotesk', system-ui, sans-serif;
+
+  /* ---- Brand colors --------------------------------------------------
+     primary   — buttons, links, active nav/tab, focus ring, the dashboard
+                 hero card. The app's main "color."
+     secondary — the "open / in-progress / informational" color: the open
+                 month's card & progress bar, transfer history, info
+                 banners.
+     accent    — the "payout / winner" color: winner cards, payout amounts,
+                 the ledger's payout entries. Deliberately distinct from
+                 warning-amber so a payout doesn't read as a caution.
+     Each has a -soft tint (light background fill) and a -strong shade
+     (hover/pressed state), derived here so nothing downstream ever needs
+     to compute a shade of a brand color itself. */
+  --color-primary: #5b4fe0;
+  --color-primary-strong: #4a3fc4;
+  --color-primary-soft: #ece9fb;
+
+  --color-secondary: #3b4a8a;
+  --color-secondary-strong: #2c3868;
+  --color-secondary-soft: #eef0f9;
+
+  --color-accent: #b8860b;
+  --color-accent-strong: #8f6909;
+  --color-accent-soft: #fbf1dd;
+
+  /* Text/icon color to use on top of a solid primary/secondary/accent
+     background (all three currently want the same white). */
+  --on-brand: #ffffff;
+
+  /* ---- Semantic / state colors -----------------------------------------
+     These carry a fixed meaning across the whole app and are intentionally
+     NOT derived from the brand colors above — see the note at the top. */
+  --color-success: #146b52;
+  --color-success-soft: #e6f2ec;
+
+  --color-warning: #b45309;
+  --color-warning-soft: #fdf1e4;
+
+  --color-danger: #b3261e;
+  --color-danger-soft: #fbe9e7;
+
+  /* ---- Neutrals ---------------------------------------------------- */
+  --color-backdrop: #d8d4cb; /* page background behind the app's centered shell */
+  --color-bg: #faf9f6;       /* the app's own background */
+  --color-surface: #ffffff;  /* cards, sheets, inputs */
+  --color-border: #e9e5dc;
+  --color-border-strong: #d8d4cb; /* unchecked checkboxes, stronger dividers */
+  --color-disabled: #c7c2b8; /* disabled button fill */
+
+  --color-text: #1c1b19;
+  --color-text-muted: #6f6a62;
+  --color-text-faint: #a39d92; /* inactive nav icons, chevrons, quiet inline icons */
+
+  --max-width: 480px;
+}
