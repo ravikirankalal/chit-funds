@@ -223,9 +223,8 @@ export function openPaymentModal(memberId) {
 export function closePaymentModal() { history.back(); }
 export function setModalMode(mode) { if (!state.ui.paymentModal) return; state.ui.paymentModal.mode = mode; render(); }
 
-export function togglePaymentSection(key) {
-  var c = state.ui.collapsedPaymentSections;
-  c[key] = !c[key];
+export function selectPaymentTab(key) {
+  state.ui.paymentTab = key;
   render();
 }
 
