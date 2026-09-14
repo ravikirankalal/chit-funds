@@ -1,0 +1,45 @@
+/* Resets and the page shell (#app). Design tokens now live in theme.css,
+   loaded before this file so every rule here can rely on them. */
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  background: var(--color-backdrop);
+  font-family: var(--font-sans);
+  color: var(--color-text);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.boot {
+  display: flex; align-items: center; justify-content: center;
+  height: 100vh; color: var(--color-text-muted); font-size: 14px;
+}
+
+#app {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  min-height: 100vh;
+  background: var(--color-bg);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  box-shadow: 0 0 0 1px var(--color-border), 0 24px 64px rgba(28,26,22,0.10);
+}
+
+a { color: var(--color-primary); text-decoration: none; }
+a:hover { color: var(--color-primary-strong); }
+
+input, select, textarea, button {
+  font-family: var(--font-sans);
+}
+input:focus, select:focus, textarea:focus { outline: none; border-color: var(--color-primary) !important; }
+button { cursor: pointer; border: none; }
+
+.hidden { display: none !important; }
+
+/* Despite the name, this is a DISPLAY face (headings, money amounts), not
+   an actual monospace font — kept for the many call sites already using it. */
+.mono { font-family: var(--font-display); }
+
+::-webkit-scrollbar { width: 0; height: 0; }
