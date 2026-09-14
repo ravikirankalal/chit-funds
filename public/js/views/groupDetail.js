@@ -31,7 +31,7 @@ export function renderGroupDetail() {
     collectedSoFar += mf.totalCollected;
     if (mf.closed) payoutSoFar += mf.payoutAmount;
   }
-  var totalCollection = group.totalMembers * group.monthlyDeposit * group.durationMonths;
+  var totalCollection = members.length * group.monthlyDeposit * group.durationMonths;
   var totalPayout = (group.payoutSchedule || []).reduce(function (a, b) { return a + b; }, 0);
   var profitSoFar = collectedSoFar - payoutSoFar;
   var profitMargin = totalCollection - totalPayout;
