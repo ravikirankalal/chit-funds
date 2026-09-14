@@ -148,15 +148,20 @@ and `recompute()` in `app.js` if you're changing the money logic.
 ## Local testing with the Firebase Emulator Suite (optional)
 
 `firebase.json` already has emulator config for Auth + Firestore + Hosting.
-Set `USE_EMULATORS = true` in `public/firebase-config.js`, then:
+`public/js/firebase.js` auto-detects the emulator at runtime (localhost/
+127.0.0.1 + the Auth emulator actually answering) — there's no flag to set,
+in either direction. Just start it:
 
 ```bash
 firebase emulators:start --only auth,firestore,hosting
+# or: scripts/dev-emulator.sh up
 ```
 
 Open the printed hosting URL (port `5050`) and the Auth emulator lets you
 "sign in" as any email without a real Google account — handy for testing
-without touching the real Firebase project.
+without touching the real Firebase project. `scripts/dev-emulator.sh seed`
+and `scripts/dev-emulator.sh signin` fill in a demo fixture and print a
+console snippet to sign in without the Google popup.
 
 **Known emulator quirk:** on some Macs, the Firestore emulator (a Java
 process) can hit the OS's default per-user thread limit (`ulimit -u`) under
@@ -171,5 +176,3 @@ firebase emulators:start --only auth,firestore,hosting
 
 This doesn't affect the real deployed app in any way — production Firestore
 has no such constraint.
-
-Remember to set `USE_EMULATORS` back to `false` before deploying for real.
