@@ -62,6 +62,16 @@ window.addEventListener('popstate', function (e) {
   // renderCreateGroup() — skip on past it the same way dashboard/login
   // collapse history instead of growing it.
   if (snap.screen === 'createGroup' && !state.ui.newGroup) { history.back(); return; }
+  // A completion action (savePaymentModal, etc. — see actions.js) applies
+  // its own "overlay closed" state synchronously and then calls
+  // history.back() to pop the entry pushed when the overlay opened, so Back
+  // only ever needs one press even after several open+save cycles in a
+  // row. That means the popstate this triggers, a moment later, is often a
+  // no-op — the snapshot it's restoring already matches current state. Skip
+  // the render in that case: firing it anyway would still SHOW the same
+  // thing, but the extra full-DOM replace is a visible flash right as the
+  // overlay closes.
+  var before = navSnapshot();
   state.screen = snap.screen;
   state.activeGroupId = snap.activeGroupId;
   state.viewMonth = snap.viewMonth;
@@ -76,6 +86,8 @@ window.addEventListener('popstate', function (e) {
         name: snap.memberFormMode === 'edit' ? ((membersById.get(snap.memberFormId) || {}).name || '') : '' }
     : null;
   state.ui.addMemberToGroup = snap.addMemberToGroupGid ? { gid: snap.addMemberToGroupGid, draftName: '' } : null;
+  var after = navSnapshot();
+  if (JSON.stringify(before) === JSON.stringify(after)) return;
   render();
 });
 

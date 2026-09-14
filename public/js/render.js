@@ -60,12 +60,39 @@ export function render() {
     }
   }
 
-  if (state.busy) {
-    var overlay = document.createElement('div');
-    overlay.className = 'overlay';
-    overlay.style.background = 'rgba(28,27,25,0.25)';
-    overlay.style.alignItems = 'center';
-    overlay.innerHTML = '<div class="spinner"></div>';
-    root.appendChild(overlay);
+  if (state.busy) addBusyOverlay(root);
+}
+
+function addBusyOverlay(root) {
+  var overlay = document.createElement('div');
+  overlay.className = 'overlay busy-overlay';
+  overlay.style.background = 'rgba(28,27,25,0.25)';
+  overlay.style.alignItems = 'center';
+  overlay.innerHTML = '<div class="spinner"></div>';
+  root.appendChild(overlay);
+}
+
+// setBusy(true) (actions.js) calls this directly instead of going through
+// the full render() above, specifically to avoid triggering one. A full
+// render() replaces root.innerHTML — rebuilding every DOM node, including
+// whatever overlay/sheet is currently open — which restarts its CSS
+// entrance animation (see .sheet's `animation: sheet-in` in overlays.css).
+// Firing that the instant an action starts (busy=true, overlay/sheet still
+// showing) made the payment drawer's entrance animation visibly replay
+// right as it was about to close a moment later, reading as a flash.
+// Toggling just the spinner overlay leaves the rest of the DOM (and any
+// in-flight animation) untouched; nothing else reads state.busy (verified —
+// render()'s own check above is the only other reader), so this is safe
+// for every setBusy(true) call site. setBusy(false) still goes through the
+// full render() — by then whatever action was in flight has already
+// updated state, so that render is the one call that needs to show the
+// result (and there's no longer an open overlay for it to disrupt).
+export function setBusyOverlay(v) {
+  var root = document.getElementById('app');
+  var existing = root.querySelector('.busy-overlay');
+  if (v) {
+    if (!existing) addBusyOverlay(root);
+  } else if (existing) {
+    existing.remove();
   }
 }
