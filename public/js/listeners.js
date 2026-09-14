@@ -14,7 +14,22 @@ var recomputeScheduled = false;
 function scheduleRecompute() {
   if (recomputeScheduled) return;
   recomputeScheduled = true;
-  setTimeout(function () { recomputeScheduled = false; recompute(); render(); }, 30);
+  setTimeout(function () {
+    recomputeScheduled = false;
+    recompute();
+    // setDoc() from an in-flight action (savePaymentModal, etc.) echoes
+    // back through these onSnapshot listeners almost immediately — often
+    // before the action's own await resolves. Rendering here while that
+    // action is still busy would rebuild the DOM out from under it (see
+    // render.js's setBusyOverlay comment for why that restarts a sheet's
+    // CSS entrance animation and reads as a flash). The action's own
+    // setBusy(false) already renders once it finishes, using whatever
+    // recompute() just refreshed, so skip this one and let that be
+    // authoritative. A background update while nothing is busy (another
+    // admin's write) still renders immediately, same as before.
+    if (state.busy) return;
+    render();
+  }, 30);
 }
 
 // Members live independently of groups (so the same person can belong to
