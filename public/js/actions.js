@@ -169,10 +169,7 @@ export async function createAndAddMemberToGroup(gid) {
   } finally { setBusy(false); }
 }
 
-export function openCurrentMonth(gid) {
-  var g = groupsById.get(gid);
-  goTo('monthDetail', { activeGroupId: gid, viewMonth: g ? g.currentMonth : 1 });
-}
+export function openGroupDetail(gid) { goTo('groupDetail', { activeGroupId: gid }); }
 
 export function openMonth(gid, m) { goTo('monthDetail', { activeGroupId: gid, viewMonth: m }); }
 

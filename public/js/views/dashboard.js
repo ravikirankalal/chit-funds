@@ -10,7 +10,7 @@ export function renderDashboard() {
 
   var groupCards = groups.map(function (g) {
     var pct = Math.round((g.currentMonth / g.durationMonths) * 100);
-    return '<div class="card" data-action="open-current-month" data-gid="' + g.id + '" style="display:flex;flex-direction:column;gap:10px;">' +
+    return '<div class="card" data-action="open-group" data-gid="' + g.id + '" style="display:flex;flex-direction:column;gap:10px;">' +
       '<div style="display:flex;justify-content:space-between;align-items:flex-start;">' +
         '<div><div style="font-size:15px;font-weight:600;">' + escapeHtml(g.name) + '</div>' +
         '<div style="font-size:12px;color:var(--text-muted);margin-top:2px;">' + (membersByGroup.get(g.id) || []).length + ' members · ' + fmt(g.monthlyDeposit) + ' / month</div></div>' +

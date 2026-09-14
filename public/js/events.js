@@ -13,7 +13,7 @@ import { signInGoogle, doLogout } from './auth.js';
 import { generatePayoutSchedule } from './helpers.js';
 import {
   startCreateGroup, createGroupStep2, addDraftMember, addExistingDraftMember, removeDraftMember, submitCreateGroup,
-  openCurrentMonth, openMonth, openPaymentModal, closePaymentModal, setModalMode,
+  openGroupDetail, openMonth, openPaymentModal, closePaymentModal, setModalMode,
   savePaymentModal, markUnpaidFromModal, openWinnerPicker, closeWinnerPicker, selectWinner,
   setPayoutAdminChoice, closeMonthAction, requestTransferToB, requestTransferToA,
   acceptTransferRequest, declineTransferRequest, cancelTransferRequest,
@@ -40,7 +40,7 @@ document.addEventListener('click', function (e) {
     case 'add-existing-draft-member': addExistingDraftMember(el.getAttribute('data-mid')); break;
     case 'remove-draft-member': removeDraftMember(parseInt(el.getAttribute('data-idx'), 10)); break;
     case 'submit-create-group': submitCreateGroup(); break;
-    case 'open-current-month': openCurrentMonth(el.getAttribute('data-gid')); break;
+    case 'open-group': openGroupDetail(el.getAttribute('data-gid')); break;
     case 'open-month': openMonth(el.getAttribute('data-gid'), parseInt(el.getAttribute('data-m'), 10)); break;
     case 'open-payment-modal': openPaymentModal(el.getAttribute('data-mid')); break;
     case 'close-payment-modal': closePaymentModal(); break;
