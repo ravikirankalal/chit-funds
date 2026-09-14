@@ -1,8 +1,11 @@
 import { ADMINS } from '../../firebase-config.js';
 import { state, groupsById, membersByGroup, paymentsCache, monthsCache, transferReqCache, monthKey } from '../store.js';
-import { fmt, escapeHtml, initialsOf, colorFor, adminName, isSuper, monthLabel, formatDateTime, otherAdmin } from '../helpers.js';
+import { fmt, escapeHtml, initialsOf, colorFor, adminName, adminDot, isSuper, monthLabel, formatDateTime, otherAdmin } from '../helpers.js';
 import { monthFinances } from '../finance.js';
-import { iconChevronLeft, iconChevronRight, iconCheck, iconClose } from '../icons.js';
+import {
+  iconChevronLeft, iconChevronRight, iconCheck, iconClose,
+  iconTrophy, iconWallet, iconWarningTriangle, iconClock, iconCash, iconCard, iconTransfer, iconCalendar
+} from '../icons.js';
 
 function signed(n) { return (n < 0 ? '−' : '') + fmt(Math.abs(n)); }
 
@@ -20,12 +23,13 @@ export function renderMonthDetail() {
   var statusLabel = isClosed ? 'Closed' : (isOpen ? 'Open' : 'Upcoming');
   var statusBg = isClosed ? '#e6f2ec' : (isOpen ? 'var(--accent)' : '#efece5');
   var statusColor = isClosed ? 'var(--accent)' : (isOpen ? '#fff' : '#a39d92');
+  var statusIcon = isClosed ? iconCheck(statusColor) : (isUpcoming ? iconClock(statusColor) : '');
 
   var html = '<div class="screen">' +
     '<div class="topbar">' +
       '<div class="back" data-action="nav-back">' + iconChevronLeft() + '</div>' +
-      '<div style="flex:1 1 auto;"><div class="title">' + monthLabel(group.startYear, group.startMonthIndex, viewMonth) + '</div><div class="subtitle">' + escapeHtml(group.name) + ' · Month ' + viewMonth + ' of ' + group.durationMonths + '</div></div>' +
-      '<div style="font-size:11px;font-weight:700;padding:5px 10px;border-radius:8px;background:' + statusBg + ';color:' + statusColor + ';">' + statusLabel + '</div>' +
+      '<div style="flex:1 1 auto;"><div class="title">' + iconCalendar('currentColor', 18) + monthLabel(group.startYear, group.startMonthIndex, viewMonth) + '</div><div class="subtitle">' + escapeHtml(group.name) + ' · Month ' + viewMonth + ' of ' + group.durationMonths + '</div></div>' +
+      '<div style="display:flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:5px 10px;border-radius:8px;background:' + statusBg + ';color:' + statusColor + ';">' + statusIcon + statusLabel + '</div>' +
     '</div>' +
     '<div class="content">';
 
@@ -75,7 +79,7 @@ function renderClosedSummary(f, members, readOnly) {
     return '<div class="card" style="display:flex;align-items:center;gap:12px;background:var(--accent-soft);border-color:var(--accent);">' +
       (winner ? '<div class="avatar" style="background:' + colorFor(winnerIdx) + ';">' + initialsOf(winner.name) + '</div>' : '') +
       '<div style="flex:1 1 auto; min-width:0;">' +
-        '<div style="font-size:11px;color:var(--accent);font-weight:600;">' + (f.winners.length > 1 ? 'Winner' : 'This month\'s winner') + '</div>' +
+        '<div style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--accent);font-weight:600;">' + iconTrophy() + (f.winners.length > 1 ? 'Winner' : 'This month\'s winner') + '</div>' +
         '<div style="font-size:16px;font-weight:700;">' + (winner ? escapeHtml(winner.name) : '—') + '</div>' +
       '</div>' +
       '<div style="text-align:right; flex-shrink:0;">' +
@@ -87,25 +91,25 @@ function renderClosedSummary(f, members, readOnly) {
 
   return '<div style="display:flex;flex-direction:column;gap:10px;">' +
     (unpaidCount > 0
-      ? '<div class="banner warn"><div class="banner-title">' + unpaidCount + ' member' + (unpaidCount === 1 ? '' : 's') + ' still unpaid</div>' +
+      ? '<div class="banner warn"><div class="banner-title">' + iconWarningTriangle('var(--warning)') + unpaidCount + ' member' + (unpaidCount === 1 ? '' : 's') + ' still unpaid</div>' +
         '<div style="font-size:12.5px;color:var(--text-muted);">This month is closed but dues are outstanding — tap an unpaid member below to record their payment.</div></div>'
       : '') +
     winnerCards +
     (readOnly ? '' : '<button class="btn btn-primary" style="width:100%;" data-action="open-winner-picker">Add another winner</button>') +
     '<div class="card" style="display:flex;justify-content:space-between;align-items:center;">' +
-      '<div><div style="font-size:12px;color:var(--text-muted);">Collected</div><div class="mono" style="font-size:16px;font-weight:700;color:#146b52;">' + fmt(f.totalCollected) + '</div></div>' +
+      '<div><div style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--text-muted);">' + iconWallet() + 'Collected</div><div class="mono" style="font-size:16px;font-weight:700;color:#146b52;">' + fmt(f.totalCollected) + '</div></div>' +
       '<div style="text-align:right;"><div style="font-size:12px;color:var(--text-muted);">Paid out by</div><div style="font-size:14px;font-weight:700;">' + adminName(f.monthDoc.payoutAdmin) + '</div></div>' +
     '</div>' +
     '<div class="stat-row">' +
-      '<div class="stat"><div class="label">' + ADMINS.A.name + ' holds</div><div class="value" style="' + (f.finalA < 0 ? 'color:var(--danger);' : '') + '">' + signed(f.finalA) + '</div></div>' +
-      '<div class="stat"><div class="label">' + ADMINS.B.name + ' holds</div><div class="value" style="' + (f.finalB < 0 ? 'color:var(--danger);' : '') + '">' + signed(f.finalB) + '</div></div>' +
+      '<div class="stat"><div class="label">' + adminDot('A') + ADMINS.A.name + ' holds</div><div class="value" style="' + (f.finalA < 0 ? 'color:var(--danger);' : '') + '">' + signed(f.finalA) + '</div></div>' +
+      '<div class="stat"><div class="label">' + adminDot('B') + ADMINS.B.name + ' holds</div><div class="value" style="' + (f.finalB < 0 ? 'color:var(--danger);' : '') + '">' + signed(f.finalB) + '</div></div>' +
     '</div>' +
-    '<div style="font-size:11px;color:var(--text-muted);text-align:center;">Closed ' + escapeHtml(f.monthDoc.closedLabel || '') + '</div>' +
+    '<div style="display:flex;align-items:center;justify-content:center;gap:4px;font-size:11px;color:var(--text-muted);">' + iconCheck('var(--text-muted)') + 'Closed ' + escapeHtml(f.monthDoc.closedLabel || '') + '</div>' +
   '</div>';
 }
 
 function renderUpcomingNotice(group, viewMonth) {
-  return '<div class="banner warn"><div class="banner-title">Not yet open</div>' +
+  return '<div class="banner warn"><div class="banner-title">' + iconClock('var(--warning)') + 'Not yet open</div>' +
     '<div style="font-size:12.5px;color:var(--text-muted);">Opens once ' + monthLabel(group.startYear, group.startMonthIndex, viewMonth - 1) + ' is closed. Scheduled payout: ' + fmt((group.payoutSchedule && group.payoutSchedule[viewMonth - 1]) || 0) + '.</div></div>';
 }
 
@@ -114,16 +118,16 @@ function renderOpenSummary(f, members, group) {
   var pct = expected > 0 ? Math.min(100, Math.round((f.totalCollected / expected) * 100)) : 0;
   return '<div class="card" style="display:flex;flex-direction:column;gap:10px;">' +
     '<div style="display:flex;justify-content:space-between;align-items:center;">' +
-      '<div><div style="font-size:12px;color:var(--text-muted);">Collected</div><div class="mono" style="font-size:16px;font-weight:700;">' + fmt(f.totalCollected) + ' <span style="font-size:12px;color:var(--text-muted);font-weight:400;">/ ' + fmt(expected) + '</span></div></div>' +
-      '<div style="text-align:right;"><div style="font-size:12px;color:var(--text-muted);">' + (f.winners.length ? 'Payout' : 'Scheduled payout') + '</div><div class="mono" style="font-size:16px;font-weight:700;color:var(--accent);">' + fmt(f.payoutAmount) + '</div></div>' +
+      '<div><div style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--text-muted);">' + iconWallet() + 'Collected</div><div class="mono" style="font-size:16px;font-weight:700;">' + fmt(f.totalCollected) + ' <span style="font-size:12px;color:var(--text-muted);font-weight:400;">/ ' + fmt(expected) + '</span></div></div>' +
+      '<div style="text-align:right;"><div style="display:flex;align-items:center;justify-content:flex-end;gap:4px;font-size:12px;color:var(--text-muted);">' + iconTrophy() + (f.winners.length ? 'Payout' : 'Scheduled payout') + '</div><div class="mono" style="font-size:16px;font-weight:700;color:var(--accent);">' + fmt(f.payoutAmount) + '</div></div>' +
     '</div>' +
     '<div>' +
       '<div style="display:flex;justify-content:space-between;margin-bottom:4px;"><div style="font-size:11px;color:var(--text-muted);">' + f.paidCount + ' / ' + members.length + ' paid</div><div style="font-size:11px;color:var(--text-muted);font-weight:600;">' + pct + '%</div></div>' +
       '<div class="progress-track"><div class="progress-fill" style="width:' + pct + '%;"></div></div>' +
     '</div>' +
     '<div class="stat-row">' +
-      '<div class="stat"><div class="label">' + ADMINS.A.name + ' holds</div><div class="value" style="' + (f.adjA < 0 ? 'color:var(--danger);' : '') + '">' + signed(f.adjA) + '</div></div>' +
-      '<div class="stat"><div class="label">' + ADMINS.B.name + ' holds</div><div class="value" style="' + (f.adjB < 0 ? 'color:var(--danger);' : '') + '">' + signed(f.adjB) + '</div></div>' +
+      '<div class="stat"><div class="label">' + adminDot('A') + ADMINS.A.name + ' holds</div><div class="value" style="' + (f.adjA < 0 ? 'color:var(--danger);' : '') + '">' + signed(f.adjA) + '</div></div>' +
+      '<div class="stat"><div class="label">' + adminDot('B') + ADMINS.B.name + ' holds</div><div class="value" style="' + (f.adjB < 0 ? 'color:var(--danger);' : '') + '">' + signed(f.adjB) + '</div></div>' +
     '</div>' +
   '</div>';
 }
@@ -131,7 +135,7 @@ function renderOpenSummary(f, members, group) {
 function paymentRow(r, readOnly, transferable) {
   var paidAtLabel = formatDateTime(r.paidAt);
   var subtitle = r.paid
-    ? 'Collected by <span style="font-weight:600;color:var(--accent);">' + adminName(r.collectedBy) + '</span> · ' + (r.mode === 'online' ? 'Online' : 'Cash') + (paidAtLabel ? ' · ' + paidAtLabel : '') + (r.transferred ? ' · Transferred' : '')
+    ? 'Collected by <span style="font-weight:600;color:var(--accent);">' + adminName(r.collectedBy) + '</span> · ' + (r.mode === 'online' ? 'Online' : 'Cash') + (paidAtLabel ? ' · ' + paidAtLabel : '') + (r.transferred ? ' · <span style="display:inline-flex;align-items:center;gap:3px;color:#3b4a8a;">' + iconTransfer('#3b4a8a') + 'Transferred</span>' : '')
     : '<span style="color:var(--danger);">Not paid yet' + (readOnly ? '' : ' · tap to record') + '</span>';
   var selection = state.ui.transferSelection;
   var canTransfer = transferable && r.paid && !readOnly;
@@ -191,7 +195,7 @@ function renderPaymentList(gid, viewMonth, members, f, readOnly, group, canTrans
   var secondRows = currentIsB ? byARows : byBRows;
   var secondAmount = currentIsB ? f.rawA : f.rawB;
 
-  return '<div><div class="section-label">Member payments (' + f.paidCount + '/' + members.length + ')</div>' +
+  return '<div><div class="section-label">' + iconWallet() + 'Member payments (' + f.paidCount + '/' + members.length + ')</div>' +
     paymentSubsection('unpaid', 'Unpaid', unpaidRows, unpaidAmount, readOnly, false) +
     paymentSubsection(firstKey, firstLabel, firstRows, firstAmount, readOnly, canTransfer) +
     paymentSubsection(secondKey, secondLabel, secondRows, secondAmount, readOnly, false) +
@@ -204,7 +208,7 @@ function renderPaymentList(gid, viewMonth, members, f, readOnly, group, canTrans
 // what used to be a single "Change" link.
 function renderWinnerCard(f, members, readOnly) {
   var html = '<div class="card" style="display:flex;flex-direction:column;gap:10px;">' +
-    '<div style="font-size:13px;font-weight:600;">' + (f.winners.length > 1 ? 'This month\'s winners' : 'This month\'s winner') + '</div>';
+    '<div style="display:flex;align-items:center;gap:5px;font-size:13px;font-weight:600;">' + iconTrophy() + (f.winners.length > 1 ? 'This month\'s winners' : 'This month\'s winner') + '</div>';
   if (f.winners.length) {
     html += f.winners.map(function (w) {
       var winner = members.find(function (mm) { return mm.id === w.memberId; });
@@ -232,8 +236,8 @@ function renderPayoutCard(f) {
   var req = transferReqCache.get(monthKey(state.activeGroupId, state.viewMonth));
   var canClose = f.winners.length && !req;
   return '<div class="card" style="display:flex;flex-direction:column;gap:12px;">' +
-    '<div style="font-size:13px;font-weight:600;">Record payout</div>' +
-    (req ? '<div style="font-size:11px;color:var(--warning);">Resolve the pending transfer request above before closing this month.</div>' : '') +
+    '<div style="display:flex;align-items:center;gap:5px;font-size:13px;font-weight:600;">' + iconWallet() + 'Record payout</div>' +
+    (req ? '<div style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--warning);">' + iconWarningTriangle('var(--warning)') + 'Resolve the pending transfer request above before closing this month.</div>' : '') +
     '<button class="btn btn-primary ' + (canClose ? '' : 'disabled') + '" style="width:100%; background:' + (canClose ? 'var(--accent)' : '#c7c2b8') + ';" data-action="close-month">Close Month &amp; Pay ' + fmt(f.payoutAmount) + '</button>' +
   '</div>';
 }
@@ -255,7 +259,7 @@ function renderWinnerPickerOverlay(gid, group, f, members) {
   }).join('') || '<div style="font-size:12.5px; color:var(--text-muted); text-align:center; padding:20px;">Everyone has already won this cycle.</div>';
 
   return '<div class="overlay"><div class="sheet">' +
-    '<div class="sheet-header"><div style="font-size:14px;font-weight:700;">Select this month\'s winner</div>' +
+    '<div class="sheet-header"><div style="display:flex;align-items:center;gap:6px;font-size:14px;font-weight:700;">' + iconTrophy() + 'Select this month\'s winner</div>' +
     '<div class="sheet-close" data-action="close-winner-picker">' + iconClose() + '</div></div>' +
     '<div class="sheet-body">' + winnerRows + '</div>' +
   '</div></div>';
@@ -271,7 +275,7 @@ function renderPaymentModalOverlay(gid, viewMonth, group, members) {
   var canMarkUnpaid = pm.isEditing && existingP && existingP.collectedBy === state.currentAdmin;
   var transferHistory = '';
   if (pm.isEditing && existingP) {
-    transferHistory += '<div><div style="font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:8px;">Transfer history</div><div style="display:flex;flex-direction:column;gap:10px;">' +
+    transferHistory += '<div><div style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:8px;">' + iconTransfer() + 'Transfer history</div><div style="display:flex;flex-direction:column;gap:10px;">' +
       timelineRow('var(--accent)', escapeHtml(pmem.name) + ' → ' + adminName(existingP.collectedBy), (existingP.mode === 'online' ? 'Online' : 'Cash'), '');
     var monthNet = (monthsCache.get(monthKey(gid, viewMonth)) || {}).transferNet || 0;
     if (monthNet) {
@@ -299,13 +303,13 @@ function renderPaymentModalOverlay(gid, viewMonth, group, members) {
         '<div class="mono" style="font-size:32px;font-weight:700;">' + fmt(group.monthlyDeposit) + '</div>' +
         (pm.isEditing && existingP && formatDateTime(existingP.paidAt) ? '<div style="font-size:11px;color:var(--text-muted);margin-top:2px;">Paid on ' + formatDateTime(existingP.paidAt) + '</div>' : '') +
       '</div>' +
-      '<div><div style="font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:8px;">Payment mode</div>' +
+      '<div><div style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:8px;">' + iconWallet() + 'Payment mode</div>' +
       (canEditMode
         ? '<div class="pill-row">' +
-            '<button class="pill ' + (pm.mode === 'cash' ? 'active' : '') + '" data-action="set-modal-mode" data-mode="cash">Cash</button>' +
-            '<button class="pill ' + (pm.mode === 'online' ? 'active' : '') + '" data-action="set-modal-mode" data-mode="online">Online</button>' +
+            '<button class="pill ' + (pm.mode === 'cash' ? 'active' : '') + '" style="display:flex;align-items:center;justify-content:center;gap:6px;" data-action="set-modal-mode" data-mode="cash">' + iconCash() + 'Cash</button>' +
+            '<button class="pill ' + (pm.mode === 'online' ? 'active' : '') + '" style="display:flex;align-items:center;justify-content:center;gap:6px;" data-action="set-modal-mode" data-mode="online">' + iconCard() + 'Online</button>' +
           '</div>'
-        : '<div class="pill-row"><div class="pill active" style="pointer-events:none;">' + (pm.mode === 'online' ? 'Online' : 'Cash') + '</div></div>' +
+        : '<div class="pill-row"><div class="pill active" style="pointer-events:none;display:flex;align-items:center;justify-content:center;gap:6px;">' + (pm.mode === 'online' ? iconCard() + 'Online' : iconCash() + 'Cash') + '</div></div>' +
           '<div style="font-size:11px;color:var(--text-muted);margin-top:6px;">' + (existingP && existingP.transferred ? 'Locked — this amount has been transferred and can no longer be edited.' : 'Only ' + adminName(holder) + ' can change this.') + '</div>'
       ) + '</div>' +
       transferHistory +

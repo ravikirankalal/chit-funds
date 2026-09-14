@@ -13,7 +13,8 @@
   border: 1px solid var(--border);
   display: flex; align-items: center; justify-content: center; flex-shrink: 0;
 }
-.topbar .title { font-family: 'Space Grotesk', sans-serif; font-size: 17px; font-weight: 700; }
+.topbar .title { font-family: 'Space Grotesk', sans-serif; font-size: 17px; font-weight: 700; display: flex; align-items: center; gap: 7px; }
+.topbar .title svg { flex-shrink: 0; }
 .topbar .subtitle { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
 
 .content {

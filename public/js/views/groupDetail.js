@@ -1,7 +1,7 @@
 import { state, groupsById, membersByGroup } from '../store.js';
-import { fmt, escapeHtml, monthLabel, adminName } from '../helpers.js';
+import { fmt, escapeHtml, monthLabel, adminName, adminDot } from '../helpers.js';
 import { monthFinances } from '../finance.js';
-import { iconChevronLeft, iconChevronRight } from '../icons.js';
+import { iconChevronLeft, iconChevronRight, iconWallet, iconPeopleSmall, iconTrendingUp, iconCalendar, iconTrophy, iconGroupStack } from '../icons.js';
 
 function signed(n) { return (n < 0 ? '−' : '') + fmt(Math.abs(n)); }
 
@@ -64,7 +64,7 @@ export function renderGroupDetail() {
         var hasUnpaid = unpaidCount > 0;
         var closedBg = hasUnpaid ? 'var(--warning-soft)' : '#e6f2ec';
         var closedFg = hasUnpaid ? 'var(--warning)' : '#146b52';
-        var subtitle = (winnerNames.length > 1 ? 'Winners: ' : 'Winner: ') + (winnerNames.length ? winnerNames.map(escapeHtml).join(', ') : '—') + (hasUnpaid ? ' · ' + unpaidCount + ' unpaid' : '');
+        var subtitle = '<span style="display:inline-flex;align-items:center;gap:4px;">' + iconTrophy() + (winnerNames.length > 1 ? 'Winners: ' : 'Winner: ') + (winnerNames.length ? winnerNames.map(escapeHtml).join(', ') : '—') + '</span>' + (hasUnpaid ? ' · ' + unpaidCount + ' unpaid' : '');
         rows.push('<div class="list-row" data-action="open-month" data-gid="' + gid + '" data-m="' + m + '"' + (hasUnpaid ? ' style="border-color:' + closedFg + ';"' : '') + '>' +
           '<div class="avatar sm" style="background:' + closedBg + '; color:' + closedFg + ';">' + m + '</div>' +
           '<div style="flex:1 1 auto; min-width:0;"><div style="font-size:13px;font-weight:600;">' + monthLabel(group.startYear, group.startMonthIndex, m) + '</div>' +
@@ -105,12 +105,12 @@ export function renderGroupDetail() {
       progressCard('Payouts so far', payoutSoFar, totalPayout, 'var(--warning)') +
     '</div>' +
     '<div class="stat-row">' +
-      '<div class="stat"><div class="label">Realized profit so far</div><div class="value" style="color:' + (profitSoFar < 0 ? 'var(--danger)' : '#146b52') + ';">' + signed(profitSoFar) + '</div></div>' +
-      '<div class="stat"><div class="label">Profit margin at completion</div><div class="value" style="color:' + (profitMargin < 0 ? 'var(--danger)' : '#146b52') + ';">' + signed(profitMargin) + '</div></div>' +
+      '<div class="stat"><div class="label">' + iconTrendingUp() + 'Realized profit so far</div><div class="value" style="color:' + (profitSoFar < 0 ? 'var(--danger)' : '#146b52') + ';">' + signed(profitSoFar) + '</div></div>' +
+      '<div class="stat"><div class="label">' + iconTrendingUp() + 'Profit margin at completion</div><div class="value" style="color:' + (profitMargin < 0 ? 'var(--danger)' : '#146b52') + ';">' + signed(profitMargin) + '</div></div>' +
     '</div>' +
     '<div class="stat-row">' +
-      '<div class="stat"><div class="label">' + adminName('A') + ' holds</div><div class="value" style="' + (holdA < 0 ? 'color:var(--danger);' : '') + '">' + signed(holdA) + '</div></div>' +
-      '<div class="stat"><div class="label">' + adminName('B') + ' holds</div><div class="value" style="' + (holdB < 0 ? 'color:var(--danger);' : '') + '">' + signed(holdB) + '</div></div>' +
+      '<div class="stat"><div class="label">' + adminDot('A') + adminName('A') + ' holds</div><div class="value" style="' + (holdA < 0 ? 'color:var(--danger);' : '') + '">' + signed(holdA) + '</div></div>' +
+      '<div class="stat"><div class="label">' + adminDot('B') + adminName('B') + ' holds</div><div class="value" style="' + (holdB < 0 ? 'color:var(--danger);' : '') + '">' + signed(holdB) + '</div></div>' +
     '</div>' +
   '</div>';
 
@@ -118,19 +118,19 @@ export function renderGroupDetail() {
     '<div class="screen">' +
       '<div class="topbar">' +
         '<div class="back" data-action="nav-back">' + iconChevronLeft() + '</div>' +
-        '<div><div class="title">' + escapeHtml(group.name) + '</div>' +
+        '<div><div class="title">' + iconGroupStack('currentColor', 18) + escapeHtml(group.name) + '</div>' +
         '<div class="subtitle">Month ' + group.currentMonth + ' of ' + group.durationMonths + ' · started ' + monthLabel(group.startYear, group.startMonthIndex, 1) + '</div></div>' +
       '</div>' +
       '<div class="content">' +
         '<div class="stat-row">' +
-          '<div class="stat"><div class="label">Monthly deposit</div><div class="value">' + fmt(group.monthlyDeposit) + '</div></div>' +
+          '<div class="stat"><div class="label">' + iconWallet() + 'Monthly deposit</div><div class="value">' + fmt(group.monthlyDeposit) + '</div></div>' +
           '<div class="stat" data-action="open-group-members" data-gid="' + gid + '" style="cursor:pointer; display:flex; align-items:center; justify-content:space-between; gap:6px;">' +
-            '<div><div class="label">Members</div><div class="value">' + members.length + '</div></div>' +
+            '<div><div class="label">' + iconPeopleSmall() + 'Members</div><div class="value">' + members.length + '</div></div>' +
             iconChevronRight() +
           '</div>' +
         '</div>' +
-        '<div><div class="section-label">Fund financials</div>' + financeCard + '</div>' +
-        '<div><div class="section-label">Months</div><div class="row-list">' + rows.join('') + '</div></div>' +
+        '<div><div class="section-label">' + iconTrendingUp() + 'Fund financials</div>' + financeCard + '</div>' +
+        '<div><div class="section-label">' + iconCalendar() + 'Months</div><div class="row-list">' + rows.join('') + '</div></div>' +
       '</div>' +
     '</div>';
 

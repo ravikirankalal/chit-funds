@@ -8,10 +8,12 @@
 
 .stat-row { display: flex; gap: 10px; }
 .stat { flex: 1 1 0; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px; }
-.stat .label { font-size: 10.5px; color: var(--text-muted); font-weight: 500; }
+.stat .label { font-size: 10.5px; color: var(--text-muted); font-weight: 500; display: flex; align-items: center; gap: 4px; }
+.stat .label svg { flex-shrink: 0; opacity: 0.85; }
 .stat .value { font-family: 'Space Grotesk', sans-serif; font-size: 15px; font-weight: 700; margin-top: 2px; }
 
-.section-label { font-size: 13px; font-weight: 600; color: var(--text-muted); margin-bottom: 10px; }
+.section-label { font-size: 13px; font-weight: 600; color: var(--text-muted); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+.section-label svg { flex-shrink: 0; opacity: 0.8; }
 
 .row-list { display: flex; flex-direction: column; gap: 8px; }
 
@@ -43,7 +45,8 @@
 .pill.active { background: var(--accent); color: #fff; border-color: var(--accent); }
 
 .field { display: flex; flex-direction: column; gap: 6px; }
-.field label { font-size: 12px; font-weight: 500; color: var(--text-muted); }
+.field label { font-size: 12px; font-weight: 500; color: var(--text-muted); display: flex; align-items: center; gap: 5px; }
+.field label svg { flex-shrink: 0; opacity: 0.8; }
 .field input {
   width: 100%; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--border);
   background: var(--surface); font-size: 14px; color: var(--text);
