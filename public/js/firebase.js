@@ -40,13 +40,34 @@ async function authEmulatorReachable() {
   }
 }
 
-if (isLocalHost && (await authEmulatorReachable())) {
-  // On a reload, Auth may already be restoring a persisted session by the
-  // time this async probe resolves — connectAuthEmulator throws
-  // auth/emulator-config-failed if called after Auth's first use. That
-  // throw would otherwise propagate out of this module's top-level await
-  // and abort the whole import graph (main.js never gets to run render()),
-  // so it's caught rather than left to crash the app.
-  try { connectAuthEmulator(auth, 'http://localhost:9099', { disableWarnings: true }); } catch (e) {}
-  try { connectFirestoreEmulator(db, 'localhost', 8080); } catch (e) {}
+// getAuth() above already kicked off an async restore of any persisted
+// session (read from IndexedDB) the moment this module started running.
+// connectAuthEmulator() throws auth/emulator-config-failed if it's called
+// after that restore has progressed — a race this file loses on every
+// reload once a session exists to restore, since the `await` below always
+// gives that restore a turn first. Caching the previous detection result
+// (per tab) lets a repeat visit skip the `await` entirely and call
+// connectAuthEmulator in the same synchronous tick as getAuth(), which
+// wins the race; only the very first visit in a tab — when there's no
+// persisted session yet to race against — needs the real async probe.
+const EMULATOR_CACHE_KEY = 'chitfunds:useEmulator';
+var useEmulator = false;
+if (isLocalHost) {
+  var cached = sessionStorage.getItem(EMULATOR_CACHE_KEY);
+  if (cached === '1') useEmulator = true;
+  else if (cached !== '0') useEmulator = await authEmulatorReachable();
+  sessionStorage.setItem(EMULATOR_CACHE_KEY, useEmulator ? '1' : '0');
+}
+
+if (useEmulator) {
+  // Belt-and-braces: if the race is somehow still lost (e.g. a slow tab),
+  // fall back loudly rather than silently proceeding against production —
+  // silently talking to prod during "local" testing could mean writes land
+  // in real data without anyone noticing.
+  try {
+    connectAuthEmulator(auth, 'http://localhost:9099', { disableWarnings: true });
+    connectFirestoreEmulator(db, 'localhost', 8080);
+  } catch (e) {
+    console.error('[firebase] Failed to connect to local emulators — this session may be talking to PRODUCTION Firebase instead. Reload to retry.', e);
+  }
 }
