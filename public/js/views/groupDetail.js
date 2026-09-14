@@ -51,11 +51,20 @@ export function renderGroupDetail() {
       var f = monthFinances(gid, group, m);
       if (f.closed) {
         var winner = members.find(function (mm) { return mm.id === f.monthDoc.winnerId; });
-        rows.push('<div class="list-row" data-action="open-month" data-gid="' + gid + '" data-m="' + m + '">' +
-          '<div class="avatar sm" style="background:#e6f2ec; color:#146b52;">' + m + '</div>' +
+        var unpaidCount = members.length - f.paidCount;
+        // A closed month can still have unpaid dues (a late/missed payment) —
+        // flag those with the amber "warning" palette instead of the usual
+        // green closed styling, so it's obvious at a glance which closed
+        // months still need follow-up.
+        var hasUnpaid = unpaidCount > 0;
+        var closedBg = hasUnpaid ? 'var(--warning-soft)' : '#e6f2ec';
+        var closedFg = hasUnpaid ? 'var(--warning)' : '#146b52';
+        var subtitle = 'Winner: ' + (winner ? escapeHtml(winner.name) : '—') + (hasUnpaid ? ' · ' + unpaidCount + ' unpaid' : '');
+        rows.push('<div class="list-row" data-action="open-month" data-gid="' + gid + '" data-m="' + m + '"' + (hasUnpaid ? ' style="border-color:' + closedFg + ';"' : '') + '>' +
+          '<div class="avatar sm" style="background:' + closedBg + '; color:' + closedFg + ';">' + m + '</div>' +
           '<div style="flex:1 1 auto; min-width:0;"><div style="font-size:13px;font-weight:600;">' + monthLabel(group.startYear, group.startMonthIndex, m) + '</div>' +
-          '<div style="font-size:11.5px;color:var(--text-muted);margin-top:1px;">Winner: ' + (winner ? escapeHtml(winner.name) : '—') + '</div></div>' +
-          '<div style="text-align:right; flex-shrink:0;"><div style="font-size:13px;font-weight:700;color:#146b52;">' + fmt(f.payoutAmount) + '</div>' +
+          '<div style="font-size:11.5px;color:' + (hasUnpaid ? closedFg : 'var(--text-muted)') + ';margin-top:1px;">' + subtitle + '</div></div>' +
+          '<div style="text-align:right; flex-shrink:0;"><div style="font-size:13px;font-weight:700;color:' + closedFg + ';">' + fmt(f.payoutAmount) + '</div>' +
           '<div style="font-size:11px;color:var(--text-muted);">won</div></div>' +
         '</div>');
       } else {

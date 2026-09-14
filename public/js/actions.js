@@ -194,7 +194,7 @@ export function openPaymentModal(memberId) {
   if (isSuper()) return;
   var gid = state.activeGroupId, m = state.viewMonth;
   var group = groupsById.get(gid);
-  if (m !== group.currentMonth) return;
+  if (m > group.currentMonth) return;
   var existing = (paymentsCache.get(monthKey(gid, m)) || {})[memberId];
   var initialMode = (existing && existing.mode) || 'cash';
   state.ui.paymentModal = { memberId: memberId, mode: initialMode, originalMode: initialMode, isEditing: !!(existing && existing.paid) };
@@ -261,7 +261,7 @@ export function togglePaymentSelection(mid) {
   if (isSuper()) return;
   var gid = state.activeGroupId, m = state.viewMonth;
   var group = groupsById.get(gid);
-  if (!group || m !== group.currentMonth) return;
+  if (!group || m > group.currentMonth) return;
   var existing = (paymentsCache.get(monthKey(gid, m)) || {})[mid];
   if (!existing || !existing.paid || existing.collectedBy !== state.currentAdmin) return;
   var sel = state.ui.transferSelection || (state.ui.transferSelection = { mids: [] });
