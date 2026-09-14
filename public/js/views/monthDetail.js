@@ -3,7 +3,7 @@ import { state, groupsById, membersByGroup, paymentsCache, monthsCache, transfer
 import { fmt, escapeHtml, initialsOf, colorFor, adminName, adminDot, isSuper, monthLabel, formatDateTime, otherAdmin } from '../helpers.js';
 import { monthFinances } from '../finance.js';
 import {
-  iconChevronLeft, iconChevronRight, iconCheck, iconClose,
+  iconChevronLeft, iconCheck, iconClose,
   iconTrophy, iconWallet, iconWarningTriangle, iconClock, iconCash, iconCard, iconTransfer, iconCalendar
 } from '../icons.js';
 import { bar, skeletonListRow } from '../skeleton.js';
@@ -175,25 +175,22 @@ function paymentRow(r, readOnly, transferable) {
   '</div>';
 }
 
-function paymentSubsection(key, label, rows, amount, readOnly, transferable) {
-  if (!rows.length) return '';
-  var collapsed = !!state.ui.collapsedPaymentSections[key];
-  var amountColor = key === 'unpaid' ? 'var(--color-danger)' : 'var(--color-success)';
-  return '<div style="margin-top:14px;">' +
-    '<div data-action="toggle-payment-section" data-key="' + key + '" style="display:flex;align-items:center;gap:4px;cursor:pointer;margin-bottom:6px;">' +
-      '<div style="display:flex;transform:rotate(' + (collapsed ? '0' : '90') + 'deg);color:var(--color-text-muted);">' + iconChevronRight() + '</div>' +
-      '<div style="font-size:11.5px;font-weight:600;color:var(--color-text-muted);">' + label + ' (' + rows.length + ') · <span style="color:' + amountColor + ';">' + fmt(amount) + '</span></div>' +
-    '</div>' +
-    (collapsed ? '' : '<div class="row-list">' + rows.map(function (r) { return paymentRow(r, readOnly, transferable); }).join('') + '</div>') +
+function paymentTabChip(tab, active) {
+  var amountColor = active ? 'var(--on-brand)' : tab.amountColor;
+  return '<div data-action="select-payment-tab" data-key="' + tab.key + '" style="display:flex;align-items:center;gap:5px;cursor:pointer;flex-shrink:0;padding:8px 14px;border-radius:20px;font-size:12.5px;font-weight:600;white-space:nowrap;' +
+    (active ? 'background:var(--color-primary);color:var(--on-brand);' : 'background:var(--color-surface);color:var(--color-text);border:1px solid var(--color-border);') + '">' +
+    tab.label + ' (' + tab.rows.length + ') · <span style="color:' + amountColor + ';">' + fmt(tab.amount) + '</span>' +
   '</div>';
 }
 
-// Unpaid always leads; whichever admin is currently signed in gets their
-// own "collected by" section second, so each admin sees their own
-// collections first without having to scan past the other admin's.
-// Collapse state is keyed by admin id (not position) so it stays stable
-// regardless of which admin is currently viewing. Only the logged-in
-// admin's own section is hold-to-transfer eligible — open or closed, so a
+// Unpaid always leads; whichever admin is currently signed in gets their own
+// "collected by" tab second, so each admin sees their own collections first
+// without having to scan past the other admin's. Only one tab's rows render
+// at a time — with ~20 members split across up to three groups, stacking all
+// of them (the old accordion layout) meant scrolling past everyone already
+// paid just to reach the winner/payout card below; a tab bar bounds the
+// list to whichever group you're actually looking at. Only the logged-in
+// admin's own tab is hold-to-transfer eligible — open or closed, so a
 // late/misattributed payment can still be handed off after close, but not
 // a not-yet-open future month. See togglePaymentSelection in actions.js.
 function renderPaymentList(gid, viewMonth, members, f, readOnly, group, canTransfer) {
@@ -210,18 +207,32 @@ function renderPaymentList(gid, viewMonth, members, f, readOnly, group, canTrans
 
   var currentIsB = state.currentAdmin === 'B';
   var firstKey = currentIsB ? 'B' : 'A';
-  var firstLabel = 'Collected by ' + adminName(currentIsB ? 'B' : 'A');
   var firstRows = currentIsB ? byBRows : byARows;
   var firstAmount = currentIsB ? f.rawB : f.rawA;
   var secondKey = currentIsB ? 'A' : 'B';
-  var secondLabel = 'Collected by ' + adminName(currentIsB ? 'A' : 'B');
   var secondRows = currentIsB ? byARows : byBRows;
   var secondAmount = currentIsB ? f.rawA : f.rawB;
 
+  var tabs = [
+    { key: 'unpaid', label: 'Unpaid', rows: unpaidRows, amount: unpaidAmount, amountColor: 'var(--color-danger)', transferable: false },
+    { key: firstKey, label: adminName(firstKey), rows: firstRows, amount: firstAmount, amountColor: 'var(--color-success)', transferable: canTransfer },
+    { key: secondKey, label: adminName(secondKey), rows: secondRows, amount: secondAmount, amountColor: 'var(--color-success)', transferable: false }
+  ].filter(function (t) { return t.rows.length; });
+
+  if (!tabs.length) return '<div><div class="section-label">' + iconWallet() + 'Member payments (' + f.paidCount + '/' + members.length + ')</div></div>';
+
+  // Unpaid is the default focus mid-collection; once everyone's paid (no
+  // unpaid tab left), fall back to the signed-in admin's own tab.
+  var defaultKey = unpaidRows.length ? 'unpaid' : firstKey;
+  var activeKey = state.ui.paymentTab;
+  if (!tabs.some(function (t) { return t.key === activeKey; })) activeKey = defaultKey;
+  var activeTab = tabs.filter(function (t) { return t.key === activeKey; })[0];
+
   return '<div><div class="section-label">' + iconWallet() + 'Member payments (' + f.paidCount + '/' + members.length + ')</div>' +
-    paymentSubsection('unpaid', 'Unpaid', unpaidRows, unpaidAmount, readOnly, false) +
-    paymentSubsection(firstKey, firstLabel, firstRows, firstAmount, readOnly, canTransfer) +
-    paymentSubsection(secondKey, secondLabel, secondRows, secondAmount, readOnly, false) +
+    '<div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:2px;margin-bottom:10px;">' +
+      tabs.map(function (t) { return paymentTabChip(t, t.key === activeKey); }).join('') +
+    '</div>' +
+    '<div class="row-list">' + activeTab.rows.map(function (r) { return paymentRow(r, readOnly, activeTab.transferable); }).join('') + '</div>' +
   '</div>';
 }
 

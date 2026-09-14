@@ -14,7 +14,7 @@ import { flatPayoutSchedule } from './helpers.js';
 import {
   startCreateGroup, createGroupStep2, addDraftMember, addExistingDraftMember, removeDraftMember, submitCreateGroup,
   openGroupDetail, openGroupMembers, openMemberPayments, removeMemberFromGroup, openMonth, openPaymentModal, closePaymentModal, setModalMode,
-  savePaymentModal, markUnpaidFromModal, togglePaymentSection, setLedgerFilter, openWinnerPicker, closeWinnerPicker, addWinner, removeWinner, setWinnerAmount,
+  savePaymentModal, markUnpaidFromModal, selectPaymentTab, setLedgerFilter, openWinnerPicker, closeWinnerPicker, addWinner, removeWinner, setWinnerAmount,
   closeMonthAction, requestTransferToB, requestTransferToA,
   acceptTransferRequest, declineTransferRequest, cancelTransferRequest,
   openMemberForm, closeMemberForm, saveMemberForm,
@@ -81,7 +81,7 @@ document.addEventListener('click', function (e) {
     case 'set-modal-mode': setModalMode(el.getAttribute('data-mode')); break;
     case 'save-payment': savePaymentModal(); break;
     case 'mark-unpaid': markUnpaidFromModal(); break;
-    case 'toggle-payment-section': togglePaymentSection(el.getAttribute('data-key')); break;
+    case 'select-payment-tab': selectPaymentTab(el.getAttribute('data-key')); break;
     case 'set-ledger-filter': setLedgerFilter(el.getAttribute('data-filter')); break;
     case 'open-winner-picker': openWinnerPicker(); break;
     case 'close-winner-picker': closeWinnerPicker(); break;
