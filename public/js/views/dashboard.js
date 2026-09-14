@@ -70,21 +70,18 @@ export function renderDashboard() {
     var payoutLine = winnerNames.length
       ? '<div style="font-size:11.5px;color:var(--color-text-muted);"><span style="display:flex;align-items:center;gap:4px;">' + iconTrophy('var(--color-text-faint)') + (winnerNames.length > 1 ? 'Winners: ' : 'Winner: ') + escapeHtml(winnerNames.join(', ')) + '</span></div>'
       : '';
-    // Compact per-month collection-trend sparkline, same visual language as
-    // the full-size one on the group detail page — closed-and-fully-paid
-    // months green, closed-with-unpaid amber, the currently open month
-    // blue, and not-yet-reached months a flat muted sliver. Reuses f
-    // (already computed above) for the current month instead of calling
+    // Compact per-month collection-trend sparkline — one rule shared with
+    // every other trend chart in the app (group detail, member payments):
+    // green once a month's dues are fully in, red if anything's
+    // outstanding, muted for months not yet reached. Reuses f (already
+    // computed above) for the current month instead of calling
     // monthFinances on it a second time.
     var trend = [];
     for (var tm = 1; tm <= g.durationMonths; tm++) {
       if (tm <= g.currentMonth) {
         var tf = tm === g.currentMonth ? f : monthFinances(g.id, g, tm);
         var tpct = memberCount > 0 ? Math.round((tf.paidCount / memberCount) * 100) : 0;
-        var tcolor = tf.closed
-          ? (tf.paidCount < memberCount ? 'var(--color-warning)' : 'var(--color-success)')
-          : 'var(--color-secondary)';
-        trend.push({ m: tm, pct: tpct, color: tcolor });
+        trend.push({ m: tm, pct: tpct, color: tf.paidCount === memberCount ? 'var(--color-success)' : 'var(--color-danger)' });
       } else {
         trend.push({ m: tm, pct: 0, color: 'var(--color-border)' });
       }

@@ -106,7 +106,11 @@ export function renderGroupDetail() {
         var closedBg = hasUnpaid ? 'var(--color-warning-soft)' : 'var(--color-success-soft)';
         var closedFg = hasUnpaid ? 'var(--color-warning)' : 'var(--color-success)';
         var subtitle = '<span style="display:inline-flex;align-items:center;gap:4px;">' + iconTrophy() + (winnerNames.length > 1 ? 'Winners: ' : 'Winner: ') + (winnerNames.length ? winnerNames.map(escapeHtml).join(', ') : '—') + '</span>' + (hasUnpaid ? ' · ' + unpaidCount + ' unpaid' : '');
-        trend.push({ m: m, pct: monthPct, color: closedFg });
+        // The trend sparkline uses one rule everywhere it appears (here,
+        // the dashboard, and the per-member charts): green once every due
+        // is in, red if anything's outstanding — regardless of the row's
+        // own richer open/closed/warning styling above.
+        trend.push({ m: m, pct: monthPct, color: hasUnpaid ? 'var(--color-danger)' : 'var(--color-success)' });
         rows.push('<div class="list-row" data-action="open-month" data-gid="' + gid + '" data-m="' + m + '"' + (hasUnpaid ? ' style="border-color:' + closedFg + ';"' : '') + '>' +
           '<div class="avatar sm" style="background:' + closedBg + '; color:' + closedFg + ';">' + m + '</div>' +
           '<div style="flex:1 1 auto; min-width:0;"><div style="font-size:13px;font-weight:600;">' + monthLabel(group.startYear, group.startMonthIndex, m) + '</div>' +
@@ -116,10 +120,7 @@ export function renderGroupDetail() {
         '</div>');
       } else {
         var pct = members.length > 0 ? Math.min(100, Math.round((f.paidCount / members.length) * 100)) : 0;
-        // Blue (not green — green already means "closed/paid out" elsewhere,
-        // and reusing it for "in progress" would blur that distinction).
-        // Same blue already used for transfer ledger entries in finance.js.
-        trend.push({ m: m, pct: pct, color: 'var(--color-secondary)' });
+        trend.push({ m: m, pct: pct, color: pct === 100 ? 'var(--color-success)' : 'var(--color-danger)' });
         rows.push('<div class="list-row" data-action="open-month" data-gid="' + gid + '" data-m="' + m + '" style="border-color:var(--color-secondary);background:var(--color-secondary-soft);flex-direction:column;align-items:stretch;gap:6px;">' +
           '<div style="display:flex;align-items:center;gap:10px;">' +
             '<div class="avatar sm" style="background:var(--color-secondary); color:var(--on-brand);">' + m + '</div>' +
