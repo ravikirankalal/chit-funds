@@ -12,10 +12,23 @@ import { db } from './firebase.js';
 import { state, groupsById, membersById, monthsCache, paymentsCache, transferReqCache, monthKey } from './store.js';
 import { isSuper, monthLabel, flatPayoutSchedule, otherAdmin } from './helpers.js';
 import { monthFinances, memberHasPaidInGroup, getMonthWinners } from './finance.js';
-import { goTo, pushNav, replaceNav } from './router.js';
-import { render } from './render.js';
+import { goTo, pushNav } from './router.js';
+import { render, setBusyOverlay } from './render.js';
 
-export function setBusy(v) { state.busy = v; render(); }
+// Going busy just shows a spinner over whatever's already on screen — see
+// setBusyOverlay() in render.js for why that's a targeted DOM toggle rather
+// than a full render() (a full render re-creates any open sheet/overlay,
+// restarting its entrance animation — visible as a flash right as the
+// payment drawer, member form, etc. is about to close). Coming back off
+// busy DOES need the full render(): that's the point where the action's
+// own state changes (a saved payment, a closed overlay) actually need to
+// reach the screen, and there's no longer an open overlay for it to
+// disrupt by then.
+export function setBusy(v) {
+  state.busy = v;
+  if (v) setBusyOverlay(true);
+  else render();
+}
 
 export function startCreateGroup() {
   if (isSuper()) return;
@@ -126,15 +139,13 @@ export async function saveMemberForm() {
   try {
     if (mf.id) await updateDoc(doc(db, 'members', mf.id), { name: name });
     else await addDoc(collection(db, 'members'), { name: name, createdAt: serverTimestamp() });
-    // openMemberForm() pushed a nav entry for this overlay; closing it here
-    // (a completed save, not a Back/cancel) leaves that entry stale unless
-    // we overwrite it too — otherwise a later Back pops it and its snapshot
-    // reopens this already-saved form. replaceNav() (not history.back())
-    // because history.back() fires an async popstate that re-renders a
-    // second time a moment later — same state, but the extra full-DOM
-    // render is a visible flash right as the overlay closes.
+    // openMemberForm() pushed a nav entry for this overlay; pop it via
+    // history.back(), same as closeMemberForm() — see router.js's popstate
+    // handler for why this no longer causes a render flash (it skips the
+    // redundant re-render when the popped snapshot already matches the
+    // state we just set synchronously below).
     state.ui.memberForm = null;
-    replaceNav();
+    history.back();
   } catch (err) {
     alert('Could not save member: ' + err.message);
   } finally { setBusy(false); }
@@ -240,17 +251,11 @@ export async function savePaymentModal() {
       transferred: !!(existing && existing.transferred),
       paidAt: (existing && existing.paidAt) || serverTimestamp()
     });
-    // openPaymentModal() pushed a nav entry for this member; closing it
-    // here (a completed save, not Cancel) leaves that entry stale unless we
-    // overwrite it — otherwise, after collecting from several members in a
-    // row, pressing the topbar Back pops one of those stale entries and its
-    // snapshot reopens the drawer for whichever member it was last pushed
-    // for. replaceNav() rather than history.back(): back() fires an async
-    // popstate that re-renders a second time a moment later with identical
-    // state — harmless in principle, but the extra full-DOM render visibly
-    // flashes right as the drawer closes.
+    // openPaymentModal() pushed a nav entry for this member; pop it via
+    // history.back(), same as closePaymentModal() — see router.js's
+    // popstate handler for why this doesn't also cause a render flash.
     state.ui.paymentModal = null;
-    replaceNav();
+    history.back();
   } catch (err) {
     alert('Could not save payment: ' + err.message);
   } finally { setBusy(false); }
@@ -268,7 +273,7 @@ export async function markUnpaidFromModal() {
   try {
     await deleteDoc(doc(db, 'groups', gid, 'months', String(m), 'payments', pm.memberId));
     state.ui.paymentModal = null;
-    replaceNav(); // see savePaymentModal() above — same stale-entry issue
+    history.back(); // see savePaymentModal() above
   } catch (err) {
     alert('Could not update payment: ' + err.message);
   } finally { setBusy(false); }
@@ -355,12 +360,12 @@ export async function addWinner(memberId) {
   var monthDoc = monthsCache.get(monthKey(gid, m));
   var scheduled = (group.payoutSchedule && group.payoutSchedule[m - 1]) || 0;
   var current = getMonthWinners(monthDoc, scheduled);
-  if (current.some(function (w) { return w.memberId === memberId; })) { state.ui.showWinnerPicker = false; render(); replaceNav(); return; }
+  if (current.some(function (w) { return w.memberId === memberId; })) { state.ui.showWinnerPicker = false; render(); history.back(); return; }
   setBusy(true);
   try {
     await updateDoc(doc(db, 'groups', gid, 'months', String(m)), { winners: current.concat([{ memberId: memberId, payoutAmount: scheduled }]) });
     state.ui.showWinnerPicker = false;
-    replaceNav(); // see savePaymentModal() — same stale pushNav()-entry issue
+    history.back(); // see savePaymentModal() above
   } catch (err) { alert('Could not add winner: ' + err.message); }
   finally { setBusy(false); }
 }
