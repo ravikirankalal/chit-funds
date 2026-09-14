@@ -67,15 +67,19 @@
      NOT derived from the brand colors above — see the note at the top.
      Warning was nudged from amber toward mustard-gold here specifically
      because the new accent (coral) already lives in the orange-red band —
-     without this shift the two would sit almost on top of each other. */
-  --color-success: #146b52;
-  --color-success-soft: #e6f2ec;
+     without this shift the two would sit almost on top of each other.
+     Success/danger are saturated emerald/red — modern, high-contrast tones
+     matching the vibrancy of --color-primary, used throughout the paid/
+     unpaid trend charts (dashboard, group detail, month detail, member
+     payments). */
+  --color-success: #16a34a;
+  --color-success-soft: #e7f8ed;
 
   --color-warning: #a6760d;
   --color-warning-soft: #f7eeda;
 
-  --color-danger: #b3261e;
-  --color-danger-soft: #fbe9e7;
+  --color-danger: #dc2626;
+  --color-danger-soft: #fdecec;
 
   /* ---- Neutrals ---------------------------------------------------- */
   --color-backdrop: #d8d4cb; /* page background behind the app's centered shell */

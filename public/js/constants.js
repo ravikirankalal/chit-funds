@@ -5,8 +5,11 @@ export const MONTH_NAMES = [
   'July', 'August', 'September', 'October', 'November', 'December'
 ];
 
-// Avatar background colors, cycled by member index.
+// Avatar background colors, cycled by member index. A modern vibrant
+// multi-hue set at the same saturation level as the brand palette in
+// theme.css, deliberately avoiding primary blue, accent coral, and gold so
+// an avatar never gets mistaken for one of those meaningful colors.
 export const PALETTE = [
-  '#146b52', '#8a5a2b', '#3b5f8a', '#8a3b5a',
-  '#5a5a8a', '#3b7a7a', '#7a6b3b', '#6b3b7a'
+  '#0d9488', '#7c3aed', '#db2777', '#ea580c',
+  '#4f46e5', '#0891b2', '#c026d3', '#65a30d'
 ];
