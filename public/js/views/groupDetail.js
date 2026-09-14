@@ -147,23 +147,23 @@ export function renderGroupDetail() {
   '</div>';
 
   var html = '' +
-    '<div class="screen">' +
+    // .screen/.content are normally unbounded (base.css gives #app/.screen
+    // min-height, not height, so pages just grow and the whole document
+    // scrolls) — this screen instead pins itself to the viewport so the
+    // months list can be the one thing that scrolls, filling every bit of
+    // space below the stats card down to the bottom of the screen rather
+    // than stopping at an arbitrary max-height.
+    '<div class="screen" style="height:100vh;overflow:hidden;">' +
       '<div class="topbar">' +
         '<div class="back" data-action="nav-back">' + iconChevronLeft() + '</div>' +
         '<div><div class="title">' + iconGroupStack('var(--color-primary)', 18) + escapeHtml(group.name) + '</div>' +
         '<div class="subtitle">Month ' + group.currentMonth + ' of ' + group.durationMonths + ' · started ' + monthLabel(group.startYear, group.startMonthIndex, 1) + '</div></div>' +
       '</div>' +
-      '<div class="content">' +
+      '<div class="content" style="min-height:0;padding-bottom:18px;">' +
         statsCard +
-        '<div>' +
-          '<div class="section-label">' + iconCalendar() + 'Months</div>' +
-          // .content/.screen grow to fit their content rather than being
-          // viewport-clipped (see base.css — #app is min-height, not
-          // height), so .content's own overflow-y:auto never actually
-          // engages; a durationMonths-long list needs an explicit
-          // max-height here to actually scroll instead of just growing
-          // the whole page.
-          '<div style="max-height:50vh;overflow-y:auto;-webkit-overflow-scrolling:touch;"><div class="row-list">' + rows.join('') + '</div></div>' +
+        '<div style="display:flex;flex-direction:column;flex:1 1 auto;min-height:0;">' +
+          '<div class="section-label" style="flex-shrink:0;">' + iconCalendar() + 'Months</div>' +
+          '<div style="flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;"><div class="row-list">' + rows.join('') + '</div></div>' +
         '</div>' +
       '</div>' +
     '</div>';
