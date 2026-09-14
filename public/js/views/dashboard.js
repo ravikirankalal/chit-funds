@@ -1,5 +1,5 @@
 import { ADMINS } from '../../firebase-config.js';
-import { state, groupsById } from '../store.js';
+import { state, groupsById, membersByGroup } from '../store.js';
 import { fmt, escapeHtml, adminName, adminAvatarColor, initialsOf, isSuper, monthLabel } from '../helpers.js';
 import { iconChevronRight, iconPlus } from '../icons.js';
 import { renderBottomNav } from './bottomNav.js';
@@ -13,7 +13,7 @@ export function renderDashboard() {
     return '<div class="card" data-action="open-current-month" data-gid="' + g.id + '" style="display:flex;flex-direction:column;gap:10px;">' +
       '<div style="display:flex;justify-content:space-between;align-items:flex-start;">' +
         '<div><div style="font-size:15px;font-weight:600;">' + escapeHtml(g.name) + '</div>' +
-        '<div style="font-size:12px;color:var(--text-muted);margin-top:2px;">' + g.memberCount + ' members · ' + fmt(g.monthlyDeposit) + ' / month</div></div>' +
+        '<div style="font-size:12px;color:var(--text-muted);margin-top:2px;">' + (membersByGroup.get(g.id) || []).length + ' members · ' + fmt(g.monthlyDeposit) + ' / month</div></div>' +
         iconChevronRight() +
       '</div>' +
       '<div><div class="progress-track"><div class="progress-fill" style="width:' + pct + '%;"></div></div>' +

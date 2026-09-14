@@ -18,12 +18,15 @@ export var state = {
     showWinnerPicker: false,
     paymentModal: null,   // { memberId, mode, isEditing }
     payoutAdminChoice: 'A',
-    newGroup: null        // set when entering createGroup screen
+    newGroup: null,        // set when entering createGroup screen
+    memberForm: null,      // { id, name } — add/edit overlay on the members screen
+    addMemberToGroup: null // { gid, draftName } — "add member to this group" overlay on groupDetail
   }
 };
 
-export var groupsById = new Map();      // gid -> group data (incl. id)
-export var membersByGroup = new Map();  // gid -> [{id,name,order}] sorted
+export var groupsById = new Map();      // gid -> group data (incl. id, memberIds[])
+export var membersById = new Map();     // memberId -> {id, name} — the shared, group-independent member directory
+export var membersByGroup = new Map();  // gid -> [{id,name}], joined from groupsById[gid].memberIds + membersById
 export var monthsCache = new Map();     // "gid|m" -> month data
 export var paymentsCache = new Map();   // "gid|m" -> { memberId: paymentData }
 export var transferReqCache = new Map(); // "gid|m" -> request data
@@ -32,6 +35,7 @@ export function monthKey(gid, m) { return gid + '|' + m; }
 
 export function clearCaches() {
   groupsById.clear();
+  membersById.clear();
   membersByGroup.clear();
   monthsCache.clear();
   paymentsCache.clear();

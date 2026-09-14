@@ -1,5 +1,5 @@
-import { state } from '../store.js';
-import { fmt, escapeHtml, initialsOf, colorFor, monthLabel } from '../helpers.js';
+import { state, membersById } from '../store.js';
+import { escapeHtml, initialsOf, colorFor, monthLabel } from '../helpers.js';
 import { iconChevronLeft } from '../icons.js';
 
 export function renderCreateGroup() {
@@ -12,10 +12,11 @@ function renderStep1(g) {
   var dur = g.durationMonths, previewRows = '';
   var now = new Date();
   for (var i = 0; i < dur; i++) {
-    var t = dur > 1 ? i / (dur - 1) : 0;
-    var amt = g.payoutStart + (g.payoutEnd - g.payoutStart) * t;
-    previewRows += '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--border);">' +
-      '<div style="font-size:12.5px;color:var(--text-muted);">' + monthLabel(now.getFullYear(), now.getMonth(), i + 1) + '</div><div style="font-size:13px;font-weight:600;">' + fmt(amt) + '</div></div>';
+    var amt = g.payoutSchedule[i] || 0;
+    previewRows += '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border);">' +
+      '<div style="font-size:12.5px;color:var(--text-muted);">' + monthLabel(now.getFullYear(), now.getMonth(), i + 1) + '</div>' +
+      '<input data-field="payoutMonth" data-idx="' + i + '" type="number" value="' + amt + '" style="width:110px;text-align:right;font-size:13px;font-weight:600;padding:6px 8px;border-radius:8px;border:1px solid var(--border);" />' +
+    '</div>';
   }
   return '' +
     '<div class="screen">' +
@@ -29,7 +30,7 @@ function renderStep1(g) {
         '<div style="height:1px;background:var(--border);"></div>' +
         '<div>' +
           '<div style="font-size:13px;font-weight:600;margin-bottom:2px;">Payout schedule</div>' +
-          '<div style="font-size:11.5px;color:var(--text-muted);margin-bottom:12px;">Set the first and last month\'s payout — the months in between are generated automatically.</div>' +
+          '<div style="font-size:11.5px;color:var(--text-muted);margin-bottom:12px;">Set the first and last month\'s payout to auto-fill the months in between, then fine-tune any individual month below. This locks once the group is created.</div>' +
           '<div class="field-row">' +
             '<div class="field"><label>' + monthLabel(now.getFullYear(), now.getMonth(), 1) + ' payout (₹)</label><input data-field="payoutStart" type="number" value="' + g.payoutStart + '" /></div>' +
             '<div class="field"><label>Final month payout (₹)</label><input data-field="payoutEnd" type="number" value="' + g.payoutEnd + '" /></div>' +
@@ -44,6 +45,19 @@ function renderStep1(g) {
 }
 
 function renderStep2(g) {
+  var selectedIds = {};
+  g.members.forEach(function (m) { if (m.id) selectedIds[m.id] = true; });
+  var available = Array.from(membersById.values())
+    .filter(function (m) { return !selectedIds[m.id]; })
+    .sort(function (a, b) { return a.name.localeCompare(b.name); });
+
+  var availableRows = available.map(function (mm, idx) {
+    return '<div class="list-row" data-action="add-existing-draft-member" data-mid="' + mm.id + '">' +
+      '<div class="avatar sm" style="background:' + colorFor(idx) + ';">' + initialsOf(mm.name) + '</div>' +
+      '<div style="flex:1 1 auto;font-size:13px;font-weight:500;">' + escapeHtml(mm.name) + '</div>' +
+      '<div style="color:var(--accent);font-size:12px;font-weight:600;">Add</div></div>';
+  }).join('') || '<div style="font-size:12px;color:var(--text-muted);padding:8px 0;">No other existing members — add a brand new one below.</div>';
+
   var memberRows = g.members.map(function (m, idx) {
     return '<div class="list-row" style="cursor:default;"><div class="avatar sm" style="background:' + colorFor(idx) + ';">' + initialsOf(m.name) + '</div>' +
       '<div style="flex:1 1 auto;font-size:13px;font-weight:500;">' + escapeHtml(m.name) + '</div>' +
@@ -54,7 +68,8 @@ function renderStep2(g) {
     '<div class="screen">' +
       '<div class="topbar"><div class="back" data-action="create-group-back-step1">' + iconChevronLeft() + '</div><div class="title">Add Members</div></div>' +
       '<div class="content">' +
-        '<div class="field"><label>Member name</label>' +
+        '<div><div class="section-label">Existing members</div><div class="row-list">' + availableRows + '</div></div>' +
+        '<div class="field"><label>Or add a brand new member</label>' +
           '<div style="display:flex; gap:8px;"><input data-field="draftMemberName" value="' + escapeHtml(g.draftMemberName) + '" placeholder="Full name" style="flex:1 1 auto; padding:12px 14px; border-radius:10px; border:1px solid var(--border);" />' +
           '<button class="btn btn-primary" style="padding:12px 16px;" data-action="add-draft-member">Add</button></div>' +
         '</div>' +

@@ -5,7 +5,7 @@
 
 import { onSnapshot, collection, collectionGroup } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
 import { db } from './firebase.js';
-import { groupsById, membersByGroup, monthsCache, paymentsCache, transferReqCache, monthKey, clearCaches } from './store.js';
+import { groupsById, membersById, membersByGroup, monthsCache, paymentsCache, transferReqCache, monthKey, clearCaches } from './store.js';
 import { pathParts } from './helpers.js';
 import { recompute } from './finance.js';
 import { render } from './render.js';
@@ -17,6 +17,20 @@ function scheduleRecompute() {
   setTimeout(function () { recomputeScheduled = false; recompute(); render(); }, 30);
 }
 
+// Members live independently of groups (so the same person can belong to
+// several); a group only stores memberIds[]. Whenever either the group
+// docs or the member directory changes, rejoin the two into the
+// {id,name} lists views actually read (membersByGroup).
+function rebuildMembersByGroup() {
+  groupsById.forEach(function (group, gid) {
+    var joined = (group.memberIds || []).map(function (id) {
+      var top = membersById.get(id);
+      return { id: id, name: top ? top.name : '(unknown member)' };
+    });
+    membersByGroup.set(gid, joined);
+  });
+}
+
 var unsubs = [];
 
 export function startListeners() {
@@ -24,25 +38,19 @@ export function startListeners() {
 
   unsubs.push(onSnapshot(collection(db, 'groups'), function (snap) {
     snap.docChanges().forEach(function (change) {
-      if (change.type === 'removed') { groupsById.delete(change.doc.id); }
+      if (change.type === 'removed') { groupsById.delete(change.doc.id); membersByGroup.delete(change.doc.id); }
       else { groupsById.set(change.doc.id, Object.assign({ id: change.doc.id }, change.doc.data())); }
     });
+    rebuildMembersByGroup();
     scheduleRecompute();
   }));
 
-  unsubs.push(onSnapshot(collectionGroup(db, 'members'), function (snap) {
+  unsubs.push(onSnapshot(collection(db, 'members'), function (snap) {
     snap.docChanges().forEach(function (change) {
-      var parts = pathParts(change.doc.ref.path); // groups/GID/members/MID
-      var gid = parts[1];
-      var list = membersByGroup.get(gid) || [];
-      list = list.filter(function (m) { return m.id !== change.doc.id; });
-      if (change.type !== 'removed') {
-        var d = change.doc.data();
-        list.push({ id: change.doc.id, name: d.name, order: d.order || 0 });
-      }
-      list.sort(function (a, b) { return a.order - b.order; });
-      membersByGroup.set(gid, list);
+      if (change.type === 'removed') membersById.delete(change.doc.id);
+      else membersById.set(change.doc.id, Object.assign({ id: change.doc.id }, change.doc.data()));
     });
+    rebuildMembersByGroup();
     scheduleRecompute();
   }));
 
