@@ -3,6 +3,8 @@
 // renders before any JS runs). A shimmer block always reads as "this part
 // of the screen is on its way," which a bare "Loading…" message doesn't.
 
+import { iconChevronLeft } from './icons.js';
+
 export function bar(w, h, extra) {
   return '<div class="skeleton" style="width:' + w + ';height:' + h + ';' + (extra || '') + '"></div>';
 }
@@ -27,12 +29,13 @@ export function renderBootSkeleton() {
 }
 
 // A topbar-shaped skeleton for detail screens (group detail, month
-// detail, member payments, group members) — back button + two lines of
-// title text, so the header doesn't visibly "pop in" once real data
-// arrives a beat after the shimmering body.
+// detail, member payments, group members). The back button is real and
+// clickable rather than a shimmer block — leaving a group works without
+// waiting on the very data that's still loading — and only the title/
+// subtitle text, which genuinely isn't known yet, shimmers.
 export function skeletonTopbar() {
   return '<div class="topbar">' +
-    bar('32px', '32px', 'border-radius:11px;flex-shrink:0;') +
+    '<div class="back" data-action="nav-back">' + iconChevronLeft() + '</div>' +
     '<div style="display:flex;flex-direction:column;gap:6px;">' + bar('150px', '15px') + bar('100px', '11px', 'margin-top:1px;') + '</div>' +
   '</div>';
 }
