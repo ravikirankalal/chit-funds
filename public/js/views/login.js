@@ -6,7 +6,7 @@ export function renderLogin() {
   return '' +
     '<div class="screen" style="align-items:center; justify-content:center; padding:32px; gap:28px;">' +
       '<div style="display:flex; flex-direction:column; align-items:center; gap:14px;">' +
-        '<div style="width:56px;height:56px;border-radius:16px;background:var(--color-primary);display:flex;align-items:center;justify-content:center;">' +
+        '<div style="width:56px;height:56px;border-radius:18px;background:linear-gradient(155deg, var(--color-primary) 0%, var(--color-primary-strong) 100%);box-shadow:var(--shadow-md);display:flex;align-items:center;justify-content:center;">' +
           '<svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M12 2L4 6V11C4 15.5 7.4 19.7 12 21C16.6 19.7 20 15.5 20 11V6L12 2Z" stroke="var(--on-brand)" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 12L11 14L15.5 9.5" stroke="var(--on-brand)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
         '</div>' +
         '<div style="text-align:center;"><div class="mono" style="font-size:22px;font-weight:700;">Chit Funds</div>' +

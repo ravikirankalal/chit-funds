@@ -12,7 +12,7 @@ function bar(w, h, extra) {
 }
 
 function renderLoadingSkeleton() {
-  var hero = '<div style="background:var(--color-surface); border-radius:16px; padding:20px; display:flex; flex-direction:column; gap:10px;">' +
+  var hero = '<div style="background:var(--color-surface); border-radius:20px; padding:20px; display:flex; flex-direction:column; gap:10px; box-shadow:var(--shadow-sm);">' +
     bar('45%', '11px') + bar('55%', '28px', 'margin-top:2px;') + bar('70%', '11px') +
   '</div>';
   var statRow = '<div style="display:flex; gap:12px;">' +
@@ -86,7 +86,7 @@ export function renderDashboard() {
             return ag ? monthLabel(ag.startYear, ag.startMonthIndex, approval.month) : 'Month ' + approval.month;
           })() + ')</div>' +
           '<div style="font-size:11.5px;color:var(--color-warning);font-weight:600;">Tap to review →</div></div>' : '') +
-        '<div style="background:var(--color-primary); border-radius:16px; padding:20px; color:var(--on-brand);">' +
+        '<div style="background:linear-gradient(155deg, var(--color-primary) 0%, var(--color-primary-strong) 100%); border-radius:20px; padding:20px; color:var(--on-brand); box-shadow:var(--shadow-md);">' +
           '<div style="display:flex;align-items:center;gap:5px;font-size:12px;opacity:0.85;font-weight:500;">' + iconWallet('var(--on-brand)') + 'Total fund available</div>' +
           '<div class="mono" style="font-size:30px;font-weight:700;margin-top:4px;">' + fmt(state.balances.total) + '</div>' +
           '<div style="font-size:12px;opacity:0.8;margin-top:2px;">Held across both admins, all groups</div>' +

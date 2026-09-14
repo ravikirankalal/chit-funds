@@ -21,29 +21,33 @@
   --font-sans: 'IBM Plex Sans', system-ui, sans-serif;
   --font-display: 'Space Grotesk', system-ui, sans-serif;
 
-  /* ---- Brand colors --------------------------------------------------
+  /* ---- Brand colors — "Ocean & Coral" ---------------------------------
      primary   — buttons, links, active nav/tab, focus ring, the dashboard
-                 hero card. The app's main "color."
+                 hero card. The app's main "color": a confident ocean
+                 cobalt.
      secondary — the "open / in-progress / informational" color: the open
                  month's card & progress bar, transfer history, info
-                 banners.
+                 banners. A deep, desaturated slate — same cool family as
+                 primary, but quieter, so the two never compete.
      accent    — the "payout / winner" color: winner cards, payout amounts,
-                 the ledger's payout entries. Deliberately distinct from
-                 warning-amber so a payout doesn't read as a caution.
+                 the ledger's payout entries. A warm coral, deliberately
+                 pushed toward pink/rose rather than straight orange so it
+                 can't be mistaken for warning-amber or danger-red at a
+                 glance — see the warning note below.
      Each has a -soft tint (light background fill) and a -strong shade
      (hover/pressed state), derived here so nothing downstream ever needs
      to compute a shade of a brand color itself. */
-  --color-primary: #5b4fe0;
-  --color-primary-strong: #4a3fc4;
-  --color-primary-soft: #ece9fb;
+  --color-primary: #1768d1;
+  --color-primary-strong: #0e4fa3;
+  --color-primary-soft: #e6f0fc;
 
-  --color-secondary: #3b4a8a;
-  --color-secondary-strong: #2c3868;
-  --color-secondary-soft: #eef0f9;
+  --color-secondary: #3d4a63;
+  --color-secondary-strong: #2a3346;
+  --color-secondary-soft: #eaedf3;
 
-  --color-accent: #b8860b;
-  --color-accent-strong: #8f6909;
-  --color-accent-soft: #fbf1dd;
+  --color-accent: #db5a6b;
+  --color-accent-strong: #b8465a;
+  --color-accent-soft: #fce7ea;
 
   /* Text/icon color to use on top of a solid primary/secondary/accent
      background (all three currently want the same white). */
@@ -51,12 +55,15 @@
 
   /* ---- Semantic / state colors -----------------------------------------
      These carry a fixed meaning across the whole app and are intentionally
-     NOT derived from the brand colors above — see the note at the top. */
+     NOT derived from the brand colors above — see the note at the top.
+     Warning was nudged from amber toward mustard-gold here specifically
+     because the new accent (coral) already lives in the orange-red band —
+     without this shift the two would sit almost on top of each other. */
   --color-success: #146b52;
   --color-success-soft: #e6f2ec;
 
-  --color-warning: #b45309;
-  --color-warning-soft: #fdf1e4;
+  --color-warning: #a6760d;
+  --color-warning-soft: #f7eeda;
 
   --color-danger: #b3261e;
   --color-danger-soft: #fbe9e7;
@@ -72,6 +79,17 @@
   --color-text: #1c1b19;
   --color-text-muted: #6f6a62;
   --color-text-faint: #a39d92; /* inactive nav icons, chevrons, quiet inline icons */
+
+  /* ---- Elevation -----------------------------------------------------
+     Warm-tinted shadows (built from the ink color, not pure black) so
+     "lift" reads as part of this palette instead of a generic overlay.
+     xs — barely-there separation for repeated rows (list rows, tabs).
+     sm — cards, stat tiles, banners: the app's default resting surface.
+     md — things that float above the page: the hero card, the FAB, the
+          floating transfer bar. */
+  --shadow-xs: 0 1px 2px rgba(28,26,22,0.05);
+  --shadow-sm: 0 1px 2px rgba(28,26,22,0.04), 0 6px 16px rgba(28,26,22,0.07);
+  --shadow-md: 0 4px 10px rgba(28,26,22,0.08), 0 16px 36px rgba(28,26,22,0.12);
 
   --max-width: 480px;
 }

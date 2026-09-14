@@ -218,7 +218,7 @@ function renderWinnerCard(f, members, readOnly) {
         '<div style="flex:1 1 auto;font-size:13px;font-weight:600;color:var(--color-accent);min-width:0;">' + (winner ? escapeHtml(winner.name) : '—') + '</div>' +
         (readOnly
           ? '<div class="mono" style="font-size:13px;font-weight:700;color:var(--color-accent);">' + fmt(w.payoutAmount) + '</div>'
-          : '<input data-winner-amount="' + w.memberId + '" type="text" inputmode="numeric" value="' + w.payoutAmount + '" style="width:100px;text-align:right;font-size:13px;font-weight:600;padding:6px 8px;border-radius:8px;border:1px solid var(--color-border);" />' +
+          : '<input data-winner-amount="' + w.memberId + '" type="text" inputmode="numeric" value="' + w.payoutAmount + '" style="width:100px;text-align:right;font-size:13px;font-weight:600;padding:6px 8px;border-radius:10px;border:1px solid var(--color-border);" />' +
             '<div data-action="remove-winner" data-mid="' + w.memberId + '" style="cursor:pointer;color:var(--color-danger);font-size:12px;font-weight:600;margin-left:10px;">Remove</div>') +
       '</div>';
     }).join('');
@@ -341,12 +341,12 @@ function renderTransferBar(gid, viewMonth, group) {
   var target = otherAdmin(state.currentAdmin);
   var total = mids.length * group.monthlyDeposit;
   return '<div style="position:fixed;left:0;right:0;bottom:0;z-index:25;display:flex;justify-content:center;">' +
-    '<div style="width:100%;max-width:var(--max-width);background:var(--color-surface);border-top:1px solid var(--color-border);border-radius:16px 16px 0 0;padding:14px 16px;display:flex;align-items:center;gap:10px;box-shadow:0 -6px 20px rgba(0,0,0,0.12);">' +
+    '<div style="width:100%;max-width:var(--max-width);background:var(--color-surface);border-radius:20px 20px 0 0;padding:14px 16px;display:flex;align-items:center;gap:10px;box-shadow:0 -12px 32px rgba(28,26,22,0.16), 0 -2px 6px rgba(28,26,22,0.08);">' +
       '<div style="flex:1 1 auto;min-width:0;">' +
         '<div style="font-size:11.5px;color:var(--color-text-muted);">' + mids.length + ' payment' + (mids.length === 1 ? '' : 's') + ' selected</div>' +
         '<div class="mono" style="font-size:16px;font-weight:700;">' + fmt(total) + '</div>' +
       '</div>' +
-      '<div data-action="cancel-transfer-selection" style="width:32px;height:32px;border-radius:9px;background:var(--color-bg);display:flex;align-items:center;justify-content:center;flex-shrink:0;">' + iconClose() + '</div>' +
+      '<div data-action="cancel-transfer-selection" style="width:32px;height:32px;border-radius:10px;background:var(--color-bg);display:flex;align-items:center;justify-content:center;flex-shrink:0;">' + iconClose() + '</div>' +
       '<button class="btn btn-primary" style="flex-shrink:0;padding:12px 16px;white-space:nowrap;" data-action="confirm-transfer">Transfer to ' + adminName(target) + '</button>' +
     '</div>' +
   '</div>';

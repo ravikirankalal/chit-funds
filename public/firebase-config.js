@@ -27,6 +27,6 @@ export const ADMINS = {
 // IMPORTANT: also duplicated in firestore.rules.
 export const SUPER_ADMIN = { email: "ravikiran.kalal@gmail.com", name: "Ravikiran" };
 
-// Set to true while developing against the local Firebase Emulator Suite
-// (see README.md). Leave false for the real deployed app.
-export const USE_EMULATORS = false;
+// Emulator vs. production is auto-detected at runtime in js/firebase.js —
+// there is nothing to flip here. See that file if you're wiring up local
+// testing (README.md also has the walkthrough).

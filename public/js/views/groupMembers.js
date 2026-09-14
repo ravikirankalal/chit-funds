@@ -74,7 +74,7 @@ function renderAddMemberOverlay(gid) {
     '<div class="sheet-body">' +
       '<div><div style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--color-text-muted);margin-bottom:8px;">' + iconPeopleSmall() + 'Existing members</div><div class="row-list">' + rows + '</div></div>' +
       '<div class="field"><label>Or add a brand new member</label>' +
-        '<div style="display:flex;gap:8px;"><input data-field="addMemberDraftName" value="' + escapeHtml(amg.draftName) + '" placeholder="Full name" style="flex:1 1 auto;padding:12px 14px;border-radius:10px;border:1px solid var(--color-border);" />' +
+        '<div style="display:flex;gap:8px;"><input data-field="addMemberDraftName" value="' + escapeHtml(amg.draftName) + '" placeholder="Full name" style="flex:1 1 auto;padding:12px 14px;border-radius:12px;border:1px solid var(--color-border);" />' +
         '<button class="btn btn-primary" style="padding:12px 16px;" data-action="create-and-add-member-to-group" data-gid="' + gid + '">Add</button></div>' +
       '</div>' +
     '</div>' +
