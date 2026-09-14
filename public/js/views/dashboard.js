@@ -4,11 +4,31 @@ import { fmt, escapeHtml, adminName, adminAvatarColor, initialsOf, isSuper, mont
 import { iconChevronRight, iconPlus } from '../icons.js';
 import { renderBottomNav } from './bottomNav.js';
 
+// Mimics the real layout (hero balance card, stat row, group cards) with
+// shimmering placeholder blocks instead of a single centered message —
+// so the page you're waiting for is recognizable while it's still loading.
+function bar(w, h, extra) {
+  return '<div class="skeleton" style="width:' + w + ';height:' + h + ';' + (extra || '') + '"></div>';
+}
+
 function renderLoadingSkeleton() {
-  return '<div class="card" style="display:flex;flex-direction:column;gap:10px;align-items:center;padding:24px;">' +
-    '<div class="spinner"></div>' +
-    '<div style="font-size:12.5px;color:var(--text-muted);">Loading your groups&hellip;</div>' +
+  var hero = '<div style="background:var(--surface); border-radius:16px; padding:20px; display:flex; flex-direction:column; gap:10px;">' +
+    bar('45%', '11px') + bar('55%', '28px', 'margin-top:2px;') + bar('70%', '11px') +
   '</div>';
+  var statRow = '<div style="display:flex; gap:12px;">' +
+    '<div class="stat">' + bar('40%', '10.5px') + bar('65%', '15px', 'margin-top:8px;') + '</div>' +
+    '<div class="stat">' + bar('40%', '10.5px') + bar('65%', '15px', 'margin-top:8px;') + '</div>' +
+  '</div>';
+  var groupCards = [0, 1, 2].map(function () {
+    return '<div class="card" style="display:flex;flex-direction:column;gap:12px;">' +
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;">' +
+        '<div style="display:flex;flex-direction:column;gap:6px;">' + bar('130px', '14px') + bar('90px', '11px') + '</div>' +
+        bar('18px', '18px') +
+      '</div>' +
+      bar('100%', '6px') +
+    '</div>';
+  }).join('');
+  return hero + statRow + '<div>' + bar('60px', '13px', 'margin-bottom:10px;') + '<div class="row-list">' + groupCards + '</div></div>';
 }
 
 export function renderDashboard() {

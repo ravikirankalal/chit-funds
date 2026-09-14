@@ -6,7 +6,7 @@ import { iconChevronLeft, iconClose } from '../icons.js';
 export function renderGroupDetail() {
   var gid = state.activeGroupId;
   var group = groupsById.get(gid);
-  if (!group) return '<div class="content"><div class="card">Group not found.</div></div>';
+  if (!group) return '<div class="content"><div class="card">' + (state.groupsLoaded ? 'Group not found.' : 'Loading…') + '</div></div>';
   var members = membersByGroup.get(gid) || [];
 
   var collectedSoFar = 0;
