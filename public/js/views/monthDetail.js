@@ -275,19 +275,29 @@ function renderPaymentModalOverlay(gid, viewMonth, group, members) {
   var canMarkUnpaid = pm.isEditing && existingP && existingP.collectedBy === state.currentAdmin;
   var transferHistory = '';
   if (pm.isEditing && existingP) {
-    transferHistory += '<div><div style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:8px;">' + iconTransfer() + 'Transfer history</div><div style="display:flex;flex-direction:column;gap:10px;">' +
-      timelineRow('var(--accent)', escapeHtml(pmem.name) + ' → ' + adminName(existingP.collectedBy), (existingP.mode === 'online' ? 'Online' : 'Cash'), '');
+    // collectedBy/transferredAt only ever reflect the CURRENT holder — the
+    // full chain of hand-offs (an amount can move A->B, then later B->A
+    // again) lives in transferLog, appended to on every confirmTransfer
+    // (see actions.js). Its first entry's `from` is who originally
+    // collected it, before any transfer happened.
+    var log = existingP.transferLog || [];
+    var originalCollector = log.length ? log[0].from : existingP.collectedBy;
+    var rows = timelineRow('var(--accent)', escapeHtml(pmem.name) + ' collected by ' + adminName(originalCollector),
+      (existingP.mode === 'online' ? 'Online' : 'Cash'), '', formatDateTime(existingP.paidAt));
+    log.forEach(function (t) {
+      rows += timelineRow('#3b4a8a', adminName(t.from) + ' → ' + adminName(t.to), 'Transferred', 'color:#3b4a8a;', formatDateTime(t.at));
+    });
     var monthNet = (monthsCache.get(monthKey(gid, viewMonth)) || {}).transferNet || 0;
     if (monthNet) {
-      transferHistory += timelineRow('var(--accent)', (monthNet > 0 ? ADMINS.A.name + ' → ' + ADMINS.B.name : ADMINS.B.name + ' → ' + ADMINS.A.name),
+      rows += timelineRow('var(--accent)', (monthNet > 0 ? ADMINS.A.name + ' → ' + ADMINS.B.name : ADMINS.B.name + ' → ' + ADMINS.A.name),
         'Accepted', 'color:var(--accent);', fmt(Math.abs(monthNet)));
     }
     var pendingReq = transferReqCache.get(monthKey(gid, viewMonth));
     if (pendingReq) {
-      transferHistory += timelineRow('var(--warning)', (pendingReq.direction === 'AtoB' ? ADMINS.A.name + ' → ' + ADMINS.B.name : ADMINS.B.name + ' → ' + ADMINS.A.name),
+      rows += timelineRow('var(--warning)', (pendingReq.direction === 'AtoB' ? ADMINS.A.name + ' → ' + ADMINS.B.name : ADMINS.B.name + ' → ' + ADMINS.A.name),
         'Pending acceptance', 'color:var(--warning);', fmt(pendingReq.amount));
     }
-    transferHistory += '</div></div>';
+    transferHistory = '<div><div style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:8px;">' + iconTransfer() + 'Transfer history</div><div style="display:flex;flex-direction:column;gap:10px;">' + rows + '</div></div>';
   }
 
   return '<div class="overlay"><div class="sheet">' +
