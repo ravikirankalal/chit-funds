@@ -2,7 +2,7 @@ import { ADMINS } from '../../firebase-config.js';
 import { state, groupsById, membersByGroup } from '../store.js';
 import { fmt, escapeHtml, adminName, adminAvatarColor, adminDot, initialsOf, isSuper, monthLabel } from '../helpers.js';
 import { monthFinances } from '../finance.js';
-import { iconChevronRight, iconPlus, iconWarningTriangle, iconWallet, iconGroupStack, iconPeopleSmall, iconCalendar, iconTrophy } from '../icons.js';
+import { iconChevronRight, iconPlus, iconWarningTriangle, iconWallet, iconGroupStack, iconPeopleSmall, iconCalendar, iconTrophy, iconTrendingUp } from '../icons.js';
 import { renderBottomNav } from './bottomNav.js';
 import { bar } from '../skeleton.js';
 
@@ -68,8 +68,38 @@ export function renderDashboard() {
       return mm ? mm.name : '—';
     });
     var payoutLine = winnerNames.length
-      ? '<span style="display:flex;align-items:center;gap:4px;">' + iconTrophy('var(--color-text-faint)') + (winnerNames.length > 1 ? 'Winners: ' : 'Winner: ') + escapeHtml(winnerNames.join(', ')) + '</span>'
-      : '<span style="display:flex;align-items:center;gap:4px;">' + iconTrophy('var(--color-text-faint)') + 'Scheduled payout</span>';
+      ? '<div style="font-size:11.5px;color:var(--color-text-muted);"><span style="display:flex;align-items:center;gap:4px;">' + iconTrophy('var(--color-text-faint)') + (winnerNames.length > 1 ? 'Winners: ' : 'Winner: ') + escapeHtml(winnerNames.join(', ')) + '</span></div>'
+      : '';
+    // Compact per-month collection-trend sparkline, same visual language as
+    // the full-size one on the group detail page — closed-and-fully-paid
+    // months green, closed-with-unpaid amber, the currently open month
+    // blue, and not-yet-reached months a flat muted sliver. Reuses f
+    // (already computed above) for the current month instead of calling
+    // monthFinances on it a second time.
+    var trend = [];
+    for (var tm = 1; tm <= g.durationMonths; tm++) {
+      if (tm <= g.currentMonth) {
+        var tf = tm === g.currentMonth ? f : monthFinances(g.id, g, tm);
+        var tpct = memberCount > 0 ? Math.round((tf.paidCount / memberCount) * 100) : 0;
+        var tcolor = tf.closed
+          ? (tf.paidCount < memberCount ? 'var(--color-warning)' : 'var(--color-success)')
+          : 'var(--color-secondary)';
+        trend.push({ m: tm, pct: tpct, color: tcolor });
+      } else {
+        trend.push({ m: tm, pct: 0, color: 'var(--color-border)' });
+      }
+    }
+    var trendBars = trend.map(function (t) {
+      var h = Math.max(2, Math.round((t.pct / 100) * 14));
+      var ring = t.m === g.currentMonth ? 'box-shadow:0 0 0 1.5px var(--color-primary);' : '';
+      return '<div data-action="open-month" data-gid="' + g.id + '" data-m="' + t.m + '" title="' + monthLabel(g.startYear, g.startMonthIndex, t.m) + ': ' + t.pct + '%" style="flex:1 1 0;min-width:2px;height:14px;display:flex;align-items:flex-end;cursor:pointer;">' +
+        '<div style="width:100%;height:' + h + 'px;background:' + t.color + ';border-radius:1.5px;' + ring + '"></div>' +
+      '</div>';
+    }).join('');
+    var trendRow = '<div style="display:flex;align-items:center;gap:6px;">' +
+      '<span style="flex-shrink:0;color:var(--color-text-faint);">' + iconTrendingUp() + '</span>' +
+      '<div style="flex:1 1 auto;display:flex;align-items:flex-end;gap:1.5px;">' + trendBars + '</div>' +
+    '</div>';
     return '<div class="card" data-action="open-group" data-gid="' + g.id + '" style="display:flex;flex-direction:column;gap:10px;">' +
       '<div style="display:flex;justify-content:space-between;align-items:flex-start;">' +
         '<div><div style="font-size:15px;font-weight:600;">' + escapeHtml(g.name) + '</div>' +
@@ -85,7 +115,8 @@ export function renderDashboard() {
         '<div style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--color-text-muted);">' + iconCalendar() + 'Month ' + g.currentMonth + ' of ' + g.durationMonths + '</div>' +
         statusBadge +
       '</div>' +
-      '<div style="font-size:11.5px;color:var(--color-text-muted);">' + payoutLine + '</div>' +
+      payoutLine +
+      trendRow +
       '</div>' +
     '</div>';
   }).join('') || '<div class="card" style="color:var(--color-text-muted); font-size:13px; text-align:center;">No groups yet — tap + to create one.</div>';
