@@ -55,6 +55,13 @@ export function getRestorableSnapshot() {
 window.addEventListener('popstate', function (e) {
   if (!e.state) return; // nothing of ours here — let the browser do its default thing
   var snap = e.state;
+  // submitCreateGroup() clears state.ui.newGroup on success without
+  // popping the wizard's own pushNav()'d step entries, so one or more
+  // stale 'createGroup' entries can sit below wherever navigation
+  // continued from. Landing on one with no newGroup to show would crash
+  // renderCreateGroup() — skip on past it the same way dashboard/login
+  // collapse history instead of growing it.
+  if (snap.screen === 'createGroup' && !state.ui.newGroup) { history.back(); return; }
   state.screen = snap.screen;
   state.activeGroupId = snap.activeGroupId;
   state.viewMonth = snap.viewMonth;
