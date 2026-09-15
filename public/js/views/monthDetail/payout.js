@@ -1,5 +1,5 @@
 import { state } from '../../store.js';
-import { fmt, escapeHtml, colorFor, initialsOf, adminName, adminDot, otherAdmin } from '../../helpers.js';
+import { fmt, escapeHtml, colorFor, initialsOf, adminName, adminDot, adminAvatarColor, otherAdmin } from '../../helpers.js';
 import { iconWallet, iconCheck, iconClose } from '../../icons.js';
 import { signed } from './shared.js';
 
@@ -66,26 +66,32 @@ export function renderPayoutModalOverlay(f, members) {
   var pct = w.payoutAmount > 0 ? Math.round((draftAmount / w.payoutAmount) * 100) : 0;
   var pctColor = exceeds ? 'var(--color-danger)' : (draftRemaining <= 0 ? 'var(--color-success)' : 'var(--color-gold)');
   var otherPct = (otherAmount > 0 && w.payoutAmount > 0) ? Math.round((otherAmount / w.payoutAmount) * 100) : 0;
+  // Three colors, three distinct facts, everything else plain text: the
+  // signed-in admin's own contribution (amount + its %) in pctColor — the
+  // same covering/partial/over tone the rest of the app uses; the OTHER
+  // admin's already-recorded amount (+ its %) in THEIR OWN avatar color,
+  // the same one their dot/holdings use everywhere else, since it's a
+  // settled fact about them, not a live status; and the payout target
+  // itself in blue wherever it's named, matching Collections elsewhere.
+  var otherColor = adminAvatarColor(otherAdmin(state.currentAdmin));
 
   return '<div class="overlay"><div class="sheet">' +
     '<div class="sheet-header">' +
       '<div class="avatar sm" style="background:' + colorFor(widx) + ';">' + (winner ? initialsOf(winner.name) : '?') + '</div>' +
       '<div style="flex:1 1 auto;min-width:0;"><div style="font-size:14px;font-weight:700;">' + (winner ? escapeHtml(winner.name) : '—') + '</div>' +
-      '<div style="font-size:11.5px;color:var(--color-text-muted);">Payout target ' + fmt(w.payoutAmount) + '</div></div>' +
+      '<div style="font-size:11.5px;color:var(--color-text);">Payout target <span style="color:var(--color-primary);font-weight:700;">' + fmt(w.payoutAmount) + '</span></div></div>' +
       '<div class="sheet-close" data-action="close-payout-modal">' + iconClose() + '</div>' +
     '</div>' +
     '<div class="sheet-body">' +
       '<div style="text-align:center;padding:8px 0 4px;">' +
-        '<div style="font-size:11px;color:var(--color-text-muted);margin-bottom:2px;">Your contribution</div>' +
+        '<div style="font-size:11px;color:var(--color-text);margin-bottom:2px;">Your contribution</div>' +
         '<div class="mono" style="font-size:36px;font-weight:700;color:' + pctColor + ';">' + fmt(draftAmount) + '</div>' +
-        '<div style="font-size:13px;color:' + pctColor + ';margin-top:2px;font-weight:600;">' + pct + '% of the ' + fmt(w.payoutAmount) + ' payout</div>' +
+        '<div style="font-size:13px;color:' + pctColor + ';margin-top:2px;font-weight:600;">' + pct + '% of the <span style="color:var(--color-primary);">' + fmt(w.payoutAmount) + '</span> payout</div>' +
         (otherAmount > 0
           // Only worth a line when it's actually true — with nothing from
           // the other admin yet, this contribution and the before/after
-          // holdings below are the whole story. otherPct is always <=100
-          // (it's a real recorded amount, never a to-be-validated draft),
-          // so it only ever needs the "already covering their share" tone.
-          ? '<div style="display:flex;align-items:center;justify-content:center;gap:5px;font-size:11.5px;color:var(--color-text-muted);margin-top:8px;">' + adminDot(otherAdmin(state.currentAdmin)) + escapeHtml(adminName(otherAdmin(state.currentAdmin))) + ' paid <span class="mono" style="font-weight:700;color:var(--color-text);">' + fmt(otherAmount) + '</span> <span style="font-weight:700;color:' + (otherPct >= 100 ? 'var(--color-success)' : 'var(--color-gold)') + ';">(' + otherPct + '%)</span></div>'
+          // holdings below are the whole story.
+          ? '<div style="display:flex;align-items:center;justify-content:center;gap:5px;font-size:11.5px;color:var(--color-text);margin-top:8px;">' + adminDot(otherAdmin(state.currentAdmin)) + escapeHtml(adminName(otherAdmin(state.currentAdmin))) + ' paid <span class="mono" style="font-weight:700;color:' + otherColor + ';">' + fmt(otherAmount) + '</span> <span style="font-weight:700;color:' + otherColor + ';">(' + otherPct + '%)</span></div>'
           : '') +
       '</div>' +
       '<div>' +
@@ -95,11 +101,15 @@ export function renderPayoutModalOverlay(f, members) {
         '</div>' +
         (exceeds
           ? '<div style="font-size:11px;color:var(--color-danger);margin-top:6px;">Exceeds the payout total by ' + fmt(rawDraft - maxForMe) + ' — reduce to save.</div>'
-          : '<div style="font-size:11px;color:var(--color-text-muted);margin-top:6px;">Up to ' + fmt(maxForMe) + ' available to contribute.</div>') +
+          : '<div style="font-size:11px;color:var(--color-text);margin-top:6px;">Up to ' + fmt(maxForMe) + ' available to contribute.</div>') +
       '</div>' +
       '<div>' +
-        '<div style="font-size:12px;font-weight:600;color:var(--color-text-muted);margin-bottom:8px;">Your holdings, if you save this</div>' +
-        '<div class="stat"><div class="label">' + adminDot(state.currentAdmin) + adminName(state.currentAdmin) + '</div><div class="value" style="' + (myAfter < 0 ? 'color:var(--color-danger);' : '') + '">' + signed(myBefore) + ' <span style="color:var(--color-text-faint);font-weight:400;">→</span> ' + signed(myAfter) + '</div></div>' +
+        '<div style="font-size:12px;font-weight:600;color:var(--color-text);margin-bottom:8px;">Your holdings, if you save this</div>' +
+        // Before and after each get their own sign-based color rather than
+        // the after figure alone deciding the whole line's tone — a healthy
+        // before sliding into a negative after (or the reverse) should read
+        // as two distinct facts, not get flattened into one color.
+        '<div class="stat"><div class="label">' + adminDot(state.currentAdmin) + adminName(state.currentAdmin) + '</div><div class="value"><span style="color:' + (myBefore < 0 ? 'var(--color-danger)' : 'var(--color-text)') + ';">' + signed(myBefore) + '</span> <span style="color:var(--color-text-faint);font-weight:400;">→</span> <span style="color:' + (myAfter < 0 ? 'var(--color-danger)' : 'var(--color-text)') + ';">' + signed(myAfter) + '</span></div></div>' +
       '</div>' +
       '<button class="btn btn-primary ' + (exceeds ? 'disabled' : '') + '" style="width:100%;" data-action="save-payout" data-mid="' + w.memberId + '">Save</button>' +
     '</div>' +
