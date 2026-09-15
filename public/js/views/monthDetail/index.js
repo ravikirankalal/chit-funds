@@ -61,19 +61,26 @@ export function renderMonthDetail() {
   var isUpcoming = viewMonth > group.currentMonth;
   // True once either admin has recorded a real contribution toward a
   // winner's payout but the total isn't fully covered yet — see
-  // setPayoutContribution in actions/winners/payout.js, which closes the month itself the
-  // instant every winner's paidByA + paidByB reaches its payoutAmount, so
-  // this can never be true at the same time as isClosed. Winner/amount
-  // editing locks while this is true (see renderWinnerCard below).
+  // setPayoutContribution in actions/winners/payout.js, which closes the
+  // month itself the instant every winner's paidByA + paidByB reaches its
+  // payoutAmount. Winner/amount editing locks while this is true (see
+  // renderWinnerCard below).
   var payoutStarted = f.winners.length > 0 && (f.payoutPaidA > 0 || f.payoutPaidB > 0);
+  // A winner added via "Add another winner" (actions/winners/picker.js)
+  // AFTER the month already closed starts genuinely unpaid, and
+  // setPayoutContribution's close-and-advance transaction only ever fires
+  // for the month's ORIGINAL close — so isClosed and an outstanding payout
+  // can now genuinely coexist. A flat "Closed" pill would misreport that
+  // as fully done; show it as still needing attention instead.
+  var payoutPending = isClosed && !f.allPayoutCovered;
 
   // Gold matches the payout color used on the dashboard, the winner card,
   // and group detail's month rows — a payout in progress gets that same
   // accent everywhere it shows up.
-  var statusLabel = isClosed ? 'Closed' : (payoutStarted ? 'Payout in progress' : (isOpen ? 'Open' : 'Upcoming'));
-  var statusBg = isClosed ? 'var(--color-success-soft)' : (payoutStarted ? 'var(--color-gold-soft)' : (isOpen ? 'var(--color-secondary)' : 'var(--color-border)'));
-  var statusColor = isClosed ? 'var(--color-success)' : (payoutStarted ? 'var(--color-gold)' : (isOpen ? 'var(--on-brand)' : 'var(--color-text-faint)'));
-  var statusIcon = isClosed ? iconCheck(statusColor) : (payoutStarted ? iconClock(statusColor) : (isUpcoming ? iconClock(statusColor) : ''));
+  var statusLabel = payoutPending ? 'Payout pending' : (isClosed ? 'Closed' : (payoutStarted ? 'Payout in progress' : (isOpen ? 'Open' : 'Upcoming')));
+  var statusBg = payoutPending ? 'var(--color-gold-soft)' : (isClosed ? 'var(--color-success-soft)' : (payoutStarted ? 'var(--color-gold-soft)' : (isOpen ? 'var(--color-secondary)' : 'var(--color-border)')));
+  var statusColor = payoutPending ? 'var(--color-gold)' : (isClosed ? 'var(--color-success)' : (payoutStarted ? 'var(--color-gold)' : (isOpen ? 'var(--on-brand)' : 'var(--color-text-faint)')));
+  var statusIcon = payoutPending ? iconClock(statusColor) : (isClosed ? iconCheck(statusColor) : (payoutStarted ? iconClock(statusColor) : (isUpcoming ? iconClock(statusColor) : '')));
 
   var html = '<div class="screen">' +
     '<div class="topbar">' +

@@ -14,7 +14,12 @@ export function renderPayoutCard(f, members) {
     var winner = members.find(function (mm) { return mm.id === w.memberId; });
     var widx = winner ? members.indexOf(winner) : -1;
     var covered = w.remaining <= 0;
-    return '<div class="list-row" data-action="open-payout-modal" data-mid="' + w.memberId + '" style="cursor:pointer;' + (covered ? 'border-left:3px solid var(--color-success);' : '') + '">' +
+    // Both states get their own deliberate left-border accent — covered
+    // (done) in success green, still-owed (in progress) in the same gold
+    // used for "Payout pending"/"Payout in progress" everywhere else —
+    // rather than only the covered row standing out and the other looking
+    // like a plain, unstyled row.
+    return '<div class="list-row" data-action="open-payout-modal" data-mid="' + w.memberId + '" style="cursor:pointer;border-left:3px solid ' + (covered ? 'var(--color-success)' : 'var(--color-gold)') + ';">' +
       '<div class="avatar sm" style="background:' + colorFor(widx) + ';">' + (winner ? initialsOf(winner.name) : '?') + '</div>' +
       '<div style="flex:1 1 auto;min-width:0;"><div style="font-size:13px;font-weight:600;">' + (winner ? escapeHtml(winner.name) : '—') + '</div>' +
       '<div style="font-size:11px;color:var(--color-text-muted);margin-top:1px;">' + adminName('A') + ': ' + fmt(w.paidByA) + ' · ' + adminName('B') + ': ' + fmt(w.paidByB) + '</div></div>' +
