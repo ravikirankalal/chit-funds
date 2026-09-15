@@ -17,6 +17,7 @@ function navSnapshot() {
   var pm = state.ui.paymentModal;
   var mf = state.ui.memberForm;
   var amg = state.ui.addMemberToGroup;
+  var pom = state.ui.payoutModal;
   return {
     screen: state.screen,
     activeGroupId: state.activeGroupId,
@@ -26,6 +27,7 @@ function navSnapshot() {
     paymentModalMemberId: pm ? pm.memberId : null,
     paymentModalMode: pm ? pm.mode : null,
     paymentModalEditing: pm ? pm.isEditing : null,
+    payoutModalMemberId: pom ? pom.memberId : null,
     createGroupStep: state.ui.newGroup ? state.ui.newGroup.step : null,
     memberFormMode: mf ? (mf.id ? 'edit' : 'new') : null,
     memberFormId: mf ? mf.id : null,
@@ -80,12 +82,29 @@ window.addEventListener('popstate', function (e) {
   state.ui.paymentModal = snap.paymentModalMemberId
     ? { memberId: snap.paymentModalMemberId, mode: snap.paymentModalMode, isEditing: !!snap.paymentModalEditing }
     : null;
+  // draftAmount isn't part of the snapshot (same "an overlay draft isn't
+  // preserved" convention as paymentModal above) — reopening via Back/
+  // Forward starts it at 0 rather than the share-remaining default
+  // openPayoutModal() would compute, since that computation needs the
+  // month's finance data this handler doesn't have.
+  state.ui.payoutModal = snap.payoutModalMemberId ? { memberId: snap.payoutModalMemberId, draftAmount: 0 } : null;
   if (state.ui.newGroup && snap.createGroupStep) state.ui.newGroup.step = snap.createGroupStep;
   state.ui.memberForm = snap.memberFormMode
     ? { id: snap.memberFormMode === 'edit' ? snap.memberFormId : null,
         name: snap.memberFormMode === 'edit' ? ((membersById.get(snap.memberFormId) || {}).name || '') : '' }
     : null;
   state.ui.addMemberToGroup = snap.addMemberToGroupGid ? { gid: snap.addMemberToGroupGid, draftName: '' } : null;
+  // transferSelection (payments.js's togglePaymentSelection) never calls
+  // pushNav() — it's an in-place selection mode on whichever monthDetail
+  // entry is already current, not its own history entry — so it's outside
+  // navSnapshot() entirely and goTo() is what normally clears it on the
+  // next navigation. A Back out of monthDetail while a selection is active
+  // leaves it stale in memory (goTo() never runs), and a subsequent Forward
+  // back into monthDetail would otherwise resurrect a transfer bar for
+  // members nobody just selected. Unconditional here is safe: every popstate
+  // that could show it is a screen change (monthDetail entered/left), which
+  // already forces a render below regardless of this line.
+  state.ui.transferSelection = null;
   var after = navSnapshot();
   if (JSON.stringify(before) === JSON.stringify(after)) return;
   render();
@@ -95,6 +114,7 @@ export function goTo(screen, extra) {
   state.screen = screen;
   state.ui.showWinnerPicker = false;
   state.ui.paymentModal = null;
+  state.ui.payoutModal = null;
   state.ui.memberForm = null;
   state.ui.addMemberToGroup = null;
   state.ui.transferSelection = null;

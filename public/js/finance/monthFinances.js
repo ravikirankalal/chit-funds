@@ -11,7 +11,14 @@ function getWinnerPaid(w, monthDoc) {
   if (typeof w.paidByA === 'number' || typeof w.paidByB === 'number') {
     return { paidByA: w.paidByA || 0, paidByB: w.paidByB || 0 };
   }
-  if (monthDoc && monthDoc.status === 'closed' && monthDoc.payoutAdmin) {
+  // Only the legacy single-winner synthesis (getMonthWinners, when monthDoc
+  // has no `winners` array at all — see finance/shared.js) should fall back
+  // to the month-level payoutAdmin. A real entry inside monthDoc.winners
+  // with no paidByA/paidByB — e.g. one added via "Add another winner" after
+  // the month already closed — is genuinely unpaid, not old-schema data;
+  // attributing it to payoutAdmin would silently invent a payment nobody
+  // made.
+  if (monthDoc && !monthDoc.winners && monthDoc.status === 'closed' && monthDoc.payoutAdmin) {
     return monthDoc.payoutAdmin === 'A'
       ? { paidByA: w.payoutAmount || 0, paidByB: 0 }
       : { paidByA: 0, paidByB: w.payoutAmount || 0 };
@@ -27,12 +34,12 @@ export function monthFinances(gid, group, monthNum) {
   var monthDoc = monthsCache.get(monthKey(gid, monthNum)) || null;
   var payments = paymentsCache.get(monthKey(gid, monthNum)) || {};
   var members = membersByGroup.get(gid) || [];
-  var paidCount = 0, rawA = 0, rawB = 0;
+  var paidCount = 0, rawA = 0, rawB = 0, paidCountA = 0, paidCountB = 0;
   members.forEach(function (mem) {
     var p = payments[mem.id];
     if (p && p.paid) {
       paidCount++;
-      if (p.collectedBy === 'A') rawA += group.monthlyDeposit; else rawB += group.monthlyDeposit;
+      if (p.collectedBy === 'A') { rawA += group.monthlyDeposit; paidCountA++; } else { rawB += group.monthlyDeposit; paidCountB++; }
     }
   });
   var net = (monthDoc && monthDoc.transferNet) || 0;
@@ -62,7 +69,7 @@ export function monthFinances(gid, group, monthNum) {
   var allPayoutCovered = winners.length > 0 && winners.every(function (w) { return w.remaining <= 0; });
   return {
     monthDoc: monthDoc, paidCount: paidCount, totalCollected: paidCount * group.monthlyDeposit,
-    rawA: rawA, rawB: rawB, net: net, adjA: adjA, adjB: adjB,
+    rawA: rawA, rawB: rawB, paidCountA: paidCountA, paidCountB: paidCountB, net: net, adjA: adjA, adjB: adjB,
     winners: winners, payoutAmount: payoutAmount, payoutPaidA: payoutPaidA, payoutPaidB: payoutPaidB,
     allPayoutCovered: allPayoutCovered, closed: closed, finalA: adjA, finalB: adjB
   };

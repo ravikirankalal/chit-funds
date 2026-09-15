@@ -11,7 +11,7 @@ function paymentRow(r, readOnly, transferable, pending) {
   var canTransfer = transferable && r.paid && !readOnly && !pending;
   var selected = canTransfer && selection && selection.mids.indexOf(r.mm.id) !== -1;
   var showCheckbox = canTransfer && !!selection;
-  return '<div class="list-row" style="' + (selected ? 'border-color:var(--color-secondary);background:var(--color-secondary-soft);' : '') + (canTransfer ? 'user-select:none;' : '') + '" ' +
+  return '<div class="list-row" style="' + (selected ? 'border-color:var(--color-secondary);background:var(--color-secondary-soft);' : '') + '" ' +
     (readOnly ? '' : 'data-action="open-payment-modal" data-mid="' + r.mm.id + '"') +
     (canTransfer ? ' data-transferable="1"' : '') + '>' +
     (showCheckbox ? '<div style="width:22px;height:22px;border-radius:11px;border:1.5px solid ' + (selected ? 'var(--color-secondary)' : 'var(--color-border-strong)') + ';background:' + (selected ? 'var(--color-secondary)' : 'transparent') + ';display:flex;align-items:center;justify-content:center;flex-shrink:0;">' + (selected ? iconCheck('var(--on-brand)') : '') + '</div>' : '') +
