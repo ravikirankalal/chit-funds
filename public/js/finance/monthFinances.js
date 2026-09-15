@@ -27,12 +27,12 @@ export function monthFinances(gid, group, monthNum) {
   var monthDoc = monthsCache.get(monthKey(gid, monthNum)) || null;
   var payments = paymentsCache.get(monthKey(gid, monthNum)) || {};
   var members = membersByGroup.get(gid) || [];
-  var paidCount = 0, rawA = 0, rawB = 0;
+  var paidCount = 0, rawA = 0, rawB = 0, paidCountA = 0, paidCountB = 0;
   members.forEach(function (mem) {
     var p = payments[mem.id];
     if (p && p.paid) {
       paidCount++;
-      if (p.collectedBy === 'A') rawA += group.monthlyDeposit; else rawB += group.monthlyDeposit;
+      if (p.collectedBy === 'A') { rawA += group.monthlyDeposit; paidCountA++; } else { rawB += group.monthlyDeposit; paidCountB++; }
     }
   });
   var net = (monthDoc && monthDoc.transferNet) || 0;
@@ -62,7 +62,7 @@ export function monthFinances(gid, group, monthNum) {
   var allPayoutCovered = winners.length > 0 && winners.every(function (w) { return w.remaining <= 0; });
   return {
     monthDoc: monthDoc, paidCount: paidCount, totalCollected: paidCount * group.monthlyDeposit,
-    rawA: rawA, rawB: rawB, net: net, adjA: adjA, adjB: adjB,
+    rawA: rawA, rawB: rawB, paidCountA: paidCountA, paidCountB: paidCountB, net: net, adjA: adjA, adjB: adjB,
     winners: winners, payoutAmount: payoutAmount, payoutPaidA: payoutPaidA, payoutPaidB: payoutPaidB,
     allPayoutCovered: allPayoutCovered, closed: closed, finalA: adjA, finalB: adjB
   };
