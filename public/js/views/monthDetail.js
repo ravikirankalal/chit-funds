@@ -1,5 +1,5 @@
 import { ADMINS } from '../../firebase-config.js';
-import { state, groupsById, membersByGroup, paymentsCache, monthsCache, transferReqCache, monthKey } from '../store.js';
+import { state, groupsById, membersByGroup, paymentsCache, monthsCache, transferReqCache, closeReqCache, handoffReqCache, monthKey } from '../store.js';
 import { fmt, escapeHtml, initialsOf, colorFor, adminName, adminDot, isSuper, monthLabel, formatDateTime, otherAdmin } from '../helpers.js';
 import { monthFinances } from '../finance.js';
 import {
@@ -42,11 +42,16 @@ export function renderMonthDetail() {
   var isClosed = f.closed;
   var isOpen = viewMonth === group.currentMonth && !isClosed;
   var isUpcoming = viewMonth > group.currentMonth;
+  // A pending close request means someone already proposed closing this
+  // (still-open) month and it's waiting on the other admin — see
+  // proposeCloseMonth/acceptCloseRequest in actions.js. Winner/amount
+  // editing locks while this is pending (see renderWinnerCard below).
+  var closeReq = isOpen ? closeReqCache.get(monthKey(gid, viewMonth)) : null;
 
-  var statusLabel = isClosed ? 'Closed' : (isOpen ? 'Open' : 'Upcoming');
-  var statusBg = isClosed ? 'var(--color-success-soft)' : (isOpen ? 'var(--color-secondary)' : 'var(--color-border)');
-  var statusColor = isClosed ? 'var(--color-success)' : (isOpen ? 'var(--on-brand)' : 'var(--color-text-faint)');
-  var statusIcon = isClosed ? iconCheck(statusColor) : (isUpcoming ? iconClock(statusColor) : '');
+  var statusLabel = isClosed ? 'Closed' : (closeReq ? 'Pending close' : (isOpen ? 'Open' : 'Upcoming'));
+  var statusBg = isClosed ? 'var(--color-success-soft)' : (closeReq ? 'var(--color-warning-soft)' : (isOpen ? 'var(--color-secondary)' : 'var(--color-border)'));
+  var statusColor = isClosed ? 'var(--color-success)' : (closeReq ? 'var(--color-warning)' : (isOpen ? 'var(--on-brand)' : 'var(--color-text-faint)'));
+  var statusIcon = isClosed ? iconCheck(statusColor) : (closeReq ? iconClock(statusColor) : (isUpcoming ? iconClock(statusColor) : ''));
 
   var html = '<div class="screen">' +
     '<div class="topbar">' +
@@ -55,6 +60,8 @@ export function renderMonthDetail() {
       '<div style="display:flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:5px 10px;border-radius:8px;background:' + statusBg + ';color:' + statusColor + ';">' + statusIcon + statusLabel + '</div>' +
     '</div>' +
     '<div class="content">';
+
+  if (isOpen || isClosed) html += renderHandoffRequests(gid, viewMonth, readOnly);
 
   if (isClosed) {
     html += renderClosedSummary(f, members, readOnly, gid, viewMonth);
@@ -69,8 +76,8 @@ export function renderMonthDetail() {
   }
 
   if (isOpen) {
-    html += renderWinnerCard(f, members, readOnly);
-    if (!readOnly) html += renderPayoutCard(f);
+    html += renderWinnerCard(f, members, readOnly, !!closeReq);
+    if (!readOnly) html += renderPayoutCard(f, closeReq);
   }
 
   html += '</div>';
@@ -115,6 +122,34 @@ function renderMemberPaymentStrip(gid, viewMonth, members, readOnly) {
     '<div style="font-size:11px;color:var(--color-text-muted);margin-bottom:4px;">Who\'s paid</div>' +
     '<div style="display:flex;align-items:flex-end;gap:2px;">' + bars + '</div>' +
   '</div>';
+}
+
+// Pending hand-offs (see confirmTransfer/acceptHandoffRequest in
+// actions.js) for this month — shown above the collection summary in both
+// open and closed months, since a late hand-off can still be proposed
+// after close (same as the transfer bar itself allows). More than one can
+// be pending at once, each independent, so each gets its own card and its
+// own accept/decline/cancel target via data-req-id.
+function renderHandoffRequests(gid, viewMonth, readOnly) {
+  var reqs = handoffReqCache.get(monthKey(gid, viewMonth)) || {};
+  var ids = Object.keys(reqs);
+  if (!ids.length) return '';
+  return ids.map(function (id) {
+    var req = reqs[id];
+    var iSent = req.from === state.currentAdmin;
+    var count = (req.mids || []).length;
+    var title = readOnly ? 'Transfer pending' : (iSent ? 'Transfer pending acceptance' : 'Transfer needs your acceptance');
+    return '<div class="banner info">' +
+      '<div class="banner-title">' + iconTransfer('var(--color-secondary)') + title + '</div>' +
+      '<div style="font-size:12.5px;color:var(--color-text-muted);">' + adminName(req.from) + ' → ' + adminName(req.to) + ' · ' + count + ' payment' + (count === 1 ? '' : 's') + ' · <span class="mono" style="font-weight:700;color:var(--color-text);">' + fmt(req.amount) + '</span></div>' +
+      (readOnly ? '' : iSent
+        ? '<button class="btn btn-danger-soft" style="width:100%;" data-action="cancel-handoff-request" data-req-id="' + id + '">Cancel</button>'
+        : '<div style="display:flex;gap:8px;">' +
+            '<button class="btn btn-danger-soft" style="flex:1 1 0;" data-action="decline-handoff-request" data-req-id="' + id + '">Decline</button>' +
+            '<button class="btn btn-primary" style="flex:1 1 0;" data-action="accept-handoff-request" data-req-id="' + id + '">Accept</button>' +
+          '</div>') +
+    '</div>';
+  }).join('');
 }
 
 function renderClosedSummary(f, members, readOnly, gid, viewMonth) {
@@ -186,13 +221,13 @@ function renderOpenSummary(f, members, group, readOnly, gid, viewMonth) {
   '</div>';
 }
 
-function paymentRow(r, readOnly, transferable) {
+function paymentRow(r, readOnly, transferable, pending) {
   var paidAtLabel = formatDateTime(r.paidAt);
   var subtitle = r.paid
-    ? 'Collected by <span style="font-weight:600;color:var(--color-success);">' + adminName(r.collectedBy) + '</span> · ' + (r.mode === 'online' ? 'Online' : 'Cash') + (paidAtLabel ? ' · ' + paidAtLabel : '') + (r.transferred ? ' · <span style="display:inline-flex;align-items:center;gap:3px;color:var(--color-secondary);">' + iconTransfer('var(--color-secondary)') + 'Transferred</span>' : '')
+    ? 'Collected by <span style="font-weight:600;color:var(--color-success);">' + adminName(r.collectedBy) + '</span> · ' + (r.mode === 'online' ? 'Online' : 'Cash') + (paidAtLabel ? ' · ' + paidAtLabel : '') + (r.transferred ? ' · <span style="display:inline-flex;align-items:center;gap:3px;color:var(--color-secondary);">' + iconTransfer('var(--color-secondary)') + 'Transferred</span>' : '') + (pending ? ' · <span style="color:var(--color-warning);">Pending transfer</span>' : '')
     : '<span style="color:var(--color-danger);">Not paid yet' + (readOnly ? '' : ' · tap to record') + '</span>';
   var selection = state.ui.transferSelection;
-  var canTransfer = transferable && r.paid && !readOnly;
+  var canTransfer = transferable && r.paid && !readOnly && !pending;
   var selected = canTransfer && selection && selection.mids.indexOf(r.mm.id) !== -1;
   var showCheckbox = canTransfer && !!selection;
   return '<div class="list-row" style="' + (selected ? 'border-color:var(--color-secondary);background:var(--color-secondary-soft);' : '') + (canTransfer ? 'user-select:none;' : '') + '" ' +
@@ -226,9 +261,12 @@ function paymentTabChip(tab, active) {
 // a not-yet-open future month. See togglePaymentSelection in actions.js.
 function renderPaymentList(gid, viewMonth, members, f, readOnly, group, canTransfer) {
   var payments = paymentsCache.get(monthKey(gid, viewMonth)) || {};
+  var handoffReqs = handoffReqCache.get(monthKey(gid, viewMonth)) || {};
+  var pendingMids = {};
+  Object.keys(handoffReqs).forEach(function (id) { (handoffReqs[id].mids || []).forEach(function (mid) { pendingMids[mid] = true; }); });
   var payRows = members.map(function (mm, idx) {
     var p = payments[mm.id] || { paid: false };
-    return { mm: mm, idx: idx, paid: !!p.paid, collectedBy: p.collectedBy, mode: p.mode, paidAt: p.paidAt, transferred: !!p.transferred };
+    return { mm: mm, idx: idx, paid: !!p.paid, collectedBy: p.collectedBy, mode: p.mode, paidAt: p.paidAt, transferred: !!p.transferred, pending: !!pendingMids[mm.id] };
   });
 
   var unpaidRows = payRows.filter(function (r) { return !r.paid; });
@@ -264,7 +302,7 @@ function renderPaymentList(gid, viewMonth, members, f, readOnly, group, canTrans
   var activeTab = tabs.filter(function (t) { return t.key === activeKey; })[0];
 
   var body = activeTab.rows.length
-    ? '<div class="row-list">' + activeTab.rows.map(function (r) { return paymentRow(r, readOnly, activeTab.transferable); }).join('') + '</div>'
+    ? '<div class="row-list">' + activeTab.rows.map(function (r) { return paymentRow(r, readOnly, activeTab.transferable, r.pending); }).join('') + '</div>'
     : '<div style="text-align:center;padding:24px 0;font-size:12.5px;color:var(--color-text-muted);">Nothing here yet</div>';
 
   return '<div><div class="section-label">' + iconWallet() + 'Member payments (' + f.paidCount + '/' + members.length + ')</div>' +
@@ -279,7 +317,8 @@ function renderPaymentList(gid, viewMonth, members, f, readOnly, group, canTrans
 // one within the same month (see getMonthWinners in finance.js), each with
 // its own editable payout amount. "Remove" + "Add another winner" covers
 // what used to be a single "Change" link.
-function renderWinnerCard(f, members, readOnly) {
+function renderWinnerCard(f, members, readOnly, locked) {
+  var editable = !readOnly && !locked;
   var html = '<div class="card" style="display:flex;flex-direction:column;gap:10px;">' +
     '<div style="display:flex;align-items:center;gap:5px;font-size:13px;font-weight:600;">' + iconTrophy() + (f.winners.length > 1 ? 'This month\'s winners' : 'This month\'s winner') + '</div>';
   if (f.winners.length) {
@@ -289,29 +328,52 @@ function renderWinnerCard(f, members, readOnly) {
       return '<div class="list-row" style="border-left:3px solid var(--color-gold);cursor:default;">' +
         '<div class="avatar sm" style="background:' + colorFor(widx) + ';box-shadow:0 0 0 2px var(--color-surface),0 0 0 3px var(--color-gold);">' + (winner ? initialsOf(winner.name) : '?') + '</div>' +
         '<div style="flex:1 1 auto;font-size:13px;font-weight:600;color:var(--color-gold);min-width:0;">' + (winner ? escapeHtml(winner.name) : '—') + '</div>' +
-        (readOnly
-          ? '<div class="mono" style="font-size:13px;font-weight:700;color:var(--color-gold);">' + fmt(w.payoutAmount) + '</div>'
-          : '<input data-winner-amount="' + w.memberId + '" type="text" inputmode="numeric" value="' + w.payoutAmount + '" style="width:100px;text-align:right;font-size:13px;font-weight:600;padding:6px 8px;border-radius:10px;border:1px solid var(--color-border);" />' +
-            '<div data-action="remove-winner" data-mid="' + w.memberId + '" style="cursor:pointer;color:var(--color-danger);font-size:12px;font-weight:600;margin-left:10px;">Remove</div>') +
+        (editable
+          ? '<input data-winner-amount="' + w.memberId + '" type="text" inputmode="numeric" value="' + w.payoutAmount + '" style="width:100px;text-align:right;font-size:13px;font-weight:600;padding:6px 8px;border-radius:10px;border:1px solid var(--color-border);" />' +
+            '<div data-action="remove-winner" data-mid="' + w.memberId + '" style="cursor:pointer;color:var(--color-danger);font-size:12px;font-weight:600;margin-left:10px;">Remove</div>'
+          : '<div class="mono" style="font-size:13px;font-weight:700;color:var(--color-gold);">' + fmt(w.payoutAmount) + '</div>') +
       '</div>';
     }).join('');
   } else if (readOnly) {
     html += '<div style="font-size:12.5px;color:var(--color-text-muted);">No winner selected yet.</div>';
   }
-  if (!readOnly) {
+  if (editable) {
     html += '<button class="btn btn-primary" style="width:100%;" data-action="open-winner-picker">' + (f.winners.length ? 'Add another winner' : 'Select Winner') + '</button>';
+  } else if (locked) {
+    html += '<div style="font-size:11.5px;color:var(--color-text-muted);text-align:center;">Locked while the close is pending approval.</div>';
   }
   html += '</div>';
   return html;
 }
 
-function renderPayoutCard(f) {
+function renderPayoutCard(f, closeReq) {
   var req = transferReqCache.get(monthKey(state.activeGroupId, state.viewMonth));
+
+  if (closeReq) {
+    var iProposed = closeReq.proposedBy === state.currentAdmin;
+    return '<div class="card" style="display:flex;flex-direction:column;gap:12px;">' +
+      '<div style="display:flex;align-items:center;gap:5px;font-size:13px;font-weight:600;">' + iconWallet() + 'Record payout</div>' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;">' +
+        '<div style="font-size:12px;color:var(--color-text-muted);">Payout</div>' +
+        '<div class="mono" style="font-size:16px;font-weight:700;color:var(--color-gold);">' + fmt(f.payoutAmount) + '</div>' +
+      '</div>' +
+      (iProposed
+        ? '<div style="display:flex;align-items:center;gap:4px;font-size:11.5px;color:var(--color-warning);">' + iconClock('var(--color-warning)') + 'Waiting for ' + adminName(otherAdmin(state.currentAdmin)) + ' to accept.</div>' +
+          '<button class="btn btn-danger-soft" style="width:100%;" data-action="cancel-close-request">Cancel request</button>'
+        : '<div style="font-size:11.5px;color:var(--color-text-muted);">' + adminName(closeReq.proposedBy) + ' wants to close this month and pay out the amount above.</div>' +
+          '<div style="display:flex;gap:8px;">' +
+            '<button class="btn btn-danger-soft" style="flex:1 1 0;" data-action="reject-close-request">Reject</button>' +
+            '<button class="btn btn-primary" style="flex:1 1 0;background:var(--color-accent);" data-action="accept-close-request">Accept</button>' +
+          '</div>') +
+    '</div>';
+  }
+
   var canClose = f.winners.length && !req;
   return '<div class="card" style="display:flex;flex-direction:column;gap:12px;">' +
     '<div style="display:flex;align-items:center;gap:5px;font-size:13px;font-weight:600;">' + iconWallet() + 'Record payout</div>' +
     (req ? '<div style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--color-warning);">' + iconWarningTriangle('var(--color-warning)') + 'Resolve the pending transfer request above before closing this month.</div>' : '') +
-    '<button class="btn btn-primary ' + (canClose ? '' : 'disabled') + '" style="width:100%; background:' + (canClose ? 'var(--color-accent)' : 'var(--color-disabled)') + ';" data-action="close-month">Close Month &amp; Pay ' + fmt(f.payoutAmount) + '</button>' +
+    '<button class="btn btn-primary ' + (canClose ? '' : 'disabled') + '" style="width:100%; background:' + (canClose ? 'var(--color-accent)' : 'var(--color-disabled)') + ';" data-action="propose-close-month">Close Month &amp; Pay ' + fmt(f.payoutAmount) + '</button>' +
+    (f.winners.length ? '<div style="font-size:11px;color:var(--color-text-muted);text-align:center;">' + adminName(otherAdmin(state.currentAdmin)) + ' will need to accept before this is final.</div>' : '') +
   '</div>';
 }
 
@@ -344,8 +406,13 @@ function renderPaymentModalOverlay(gid, viewMonth, group, members) {
   var pidx = members.indexOf(pmem);
   var existingP = (paymentsCache.get(monthKey(gid, viewMonth)) || {})[pm.memberId];
   var holder = pm.isEditing && existingP ? existingP.collectedBy : state.currentAdmin;
-  var canEditMode = !pm.isEditing || (existingP && existingP.collectedBy === state.currentAdmin && !existingP.transferred);
-  var canMarkUnpaid = pm.isEditing && existingP && existingP.collectedBy === state.currentAdmin;
+  var handoffReqs = handoffReqCache.get(monthKey(gid, viewMonth)) || {};
+  var pendingHandoffId = Object.keys(handoffReqs).find(function (id) { return (handoffReqs[id].mids || []).indexOf(pm.memberId) !== -1; });
+  // Locked the same way once-transferred payments already were: a hand-off
+  // still awaiting the other admin's acceptance can't have its mode
+  // changed or be marked unpaid out from under the pending request.
+  var canEditMode = !pm.isEditing || (existingP && existingP.collectedBy === state.currentAdmin && !existingP.transferred && !pendingHandoffId);
+  var canMarkUnpaid = pm.isEditing && existingP && existingP.collectedBy === state.currentAdmin && !existingP.transferred && !pendingHandoffId;
   var transferHistory = '';
   if (pm.isEditing && existingP) {
     // collectedBy/transferredAt only ever reflect the CURRENT holder — the
@@ -370,6 +437,11 @@ function renderPaymentModalOverlay(gid, viewMonth, group, members) {
       rows += timelineRow('var(--color-warning)', (pendingReq.direction === 'AtoB' ? ADMINS.A.name + ' → ' + ADMINS.B.name : ADMINS.B.name + ' → ' + ADMINS.A.name),
         'Pending acceptance', 'color:var(--color-warning);', fmt(pendingReq.amount));
     }
+    if (pendingHandoffId) {
+      var pendingHandoff = handoffReqs[pendingHandoffId];
+      rows += timelineRow('var(--color-warning)', adminName(pendingHandoff.from) + ' → ' + adminName(pendingHandoff.to),
+        'Pending acceptance', 'color:var(--color-warning);', fmt(group.monthlyDeposit));
+    }
     transferHistory = '<div><div style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--color-text-muted);margin-bottom:8px;">' + iconTransfer() + 'Transfer history</div><div style="display:flex;flex-direction:column;gap:10px;">' + rows + '</div></div>';
   }
 
@@ -393,7 +465,7 @@ function renderPaymentModalOverlay(gid, viewMonth, group, members) {
             '<button class="pill ' + (pm.mode === 'online' ? 'active' : '') + '" style="display:flex;align-items:center;justify-content:center;gap:6px;" data-action="set-modal-mode" data-mode="online">' + iconCard() + 'Online</button>' +
           '</div>'
         : '<div class="pill-row"><div class="pill active" style="pointer-events:none;display:flex;align-items:center;justify-content:center;gap:6px;">' + (pm.mode === 'online' ? iconCard() + 'Online' : iconCash() + 'Cash') + '</div></div>' +
-          '<div style="font-size:11px;color:var(--color-text-muted);margin-top:6px;">' + (existingP && existingP.transferred ? 'Locked — this amount has been transferred and can no longer be edited.' : 'Only ' + adminName(holder) + ' can change this.') + '</div>'
+          '<div style="font-size:11px;color:var(--color-text-muted);margin-top:6px;">' + (existingP && existingP.transferred ? 'Locked — this amount has been transferred and can no longer be edited.' : pendingHandoffId ? 'Locked — a transfer request is pending on this amount.' : 'Only ' + adminName(holder) + ' can change this.') + '</div>'
       ) + '</div>' +
       transferHistory +
       (canMarkUnpaid ? '<button class="btn btn-danger-soft" style="width:100%;" data-action="mark-unpaid">Mark as unpaid</button>' : '') +
@@ -420,7 +492,7 @@ function renderTransferBar(gid, viewMonth, group) {
         '<div class="mono" style="font-size:16px;font-weight:700;">' + fmt(total) + '</div>' +
       '</div>' +
       '<div data-action="cancel-transfer-selection" style="width:32px;height:32px;border-radius:10px;background:var(--color-bg);display:flex;align-items:center;justify-content:center;flex-shrink:0;">' + iconClose() + '</div>' +
-      '<button class="btn btn-primary" style="flex-shrink:0;padding:12px 16px;white-space:nowrap;" data-action="confirm-transfer">Transfer to ' + adminName(target) + '</button>' +
+      '<button class="btn btn-primary" style="flex-shrink:0;padding:12px 16px;white-space:nowrap;" data-action="confirm-transfer">Request transfer to ' + adminName(target) + '</button>' +
     '</div>' +
   '</div>';
 }

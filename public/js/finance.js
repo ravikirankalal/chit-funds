@@ -8,7 +8,7 @@
 // this module from ever needing to import render.js.
 
 import {
-  state, groupsById, membersByGroup, monthsCache, paymentsCache, transferReqCache, monthKey
+  state, groupsById, membersByGroup, monthsCache, paymentsCache, transferReqCache, closeReqCache, handoffReqCache, monthKey
 } from './store.js';
 import { fmt, adminName, monthLabel, formatDateTime } from './helpers.js';
 
@@ -173,8 +173,27 @@ export function recompute() {
 
       var req = transferReqCache.get(monthKey(gid, m));
       if (req) {
-        approvals.push({ groupId: gid, groupName: group.name, month: m, direction: req.direction, amount: req.amount, requestedBy: req.requestedBy });
+        approvals.push({ kind: 'transfer', groupId: gid, groupName: group.name, month: m, direction: req.direction, amount: req.amount, requestedBy: req.requestedBy });
       }
+
+      // Closing a month is now propose (by whichever admin picks the
+      // winner and taps close) then accept (by the other admin) — see
+      // proposeCloseMonth/acceptCloseRequest in actions.js. Until accepted
+      // the month doc's own status is still 'open' (f.closed stays false),
+      // so this doesn't duplicate the closed-month ledger entry above.
+      var closeReq = closeReqCache.get(monthKey(gid, m));
+      if (closeReq) {
+        approvals.push({ kind: 'close', groupId: gid, groupName: group.name, month: m, amount: f.payoutAmount, requestedBy: closeReq.proposedBy });
+      }
+
+      // Each pending hand-off (see confirmTransfer/acceptHandoffRequest in
+      // actions.js) is its own request, keyed by reqId so accept/decline/
+      // cancel can target the right one when more than one is in flight.
+      var handoffReqs = handoffReqCache.get(monthKey(gid, m)) || {};
+      Object.keys(handoffReqs).forEach(function (reqId) {
+        var hreq = handoffReqs[reqId];
+        approvals.push({ kind: 'handoff', groupId: gid, groupName: group.name, month: m, amount: hreq.amount, requestedBy: hreq.requestedBy, from: hreq.from, to: hreq.to, reqId: reqId, count: (hreq.mids || []).length });
+      });
     }
   });
 

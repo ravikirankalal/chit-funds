@@ -1,5 +1,5 @@
-import { state, groupsById, membersByGroup } from '../store.js';
-import { fmt, escapeHtml, monthLabel, adminName, adminDot } from '../helpers.js';
+import { state, groupsById, membersByGroup, closeReqCache, monthKey } from '../store.js';
+import { fmt, escapeHtml, monthLabel, adminName, adminDot, otherAdmin } from '../helpers.js';
 import { monthFinances } from '../finance.js';
 import { iconChevronLeft, iconChevronRight, iconWallet, iconPeopleSmall, iconTrendingUp, iconCalendar, iconTrophy, iconGroupStack } from '../icons.js';
 import { bar, skeletonTopbar, skeletonListRow } from '../skeleton.js';
@@ -125,15 +125,24 @@ export function renderGroupDetail() {
       } else {
         var pct = members.length > 0 ? Math.min(100, Math.round((f.paidCount / members.length) * 100)) : 0;
         trend.push({ m: m, pct: pct, color: pct === 100 ? 'var(--color-success)' : 'var(--color-danger)' });
-        rows.push('<div class="list-row" data-action="open-month" data-gid="' + gid + '" data-m="' + m + '" style="border-color:var(--color-secondary);background:var(--color-secondary-soft);flex-direction:column;align-items:stretch;gap:6px;">' +
+        // A pending close request (see proposeCloseMonth in actions.js)
+        // means the month isn't just "open" anymore — it's waiting on the
+        // other admin's approval to actually close, so it gets its own
+        // amber treatment instead of the usual secondary "open" styling.
+        var pendingClose = closeReqCache.get(monthKey(gid, m));
+        var rowColor = pendingClose ? 'var(--color-warning)' : 'var(--color-secondary)';
+        var rowBg = pendingClose ? 'var(--color-warning-soft)' : 'var(--color-secondary-soft)';
+        var rowLabel = pendingClose ? ' · Pending close' : ' · Open';
+        var rowSubtitle = pendingClose ? 'Awaiting ' + adminName(otherAdmin(pendingClose.proposedBy)) + "'s approval" : f.paidCount + ' / ' + members.length + ' paid so far';
+        rows.push('<div class="list-row" data-action="open-month" data-gid="' + gid + '" data-m="' + m + '" style="border-color:' + rowColor + ';background:' + rowBg + ';flex-direction:column;align-items:stretch;gap:6px;">' +
           '<div style="display:flex;align-items:center;gap:10px;">' +
-            '<div class="avatar sm" style="background:var(--color-secondary); color:var(--on-brand);">' + m + '</div>' +
-            '<div style="flex:1 1 auto; min-width:0;"><div style="font-size:13px;font-weight:600;">' + monthLabel(group.startYear, group.startMonthIndex, m) + ' · Open</div>' +
-            '<div style="font-size:11.5px;color:var(--color-text-muted);margin-top:1px;">' + f.paidCount + ' / ' + members.length + ' paid so far</div></div>' +
-            '<div style="text-align:right; flex-shrink:0;"><div style="font-size:13px;font-weight:700;color:var(--color-secondary);">' + fmt(f.payoutAmount) + '</div>' +
+            '<div class="avatar sm" style="background:' + rowColor + '; color:var(--on-brand);">' + m + '</div>' +
+            '<div style="flex:1 1 auto; min-width:0;"><div style="font-size:13px;font-weight:600;">' + monthLabel(group.startYear, group.startMonthIndex, m) + rowLabel + '</div>' +
+            '<div style="font-size:11.5px;color:var(--color-text-muted);margin-top:1px;">' + rowSubtitle + '</div></div>' +
+            '<div style="text-align:right; flex-shrink:0;"><div style="font-size:13px;font-weight:700;color:' + rowColor + ';">' + fmt(f.payoutAmount) + '</div>' +
             '<div style="font-size:11px;color:var(--color-text-muted);">' + pct + '% collected</div></div>' +
           '</div>' +
-          '<div class="progress-track"><div class="progress-fill" style="width:' + pct + '%; background:var(--color-secondary);"></div></div>' +
+          '<div class="progress-track"><div class="progress-fill" style="width:' + pct + '%; background:' + rowColor + ';"></div></div>' +
         '</div>');
       }
     } else {

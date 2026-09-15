@@ -29,9 +29,47 @@ function renderLoadingSkeleton() {
   return hero + statRow + '<div>' + bar('60px', '13px', 'margin-bottom:10px;') + '<div class="row-list">' + groupCards + '</div></div>';
 }
 
+// One line per pending-approval kind — see recompute() in finance.js for
+// how each kind's fields are shaped. Only ever called for approvals where
+// requestedBy !== the signed-in admin (see renderDashboard below), so the
+// wording always reads as something for THIS admin to act on.
+function approvalBannerText(a) {
+  var monthText = (function () {
+    var ag = groupsById.get(a.groupId);
+    return ag ? monthLabel(ag.startYear, ag.startMonthIndex, a.month) : 'Month ' + a.month;
+  })();
+  if (a.kind === 'close') {
+    return {
+      title: 'Payout needs your approval',
+      body: adminName(a.requestedBy) + ' wants to close ' + monthText + ' and pay out ' + fmt(a.amount) + ' (' + escapeHtml(a.groupName) + ')'
+    };
+  }
+  if (a.kind === 'handoff') {
+    return {
+      title: 'Transfer needs your approval',
+      body: adminName(a.requestedBy) + ' wants to send you ' + fmt(a.amount) + ' · ' + a.count + ' payment' + (a.count === 1 ? '' : 's') + ' (' + escapeHtml(a.groupName) + ', ' + monthText + ')'
+    };
+  }
+  // kind === 'transfer' — the net-balance request.
+  return {
+    title: 'Transfer needs your approval',
+    body: adminName(a.requestedBy) + ' wants to send ' + fmt(a.amount) + ' · ' +
+      (a.direction === 'AtoB' ? adminName('A') + ' → ' + adminName('B') : adminName('B') + ' → ' + adminName('A')) +
+      ' (' + escapeHtml(a.groupName) + ', ' + monthText + ')'
+  };
+}
+
+function renderApprovalBanner(a) {
+  var text = approvalBannerText(a);
+  return '<div class="banner warn" data-action="open-month" data-gid="' + a.groupId + '" data-m="' + a.month + '">' +
+    '<div class="banner-title">' + iconWarningTriangle('var(--color-warning)') + text.title + '</div>' +
+    '<div style="font-size:12.5px;">' + text.body + '</div>' +
+    '<div style="font-size:11.5px;color:var(--color-warning);font-weight:600;">Tap to review →</div></div>';
+}
+
 export function renderDashboard() {
   var groups = Array.from(groupsById.values());
-  var approval = !isSuper() && state.pendingApprovals.find(function (a) { return a.requestedBy !== state.currentAdmin; });
+  var approvals = isSuper() ? [] : state.pendingApprovals.filter(function (a) { return a.requestedBy !== state.currentAdmin; });
 
   // Until the groups listener delivers its first snapshot, `groups` is
   // always empty and `state.balances` always zero — show a loading state
@@ -126,15 +164,7 @@ export function renderDashboard() {
         '<div data-action="logout" class="avatar" style="cursor:pointer; background:' + adminAvatarColor(state.currentAdmin) + ';">' + initialsOf(adminName(state.currentAdmin)) + '</div>' +
       '</div>' +
       '<div class="content">' +
-        (approval ? '<div class="banner warn" data-action="open-month" data-gid="' + approval.groupId + '" data-m="' + approval.month + '">' +
-          '<div class="banner-title">' + iconWarningTriangle('var(--color-warning)') + 'Transfer needs your approval</div>' +
-          '<div style="font-size:12.5px;">' + adminName(approval.requestedBy) + ' wants to send ' + fmt(approval.amount) + ' · ' +
-          (approval.direction === 'AtoB' ? adminName('A') + ' → ' + adminName('B') : adminName('B') + ' → ' + adminName('A')) +
-          ' (' + escapeHtml(approval.groupName) + ', ' + (function () {
-            var ag = groupsById.get(approval.groupId);
-            return ag ? monthLabel(ag.startYear, ag.startMonthIndex, approval.month) : 'Month ' + approval.month;
-          })() + ')</div>' +
-          '<div style="font-size:11.5px;color:var(--color-warning);font-weight:600;">Tap to review →</div></div>' : '') +
+        approvals.map(renderApprovalBanner).join('') +
         '<div style="background:linear-gradient(155deg, var(--color-primary) 0%, var(--color-primary-strong) 100%); border-radius:20px; padding:20px; color:var(--on-brand); box-shadow:var(--shadow-md);">' +
           '<div style="display:flex;align-items:center;gap:5px;font-size:12px;opacity:0.85;font-weight:500;">' + iconWallet('var(--on-brand)') + 'Total fund available</div>' +
           '<div class="mono" style="font-size:30px;font-weight:700;margin-top:4px;">' + fmt(state.balances.total) + '</div>' +
