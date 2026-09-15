@@ -70,20 +70,20 @@ function adminAmountSpan(id, label) {
   return '<span style="display:inline-flex;align-items:center;gap:4px;color:' + adminAvatarColor(id) + ';font-weight:600;white-space:nowrap;">' + adminDot(id) + label + '</span>';
 }
 
-// Collected / payout / profit for one month, each its own color — collected
-// (success green, matches the collection progress bar), payout (accent,
-// the app-wide "money going out" color), and profit (success/danger by
-// sign, same convention as the profit-margin figure on the create-group
-// screen) — so a row's three most-asked financial questions ("how much did
-// we collect", "how much went out", "did we come out ahead") each have a
-// distinct, consistent color instead of blending into one flat tone.
-function financeTriplet(collected, payout) {
+// The right-hand column of a month row — collected above, the payout
+// amount in its usual headline spot, profit below — replacing the old
+// bare "won" / "X% collected" caption with the three figures a row gets
+// tapped open for, each its own color: collected (success green, matches
+// the collection progress bar), payout (accent, the app-wide "money going
+// out" color), and profit (success/danger by sign, same convention as the
+// profit-margin figure on the create-group screen).
+function rightMoneyColumn(collected, payout) {
   var profit = collected - payout;
   var profitColor = profit < 0 ? 'var(--color-danger)' : 'var(--color-success)';
-  return '<div style="display:flex;flex-wrap:wrap;gap:10px 14px;font-size:11px;padding-top:2px;">' +
-    '<span><span style="color:var(--color-text-muted);">Collected </span><span class="mono" style="color:var(--color-success);font-weight:700;">' + fmt(collected) + '</span></span>' +
-    '<span><span style="color:var(--color-text-muted);">Payout </span><span class="mono" style="color:var(--color-accent);font-weight:700;">' + fmt(payout) + '</span></span>' +
-    '<span><span style="color:var(--color-text-muted);">Profit </span><span class="mono" style="color:' + profitColor + ';font-weight:700;">' + signed(profit) + '</span></span>' +
+  return '<div style="text-align:right; flex-shrink:0;">' +
+    '<div style="font-size:10px;color:var(--color-text-muted);white-space:nowrap;">Collected <span class="mono" style="color:var(--color-success);font-weight:700;">' + fmt(collected) + '</span></div>' +
+    '<div style="font-size:13px;font-weight:700;color:var(--color-accent);margin-top:1px;">' + fmt(payout) + '</div>' +
+    '<div style="font-size:10px;color:var(--color-text-muted);margin-top:1px;white-space:nowrap;">Profit <span class="mono" style="color:' + profitColor + ';font-weight:700;">' + signed(profit) + '</span></div>' +
   '</div>';
 }
 
@@ -157,15 +157,11 @@ export function renderGroupDetail() {
         // is in, red if anything's outstanding — regardless of the row's
         // own richer open/closed/warning styling above.
         trend.push({ m: m, pct: monthPct, color: hasUnpaid ? 'var(--color-danger)' : 'var(--color-success)' });
-        rows.push('<div class="list-row" data-action="open-month" data-gid="' + gid + '" data-m="' + m + '" style="flex-direction:column;align-items:stretch;gap:6px;' + (hasUnpaid ? 'border-color:' + closedFg + ';' : '') + '">' +
-          '<div style="display:flex;align-items:center;gap:10px;">' +
-            '<div class="avatar sm" style="background:' + closedBg + '; color:' + closedFg + ';">' + m + '</div>' +
-            '<div style="flex:1 1 auto; min-width:0;"><div style="font-size:13px;font-weight:600;">' + monthLabel(group.startYear, group.startMonthIndex, m) + '</div>' +
-            '<div style="display:flex;flex-direction:column;gap:2px;font-size:11.5px;color:var(--color-text-muted);margin-top:2px;">' + winnerLine + payoutByLine + unpaidLine + '</div></div>' +
-            '<div style="text-align:right; flex-shrink:0;"><div style="font-size:13px;font-weight:700;color:var(--color-accent);">' + fmt(f.payoutAmount) + '</div>' +
-            '<div style="font-size:11px;color:var(--color-text-muted);">won</div></div>' +
-          '</div>' +
-          financeTriplet(f.totalCollected, f.payoutAmount) +
+        rows.push('<div class="list-row" data-action="open-month" data-gid="' + gid + '" data-m="' + m + '"' + (hasUnpaid ? ' style="border-color:' + closedFg + ';"' : '') + '>' +
+          '<div class="avatar sm" style="background:' + closedBg + '; color:' + closedFg + ';">' + m + '</div>' +
+          '<div style="flex:1 1 auto; min-width:0;"><div style="font-size:13px;font-weight:600;">' + monthLabel(group.startYear, group.startMonthIndex, m) + '</div>' +
+          '<div style="display:flex;flex-direction:column;gap:2px;font-size:11.5px;color:var(--color-text-muted);margin-top:2px;">' + winnerLine + payoutByLine + unpaidLine + '</div></div>' +
+          rightMoneyColumn(f.totalCollected, f.payoutAmount) +
         '</div>');
       } else {
         var pct = members.length > 0 ? Math.min(100, Math.round((f.paidCount / members.length) * 100)) : 0;
@@ -216,12 +212,10 @@ export function renderGroupDetail() {
             '<div class="avatar sm" style="background:' + rowColor + '; color:var(--on-brand);">' + m + '</div>' +
             '<div style="flex:1 1 auto; min-width:0;"><div style="font-size:13px;font-weight:600;">' + monthLabel(group.startYear, group.startMonthIndex, m) + rowLabel + '</div>' +
             '<div style="font-size:11.5px;color:var(--color-text-muted);margin-top:1px;">' + rowSubtitle + '</div></div>' +
-            '<div style="text-align:right; flex-shrink:0;"><div style="font-size:13px;font-weight:700;color:var(--color-accent);">' + fmt(f.payoutAmount) + '</div>' +
-            '<div style="font-size:11px;color:var(--color-text-muted);">' + pct + '% collected</div></div>' +
+            rightMoneyColumn(f.totalCollected, f.payoutAmount) +
           '</div>' +
           '<div class="progress-track"><div class="progress-fill" style="width:' + pct + '%; background:' + rowColor + ';"></div></div>' +
           payoutSection +
-          financeTriplet(f.totalCollected, f.payoutAmount) +
         '</div>');
       }
     } else {
