@@ -17,12 +17,12 @@ export function openWinnerPicker() {
 export function closeWinnerPicker() { history.back(); }
 
 // Once any admin has recorded a real contribution toward THIS winner's
-// payout, THIS winner locks — changing who they are or their target amount
-// after money has already started moving toward them would leave paidByA/
-// paidByB pointing at the wrong thing. Scoped to the one winner rather than
-// the whole month: with more than one winner (see getMonthWinners in
-// finance/shared.js), a payout already in progress for one shouldn't block adding
-// a brand-new winner or editing a different, not-yet-started one.
+// payout, THIS winner locks — removing them once money has already started
+// moving toward them would leave that paidByA/paidByB pointing at nothing.
+// Scoped to the one winner rather than the whole month: with more than one
+// winner (see getMonthWinners in finance/shared.js), a payout already in
+// progress for one shouldn't block adding a brand-new winner or removing a
+// different, not-yet-started one.
 function winnerLocked(w) {
   return !!w && ((w.paidByA || 0) > 0 || (w.paidByB || 0) > 0);
 }
@@ -70,7 +70,11 @@ export async function removeWinner(memberId) {
   var gid = state.activeGroupId, m = state.viewMonth;
   var group = groupsById.get(gid);
   var monthDoc = monthsCache.get(monthKey(gid, m));
-  if (monthDoc && monthDoc.status === 'closed') return;
+  // No blanket "month closed" block: a winner added via addWinner AFTER
+  // close (see its own comment above) starts genuinely unpaid, and an
+  // admin catching a mistaken addition should be able to remove them the
+  // same as any other not-yet-started winner. winnerLocked below is what
+  // actually protects a payout in progress, closed month or not.
   var scheduled = (group.payoutSchedule && group.payoutSchedule[m - 1]) || 0;
   var current = getMonthWinners(monthDoc, scheduled);
   var target = current.find(function (w) { return w.memberId === memberId; });
@@ -80,21 +84,5 @@ export async function removeWinner(memberId) {
   setBusy(true);
   updateDoc(doc(db, 'groups', gid, 'months', String(m)), { winners: updated })
     .catch(function (err) { alert('Could not remove winner: ' + err.message); })
-    .finally(function () { setBusy(false); });
-}
-
-export function setWinnerAmount(memberId, amount) {
-  if (isSuper()) return;
-  var gid = state.activeGroupId, m = state.viewMonth;
-  var group = groupsById.get(gid);
-  var monthDoc = monthsCache.get(monthKey(gid, m));
-  var scheduled = (group.payoutSchedule && group.payoutSchedule[m - 1]) || 0;
-  var current = getMonthWinners(monthDoc, scheduled);
-  var target = current.find(function (w) { return w.memberId === memberId; });
-  if (winnerLocked(target)) return; // locked once a payout contribution has been recorded for THIS winner
-  var updated = current.map(function (w) { return w.memberId === memberId ? { memberId: memberId, payoutAmount: amount } : w; });
-  setBusy(true);
-  updateDoc(doc(db, 'groups', gid, 'months', String(m)), { winners: updated })
-    .catch(function (err) { alert('Could not update payout amount: ' + err.message); })
     .finally(function () { setBusy(false); });
 }

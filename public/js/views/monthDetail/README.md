@@ -13,10 +13,10 @@ split — no behavior changed, only where the code lives.
 |---|---|---|
 | `index.js` | `renderMonthDetail` | **Orchestrator.** Screen-level state (open/closed/upcoming, the status pill), the loading skeleton, and assembly — decides which sections and overlays to render, in what order. Has no rendering logic of its own beyond the topbar/status pill. |
 | `shared.js` | `signed`, `summaryStat`, `timelineRow`, `renderMemberPaymentStrip` | Small presentational helpers used by more than one section below. If you need a helper in two of the files below, it belongs here, not duplicated. |
-| `summary.js` | `renderClosedSummary`, `renderOpenSummary`, `renderUpcomingNotice` | The top card: collections/payout/profit stats, the "who's paid" strip, admin holdings. One function per month state. |
+| `summary.js` | `renderClosedSummary`, `renderOpenSummary`, `renderUpcomingNotice` | The top card(s): a per-winner card for each of `f.winners` (name, payout status, a Remove link while removable), then collections/payout/profit stats, the "who's paid" strip, admin holdings. Same per-winner card in both open and closed months. |
 | `paymentList.js` | `renderPaymentList` | The tabbed member payment list (Unpaid / admin A / admin B) below the summary card. |
 | `handoffRequests.js` | `renderHandoffRequests` | Pending transfer hand-off cards shown above the summary, in both open and closed months. |
-| `winner.js` | `renderWinnerCard`, `renderWinnerPickerOverlay` | The "this month's winner(s)" card (open months only) and the picker sheet it opens. |
+| `winner.js` | `renderWinnerPickerOverlay` | The picker sheet "Add another winner"/"Select Winner" opens (`index.js`) — the winner(s) themselves render on `summary.js`'s per-winner card, not here. |
 | `payout.js` | `renderPayoutCard`, `renderPayoutModalOverlay` | The "record payout" card (per-winner contribution tracking) and the modal it opens. |
 | `paymentModal.js` | `renderPaymentModalOverlay` | The per-member payment detail/edit sheet, including its transfer-history timeline. |
 | `transferBar.js` | `renderTransferBar` | The floating "N payments selected" bar shown during a hold-to-transfer selection. |
@@ -35,10 +35,11 @@ is special-cased.
 
 ## Where do I make my change?
 
-- **A new stat/figure on the summary card** → `summary.js` (and `shared.js`
-  if it's a new reusable stat shape).
+- **A new stat/figure on the summary card, or anything about the per-winner
+  card's payout status/Remove link** → `summary.js` (and `shared.js` if it's
+  a new reusable stat shape).
 - **A new payment-list tab or row detail** → `paymentList.js`.
-- **Anything about picking or editing a winner** → `winner.js`.
+- **The picker sheet itself (who's eligible, tapping to add)** → `winner.js`.
 - **Anything about recording a payout contribution** → `payout.js`.
 - **The per-member payment sheet (mode, transfer history, mark unpaid)** →
   `paymentModal.js`.

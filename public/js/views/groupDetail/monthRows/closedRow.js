@@ -15,10 +15,15 @@ export function renderClosedMonthRow(gid, group, m, f, members, monthPct) {
   // A closed month can still have unpaid dues (a late/missed payment) —
   // flag those with the amber "warning" palette instead of the usual
   // green closed styling, so it's obvious at a glance which closed
-  // months still need follow-up.
+  // months still need follow-up. A winner added via "Add another winner"
+  // AFTER close (see addWinner in actions/winners/picker.js) starts
+  // genuinely unpaid too — that gets the same gold used for "payout in
+  // progress" everywhere else, rather than the amber dues warning, since
+  // it's a different kind of outstanding thing (money owed out, not in).
   var hasUnpaid = unpaidCount > 0;
-  var closedBg = hasUnpaid ? 'var(--color-warning-soft)' : 'var(--color-success-soft)';
-  var closedFg = hasUnpaid ? 'var(--color-warning)' : 'var(--color-success)';
+  var payoutPending = !f.allPayoutCovered;
+  var closedBg = hasUnpaid ? 'var(--color-warning-soft)' : (payoutPending ? 'var(--color-gold-soft)' : 'var(--color-success-soft)');
+  var closedFg = hasUnpaid ? 'var(--color-warning)' : (payoutPending ? 'var(--color-gold)' : 'var(--color-success)');
   // Which admin handed the winner the payout — same field month
   // detail's closed summary shows, surfaced here too so it doesn't
   // take an extra tap to see who paid out a given month. Split
@@ -41,15 +46,16 @@ export function renderClosedMonthRow(gid, group, m, f, members, monthPct) {
   if (f.payoutPaidB > 0) paidByParts.push(adminAmountSpan('B', adminName('B') + (f.payoutPaidA > 0 ? ' (' + fmt(f.payoutPaidB) + ')' : '')));
   var payoutByLine = paidByParts.length ? '<div>Paid by ' + paidByParts.join(' + ') + '</div>' : '';
   var unpaidLine = hasUnpaid ? '<div style="color:var(--color-warning);font-weight:600;">' + unpaidCount + ' member' + (unpaidCount === 1 ? '' : 's') + ' still unpaid</div>' : '';
+  var payoutPendingLine = payoutPending ? '<div style="color:var(--color-gold);font-weight:600;">Payout pending</div>' : '';
   // The trend sparkline uses one rule everywhere it appears (here,
   // the dashboard, and the per-member charts): green once every due
   // is in, red if anything's outstanding — regardless of the row's
   // own richer open/closed/warning styling above.
   var trend = { m: m, pct: monthPct, color: hasUnpaid ? 'var(--color-danger)' : 'var(--color-success)' };
-  var html = '<div class="list-row" data-action="open-month" data-gid="' + gid + '" data-m="' + m + '"' + (hasUnpaid ? ' style="border-color:' + closedFg + ';"' : '') + '>' +
+  var html = '<div class="list-row" data-action="open-month" data-gid="' + gid + '" data-m="' + m + '"' + ((hasUnpaid || payoutPending) ? ' style="border-color:' + closedFg + ';"' : '') + '>' +
     '<div class="avatar sm" style="background:' + closedBg + '; color:' + closedFg + ';">' + m + '</div>' +
     '<div style="flex:1 1 auto; min-width:0;"><div style="font-size:13px;font-weight:600;">' + monthLabel(group.startYear, group.startMonthIndex, m) + '</div>' +
-    '<div style="display:flex;flex-direction:column;gap:2px;font-size:11.5px;color:var(--color-text-muted);margin-top:2px;">' + winnerLine + payoutByLine + unpaidLine + '</div></div>' +
+    '<div style="display:flex;flex-direction:column;gap:2px;font-size:11.5px;color:var(--color-text-muted);margin-top:2px;">' + winnerLine + payoutByLine + unpaidLine + payoutPendingLine + '</div></div>' +
     rightMoneyColumn(f.totalCollected, f.payoutAmount) +
   '</div>';
   return { html: html, trend: trend };

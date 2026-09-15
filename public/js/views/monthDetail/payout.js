@@ -1,6 +1,6 @@
 import { state } from '../../store.js';
-import { fmt, escapeHtml, colorFor, initialsOf, adminName, adminDot, otherAdmin } from '../../helpers.js';
-import { iconWallet, iconCheck, iconClose } from '../../icons.js';
+import { fmt, escapeHtml, colorFor, initialsOf, adminName, adminDot, adminAvatarColor, otherAdmin } from '../../helpers.js';
+import { iconWallet, iconCheck, iconClose, iconFillToMax } from '../../icons.js';
 import { signed } from './shared.js';
 
 // Each admin records their own contribution toward a winner's payout —
@@ -14,7 +14,12 @@ export function renderPayoutCard(f, members) {
     var winner = members.find(function (mm) { return mm.id === w.memberId; });
     var widx = winner ? members.indexOf(winner) : -1;
     var covered = w.remaining <= 0;
-    return '<div class="list-row" data-action="open-payout-modal" data-mid="' + w.memberId + '" style="cursor:pointer;' + (covered ? 'border-left:3px solid var(--color-success);' : '') + '">' +
+    // Both states get their own deliberate left-border accent — covered
+    // (done) in success green, still-owed (in progress) in the same gold
+    // used for "Payout pending"/"Payout in progress" everywhere else —
+    // rather than only the covered row standing out and the other looking
+    // like a plain, unstyled row.
+    return '<div class="list-row" data-action="open-payout-modal" data-mid="' + w.memberId + '" style="cursor:pointer;border-left:3px solid ' + (covered ? 'var(--color-success)' : 'var(--color-gold)') + ';">' +
       '<div class="avatar sm" style="background:' + colorFor(widx) + ';">' + (winner ? initialsOf(winner.name) : '?') + '</div>' +
       '<div style="flex:1 1 auto;min-width:0;"><div style="font-size:13px;font-weight:600;">' + (winner ? escapeHtml(winner.name) : '—') + '</div>' +
       '<div style="font-size:11px;color:var(--color-text-muted);margin-top:1px;">' + adminName('A') + ': ' + fmt(w.paidByA) + ' · ' + adminName('B') + ': ' + fmt(w.paidByB) + '</div></div>' +
@@ -52,35 +57,59 @@ export function renderPayoutModalOverlay(f, members) {
   var draftRemaining = Math.max(0, w.payoutAmount - otherAmount - draftAmount);
   var myBefore = state.currentAdmin === 'A' ? f.adjA : f.adjB;
   var myAfter = myBefore - (draftAmount - myAmount);
+  // The hero figure is the actual rupee amount being edited (what an admin
+  // is typing into the input below), not a "Remaining" total that says
+  // nothing about whose job it is to close the gap. The percentage of the
+  // payout that amount represents is auto-computed as a small status line
+  // underneath it, live as they type — never exceeds 100%, since
+  // draftAmount is already clamped to maxForMe above.
+  var pct = w.payoutAmount > 0 ? Math.round((draftAmount / w.payoutAmount) * 100) : 0;
+  var pctColor = exceeds ? 'var(--color-danger)' : (draftRemaining <= 0 ? 'var(--color-success)' : 'var(--color-gold)');
+  var otherPct = (otherAmount > 0 && w.payoutAmount > 0) ? Math.round((otherAmount / w.payoutAmount) * 100) : 0;
+  // Three colors, three distinct facts, everything else plain text: the
+  // signed-in admin's own contribution (amount + its %) in pctColor — the
+  // same covering/partial/over tone the rest of the app uses; the OTHER
+  // admin's already-recorded amount (+ its %) in THEIR OWN avatar color,
+  // the same one their dot/holdings use everywhere else, since it's a
+  // settled fact about them, not a live status; and the payout target
+  // itself in blue wherever it's named, matching Collections elsewhere.
+  var otherColor = adminAvatarColor(otherAdmin(state.currentAdmin));
 
   return '<div class="overlay"><div class="sheet">' +
     '<div class="sheet-header">' +
       '<div class="avatar sm" style="background:' + colorFor(widx) + ';">' + (winner ? initialsOf(winner.name) : '?') + '</div>' +
       '<div style="flex:1 1 auto;min-width:0;"><div style="font-size:14px;font-weight:700;">' + (winner ? escapeHtml(winner.name) : '—') + '</div>' +
-      '<div style="font-size:11.5px;color:var(--color-text-muted);">Payout target ' + fmt(w.payoutAmount) + '</div></div>' +
+      '<div style="font-size:11.5px;color:var(--color-text);">Payout target <span style="color:var(--color-primary);font-weight:700;">' + fmt(w.payoutAmount) + '</span></div></div>' +
       '<div class="sheet-close" data-action="close-payout-modal">' + iconClose() + '</div>' +
     '</div>' +
     '<div class="sheet-body">' +
       '<div style="text-align:center;padding:8px 0 4px;">' +
-        '<div style="font-size:11px;color:var(--color-text-muted);margin-bottom:2px;">Remaining</div>' +
-        '<div class="mono" style="font-size:32px;font-weight:700;color:' + (draftRemaining > 0 ? 'var(--color-gold)' : 'var(--color-success)') + ';">' + fmt(draftRemaining) + '</div>' +
+        '<div style="font-size:11px;color:var(--color-text);margin-bottom:2px;">Your contribution</div>' +
+        '<div class="mono" style="font-size:36px;font-weight:700;color:' + pctColor + ';">' + fmt(draftAmount) + '</div>' +
+        '<div style="font-size:13px;color:var(--color-text);margin-top:2px;font-weight:600;"><span style="color:' + pctColor + ';">' + pct + '%</span> of the <span style="color:var(--color-primary);">' + fmt(w.payoutAmount) + '</span> payout</div>' +
         (otherAmount > 0
-          ? '<div style="display:flex;align-items:center;justify-content:center;gap:5px;font-size:11.5px;color:var(--color-text-muted);margin-top:4px;">' + adminDot(otherAdmin(state.currentAdmin)) + escapeHtml(adminName(otherAdmin(state.currentAdmin))) + ' already paid <span class="mono" style="font-weight:700;color:var(--color-text);">' + fmt(otherAmount) + '</span></div>'
+          // Only worth a line when it's actually true — with nothing from
+          // the other admin yet, this contribution and the before/after
+          // holdings below are the whole story.
+          ? '<div style="display:flex;align-items:center;justify-content:center;gap:5px;font-size:11.5px;color:var(--color-text);margin-top:8px;">' + adminDot(otherAdmin(state.currentAdmin)) + escapeHtml(adminName(otherAdmin(state.currentAdmin))) + ' paid <span class="mono" style="font-weight:700;color:' + otherColor + ';">' + fmt(otherAmount) + '</span> <span style="font-weight:700;color:' + otherColor + ';">(' + otherPct + '%)</span></div>'
           : '') +
       '</div>' +
       '<div>' +
-        '<div style="font-size:12px;font-weight:600;color:var(--color-text-muted);margin-bottom:8px;">Your contribution</div>' +
         '<div style="display:flex;gap:8px;">' +
           '<input data-field="payoutDraftAmount" type="text" inputmode="numeric" value="' + rawDraft + '" style="flex:1 1 auto;min-width:0;font-size:16px;font-weight:700;padding:10px 12px;border-radius:10px;border:1px solid ' + (exceeds ? 'var(--color-danger)' : 'var(--color-border)') + ';" />' +
-          '<button class="btn btn-outline" style="flex-shrink:0;" data-action="fill-remaining-payout" data-mid="' + w.memberId + '" data-amount="' + maxForMe + '">Fill remaining</button>' +
+          '<button class="btn btn-outline" style="flex-shrink:0;display:flex;align-items:center;justify-content:center;" data-action="fill-remaining-payout" data-mid="' + w.memberId + '" data-amount="' + maxForMe + '" title="Fill remaining">' + iconFillToMax() + '</button>' +
         '</div>' +
         (exceeds
           ? '<div style="font-size:11px;color:var(--color-danger);margin-top:6px;">Exceeds the payout total by ' + fmt(rawDraft - maxForMe) + ' — reduce to save.</div>'
-          : '<div style="font-size:11px;color:var(--color-text-muted);margin-top:6px;">Up to ' + fmt(maxForMe) + ' — the rest of the target after ' + adminName(otherAdmin(state.currentAdmin)) + '\'s share.</div>') +
+          : '<div style="font-size:11px;color:var(--color-text);margin-top:6px;">Up to ' + fmt(maxForMe) + ' available to contribute.</div>') +
       '</div>' +
       '<div>' +
-        '<div style="font-size:12px;font-weight:600;color:var(--color-text-muted);margin-bottom:8px;">Your holdings, if you save this</div>' +
-        '<div class="stat"><div class="label">' + adminDot(state.currentAdmin) + adminName(state.currentAdmin) + '</div><div class="value" style="' + (myAfter < 0 ? 'color:var(--color-danger);' : '') + '">' + signed(myBefore) + ' <span style="color:var(--color-text-faint);font-weight:400;">→</span> ' + signed(myAfter) + '</div></div>' +
+        '<div style="font-size:12px;font-weight:600;color:var(--color-text);margin-bottom:8px;">Your holdings, if you save this</div>' +
+        // Before and after each get their own sign-based color rather than
+        // the after figure alone deciding the whole line's tone — a healthy
+        // before sliding into a negative after (or the reverse) should read
+        // as two distinct facts, not get flattened into one color.
+        '<div class="stat"><div class="label">' + adminDot(state.currentAdmin) + adminName(state.currentAdmin) + '</div><div class="value"><span style="color:' + (myBefore < 0 ? 'var(--color-danger)' : 'var(--color-text)') + ';">' + signed(myBefore) + '</span> <span style="color:var(--color-text-faint);font-weight:400;">→</span> <span style="color:' + (myAfter < 0 ? 'var(--color-danger)' : 'var(--color-text)') + ';">' + signed(myAfter) + '</span></div></div>' +
       '</div>' +
       '<button class="btn btn-primary ' + (exceeds ? 'disabled' : '') + '" style="width:100%;" data-action="save-payout" data-mid="' + w.memberId + '">Save</button>' +
     '</div>' +
