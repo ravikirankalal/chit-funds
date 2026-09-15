@@ -109,7 +109,12 @@ document.addEventListener('click', function (e) {
     case 'open-payout-modal': openPayoutModal(el.getAttribute('data-mid')); break;
     case 'close-payout-modal': closePayoutModal(); break;
     case 'save-payout': setPayoutContribution(el.getAttribute('data-mid'), (state.ui.payoutModal && state.ui.payoutModal.draftAmount) || 0); break;
-    case 'fill-remaining-payout': setPayoutContribution(el.getAttribute('data-mid'), parseFloat(el.getAttribute('data-amount')) || 0); break;
+    // Only fills the draft input, same as typing the number in by hand — it
+    // does not save. Saving still needs its own explicit tap on Save
+    // (case 'save-payout' above), same as any other edit to the amount.
+    case 'fill-remaining-payout':
+      if (state.ui.payoutModal) { state.ui.payoutModal.draftAmount = parseFloat(el.getAttribute('data-amount')) || 0; render(); }
+      break;
     case 'request-transfer-b': requestTransferToB(); break;
     case 'request-transfer-a': requestTransferToA(); break;
     case 'accept-transfer-request': acceptTransferRequest(); break;

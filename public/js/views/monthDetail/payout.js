@@ -57,6 +57,15 @@ export function renderPayoutModalOverlay(f, members) {
   var draftRemaining = Math.max(0, w.payoutAmount - otherAmount - draftAmount);
   var myBefore = state.currentAdmin === 'A' ? f.adjA : f.adjB;
   var myAfter = myBefore - (draftAmount - myAmount);
+  // The hero figure is the actual rupee amount being edited (what an admin
+  // is typing into the input below), not a "Remaining" total that says
+  // nothing about whose job it is to close the gap. The percentage of the
+  // payout that amount represents is auto-computed as a small status line
+  // underneath it, live as they type — never exceeds 100%, since
+  // draftAmount is already clamped to maxForMe above.
+  var pct = w.payoutAmount > 0 ? Math.round((draftAmount / w.payoutAmount) * 100) : 0;
+  var pctColor = exceeds ? 'var(--color-danger)' : (draftRemaining <= 0 ? 'var(--color-success)' : 'var(--color-gold)');
+  var otherPct = (otherAmount > 0 && w.payoutAmount > 0) ? Math.round((otherAmount / w.payoutAmount) * 100) : 0;
 
   return '<div class="overlay"><div class="sheet">' +
     '<div class="sheet-header">' +
@@ -67,21 +76,26 @@ export function renderPayoutModalOverlay(f, members) {
     '</div>' +
     '<div class="sheet-body">' +
       '<div style="text-align:center;padding:8px 0 4px;">' +
-        '<div style="font-size:11px;color:var(--color-text-muted);margin-bottom:2px;">Remaining</div>' +
-        '<div class="mono" style="font-size:32px;font-weight:700;color:' + (draftRemaining > 0 ? 'var(--color-gold)' : 'var(--color-success)') + ';">' + fmt(draftRemaining) + '</div>' +
+        '<div style="font-size:11px;color:var(--color-text-muted);margin-bottom:2px;">Your contribution</div>' +
+        '<div class="mono" style="font-size:36px;font-weight:700;color:' + pctColor + ';">' + fmt(draftAmount) + '</div>' +
+        '<div style="font-size:13px;color:' + pctColor + ';margin-top:2px;font-weight:600;">' + pct + '% of the ' + fmt(w.payoutAmount) + ' payout</div>' +
         (otherAmount > 0
-          ? '<div style="display:flex;align-items:center;justify-content:center;gap:5px;font-size:11.5px;color:var(--color-text-muted);margin-top:4px;">' + adminDot(otherAdmin(state.currentAdmin)) + escapeHtml(adminName(otherAdmin(state.currentAdmin))) + ' already paid <span class="mono" style="font-weight:700;color:var(--color-text);">' + fmt(otherAmount) + '</span></div>'
+          // Only worth a line when it's actually true — with nothing from
+          // the other admin yet, this contribution and the before/after
+          // holdings below are the whole story. otherPct is always <=100
+          // (it's a real recorded amount, never a to-be-validated draft),
+          // so it only ever needs the "already covering their share" tone.
+          ? '<div style="display:flex;align-items:center;justify-content:center;gap:5px;font-size:11.5px;color:var(--color-text-muted);margin-top:8px;">' + adminDot(otherAdmin(state.currentAdmin)) + escapeHtml(adminName(otherAdmin(state.currentAdmin))) + ' paid <span class="mono" style="font-weight:700;color:var(--color-text);">' + fmt(otherAmount) + '</span> <span style="font-weight:700;color:' + (otherPct >= 100 ? 'var(--color-success)' : 'var(--color-gold)') + ';">(' + otherPct + '%)</span></div>'
           : '') +
       '</div>' +
       '<div>' +
-        '<div style="font-size:12px;font-weight:600;color:var(--color-text-muted);margin-bottom:8px;">Your contribution</div>' +
         '<div style="display:flex;gap:8px;">' +
           '<input data-field="payoutDraftAmount" type="text" inputmode="numeric" value="' + rawDraft + '" style="flex:1 1 auto;min-width:0;font-size:16px;font-weight:700;padding:10px 12px;border-radius:10px;border:1px solid ' + (exceeds ? 'var(--color-danger)' : 'var(--color-border)') + ';" />' +
           '<button class="btn btn-outline" style="flex-shrink:0;" data-action="fill-remaining-payout" data-mid="' + w.memberId + '" data-amount="' + maxForMe + '">Fill remaining</button>' +
         '</div>' +
         (exceeds
           ? '<div style="font-size:11px;color:var(--color-danger);margin-top:6px;">Exceeds the payout total by ' + fmt(rawDraft - maxForMe) + ' — reduce to save.</div>'
-          : '<div style="font-size:11px;color:var(--color-text-muted);margin-top:6px;">Up to ' + fmt(maxForMe) + ' — the rest of the target after ' + adminName(otherAdmin(state.currentAdmin)) + '\'s share.</div>') +
+          : '<div style="font-size:11px;color:var(--color-text-muted);margin-top:6px;">Up to ' + fmt(maxForMe) + ' available to contribute.</div>') +
       '</div>' +
       '<div>' +
         '<div style="font-size:12px;font-weight:600;color:var(--color-text-muted);margin-bottom:8px;">Your holdings, if you save this</div>' +
