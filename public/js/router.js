@@ -94,6 +94,17 @@ window.addEventListener('popstate', function (e) {
         name: snap.memberFormMode === 'edit' ? ((membersById.get(snap.memberFormId) || {}).name || '') : '' }
     : null;
   state.ui.addMemberToGroup = snap.addMemberToGroupGid ? { gid: snap.addMemberToGroupGid, draftName: '' } : null;
+  // transferSelection (payments.js's togglePaymentSelection) never calls
+  // pushNav() — it's an in-place selection mode on whichever monthDetail
+  // entry is already current, not its own history entry — so it's outside
+  // navSnapshot() entirely and goTo() is what normally clears it on the
+  // next navigation. A Back out of monthDetail while a selection is active
+  // leaves it stale in memory (goTo() never runs), and a subsequent Forward
+  // back into monthDetail would otherwise resurrect a transfer bar for
+  // members nobody just selected. Unconditional here is safe: every popstate
+  // that could show it is a screen change (monthDetail entered/left), which
+  // already forces a render below regardless of this line.
+  state.ui.transferSelection = null;
   var after = navSnapshot();
   if (JSON.stringify(before) === JSON.stringify(after)) return;
   render();
