@@ -72,14 +72,15 @@ function adminAmountSpan(id, label) {
 
 // The right-hand column of a month row — profit as the headline (the
 // number a row gets tapped open to check), collected and payout below it
-// as supporting detail. Fixed colors rather than sign-dependent ones so
-// each line reads as "this kind of figure" at a glance: profit green,
-// collection blue (primary), payout red and shown as a negative — money
-// leaving the fund, the opposite direction from collection.
+// as supporting detail. Collection and payout are fixed colors (blue and
+// red — each reads as "this kind of figure" regardless of amount), but
+// profit is sign-dependent like the profit-margin figure on the
+// create-group screen: red when the month ran at a loss, green otherwise.
 function rightMoneyColumn(collected, payout) {
   var profit = collected - payout;
+  var profitColor = profit < 0 ? 'var(--color-danger)' : 'var(--color-success)';
   return '<div style="text-align:right; flex-shrink:0;">' +
-    '<div style="font-size:13px;font-weight:700;color:var(--color-success);">' + signed(profit) + '</div>' +
+    '<div style="font-size:13px;font-weight:700;color:' + profitColor + ';">' + signed(profit) + '</div>' +
     '<div style="font-size:10px;color:var(--color-text-muted);margin-top:2px;white-space:nowrap;">Collected <span class="mono" style="color:var(--color-primary);font-weight:700;">' + fmt(collected) + '</span></div>' +
     '<div style="font-size:10px;color:var(--color-text-muted);margin-top:1px;white-space:nowrap;">Payout <span class="mono" style="color:var(--color-danger);font-weight:700;">−' + fmt(payout) + '</span></div>' +
   '</div>';
