@@ -7,7 +7,7 @@ import { iconTrophy, iconClose } from '../../icons.js';
 // its own editable payout amount. "Remove" + "Add another winner" covers
 // what used to be a single "Change" link. Each winner locks independently
 // once a payout contribution has been recorded toward THEM specifically
-// (see winnerLocked in actions.js) — one winner's payout already being
+// (see winnerLocked in actions/winners/picker.js) — one winner's payout already being
 // underway never blocks adding a new winner or editing a different,
 // not-yet-started one.
 export function renderWinnerCard(f, members, readOnly) {

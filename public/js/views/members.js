@@ -1,5 +1,5 @@
 // The shared member directory — independent of any single group, so the
-// same person can be added to as many groups as needed (see groupDetail.js
+// same person can be added to as many groups as needed (see groupDetail/
 // for the "add to this group" side of that). Tapping a row edits the
 // member's own details; a group only ever stores memberIds[] pointing here.
 

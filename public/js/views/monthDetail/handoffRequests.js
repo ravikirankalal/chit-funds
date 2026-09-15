@@ -4,7 +4,7 @@ import { iconTransfer } from '../../icons.js';
 import { signed } from './shared.js';
 
 // Pending hand-offs (see confirmTransfer/acceptHandoffRequest in
-// actions.js) for this month — shown above the collection summary in both
+// actions/handoffs.js) for this month — shown above the collection summary in both
 // open and closed months, since a late hand-off can still be proposed
 // after close (same as the transfer bar itself allows). More than one can
 // be pending at once, each independent, so each gets its own card and its
@@ -15,7 +15,7 @@ export function renderHandoffRequests(gid, viewMonth, readOnly, members, f, isCl
   if (!ids.length) return '';
   // Same "X holds" figures shown on the open/closed summary card above
   // (f.adjA/adjB while open, f.finalA/finalB once closed) — a hand-off
-  // hasn't moved collectedBy yet (see acceptHandoffRequest in actions.js),
+  // hasn't moved collectedBy yet (see acceptHandoffRequest in actions/handoffs.js),
   // so these are still the pre-acceptance ("before") balances.
   var holdA = isClosed ? f.finalA : f.adjA;
   var holdB = isClosed ? f.finalB : f.adjB;
@@ -25,7 +25,7 @@ export function renderHandoffRequests(gid, viewMonth, readOnly, members, f, isCl
     var mids = req.mids || [];
     var count = mids.length;
     // Every payment in a hand-off shares the same amount (see confirmTransfer
-    // in actions.js: amount = mids.length * group.monthlyDeposit), so
+    // in actions/handoffs.js: amount = mids.length * group.monthlyDeposit), so
     // dividing back out is exact — no need to thread the group's
     // monthlyDeposit through just for this.
     var perAmount = count ? req.amount / count : 0;

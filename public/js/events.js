@@ -3,7 +3,7 @@
 // listener for "Enter submits the add-member field", and an input
 // listener that keeps the create-group form's fields in sync with state.
 //
-// Deliberately the only module that imports both actions.js and auth.js —
+// Deliberately the only module that imports both actions/ and auth.js —
 // everything else only needs one or the other.
 
 import { state } from './store.js';
@@ -22,7 +22,7 @@ import {
   openAddMemberToGroup, closeAddMemberToGroup, addExistingMemberToGroup, createAndAddMemberToGroup,
   togglePaymentSelection, cancelTransferSelection, confirmTransfer,
   acceptHandoffRequest, declineHandoffRequest, cancelHandoffRequest
-} from './actions.js';
+} from './actions/index.js';
 
 // Holding a payment row (in the logged-in admin's own "collected by"
 // section) starts a multi-select for handing payments off to the other
@@ -155,7 +155,7 @@ document.addEventListener('input', function (e) {
     // Re-rendering on every keystroke (rather than committing on blur like
     // setWinnerAmount) is what makes the before/after holdings preview in
     // renderPayoutModalOverlay live — nothing is written to Firestore until
-    // Save (see setPayoutContribution in actions.js).
+    // Save (see setPayoutContribution in actions/winners/payout.js).
     state.ui.payoutModal.draftAmount = parseFloat(e.target.value) || 0;
     render();
     return;

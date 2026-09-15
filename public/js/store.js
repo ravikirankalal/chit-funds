@@ -35,7 +35,7 @@ export var membersByGroup = new Map();  // gid -> [{id,name}], joined from group
 export var monthsCache = new Map();     // "gid|m" -> month data
 export var paymentsCache = new Map();   // "gid|m" -> { memberId: paymentData }
 export var transferReqCache = new Map(); // "gid|m" -> request data — the net-balance transfer request (unchanged, separate from handoffRequests below)
-export var handoffReqCache = new Map();  // "gid|m" -> { reqId: { mids[], from, to, amount, requestedBy, createdAt } } — pending hand-offs of specific already-collected payments (see confirmTransfer in actions.js)
+export var handoffReqCache = new Map();  // "gid|m" -> { reqId: { mids[], from, to, amount, requestedBy, createdAt } } — pending hand-offs of specific already-collected payments (see confirmTransfer in actions/handoffs.js)
 
 export function monthKey(gid, m) { return gid + '|' + m; }
 

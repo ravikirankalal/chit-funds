@@ -4,7 +4,7 @@
 // there's no history entry for the back button to land on and it just
 // closes the app. Every "forward" navigation (goTo, opening an overlay)
 // pushes a snapshot of the relevant state; every "back" control (topbar
-// arrows, overlay close buttons — see actions.js and events.js) calls
+// arrows, overlay close buttons — see actions/ and events.js) calls
 // history.back() instead of touching state directly, and popstate here is
 // the one place that applies a popped snapshot back onto `state`.
 // Dashboard/login are treated as the root — arriving at either collapses
@@ -62,7 +62,7 @@ window.addEventListener('popstate', function (e) {
   // renderCreateGroup() — skip on past it the same way dashboard/login
   // collapse history instead of growing it.
   if (snap.screen === 'createGroup' && !state.ui.newGroup) { history.back(); return; }
-  // A completion action (savePaymentModal, etc. — see actions.js) applies
+  // A completion action (savePaymentModal, etc. — see actions/) applies
   // its own "overlay closed" state synchronously and then calls
   // history.back() to pop the entry pushed when the overlay opened, so Back
   // only ever needs one press even after several open+save cycles in a

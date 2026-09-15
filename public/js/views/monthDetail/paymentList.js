@@ -39,7 +39,7 @@ function paymentTabChip(tab, active) {
 // list to whichever group you're actually looking at. Only the logged-in
 // admin's own tab is hold-to-transfer eligible — open or closed, so a
 // late/misattributed payment can still be handed off after close, but not
-// a not-yet-open future month. See togglePaymentSelection in actions.js.
+// a not-yet-open future month. See togglePaymentSelection in actions/payments.js.
 export function renderPaymentList(gid, viewMonth, members, f, readOnly, group, canTransfer) {
   var payments = paymentsCache.get(monthKey(gid, viewMonth)) || {};
   var handoffReqs = handoffReqCache.get(monthKey(gid, viewMonth)) || {};

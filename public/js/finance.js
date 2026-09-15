@@ -45,7 +45,7 @@ export function getMonthWinners(monthDoc, defaultAmount) {
 
 // Each admin now contributes their own partial share of a winner's payout
 // (w.paidByA / w.paidByB) — no more single monthDoc.payoutAdmin deciding
-// the whole thing (see setPayoutContribution in actions.js). Older, already-
+// the whole thing (see setPayoutContribution in actions/winners/payout.js). Older, already-
 // closed months only ever wrote that single field for the WHOLE month's
 // payout; this attributes it back to whichever admin closed it, so old data
 // still renders correctly without a migration.
@@ -107,7 +107,7 @@ export function monthFinances(gid, group, monthNum) {
   // Each admin's contribution reduces what they hold the moment it's
   // recorded — a partial payout is money leaving that admin's hand right
   // away, whether or not the month has fully closed yet (see
-  // setPayoutContribution in actions.js, which auto-closes the month once
+  // setPayoutContribution in actions/winners/payout.js, which auto-closes the month once
   // every winner's contributions add up to their full payoutAmount).
   var adjA = rawA - net - payoutPaidA, adjB = rawB + net - payoutPaidB;
   var closed = !!monthDoc && monthDoc.status === 'closed';
@@ -189,7 +189,7 @@ export function recompute() {
       // Two independent mechanisms move money between admins for a month:
       // an explicit request-and-accept (monthDoc.transferNet) and a direct
       // hand-off of specific already-collected payments (payment docs with
-      // transferred:true — see confirmTransfer in actions.js, which only
+      // transferred:true — see confirmTransfer in actions/handoffs.js, which only
       // this second kind stamps with transferredAt). Both already feed the
       // balance math correctly on their own; combined here into one net
       // figure purely so the ledger has a single, complete "money moved
@@ -219,7 +219,7 @@ export function recompute() {
       }
 
       // Each pending hand-off (see confirmTransfer/acceptHandoffRequest in
-      // actions.js) is its own request, keyed by reqId so accept/decline/
+      // actions/handoffs.js) is its own request, keyed by reqId so accept/decline/
       // cancel can target the right one when more than one is in flight.
       var handoffReqs = handoffReqCache.get(monthKey(gid, m)) || {};
       Object.keys(handoffReqs).forEach(function (reqId) {

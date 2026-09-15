@@ -4,7 +4,7 @@ import { iconWallet, iconCheck, iconClose } from '../../icons.js';
 import { signed } from './shared.js';
 
 // Each admin records their own contribution toward a winner's payout —
-// there's no approval step (see setPayoutContribution in actions.js): the
+// there's no approval step (see setPayoutContribution in actions/winners/payout.js): the
 // month closes itself automatically the moment every winner's paidByA +
 // paidByB reaches its payoutAmount. Tapping a winner row opens
 // renderPayoutModalOverlay to enter/adjust the signed-in admin's own share.
@@ -43,7 +43,7 @@ export function renderPayoutModalOverlay(f, members) {
   // Live preview of what Save would do, recomputed on every keystroke (see
   // the 'payoutDraftAmount' input handler in events.js). Typing past
   // maxForMe is allowed (so the raw number stays visible with an error),
-  // but setPayoutContribution in actions.js rejects it outright rather
+  // but setPayoutContribution in actions/winners/payout.js rejects it outright rather
   // than clamping — so the preview below freezes at the valid max instead
   // of showing a false "what if" for an amount that won't actually save.
   var rawDraft = pm.draftAmount || 0;

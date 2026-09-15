@@ -61,7 +61,7 @@ export function renderMonthDetail() {
   var isUpcoming = viewMonth > group.currentMonth;
   // True once either admin has recorded a real contribution toward a
   // winner's payout but the total isn't fully covered yet — see
-  // setPayoutContribution in actions.js, which closes the month itself the
+  // setPayoutContribution in actions/winners/payout.js, which closes the month itself the
   // instant every winner's paidByA + paidByB reaches its payoutAmount, so
   // this can never be true at the same time as isClosed. Winner/amount
   // editing locks while this is true (see renderWinnerCard below).
