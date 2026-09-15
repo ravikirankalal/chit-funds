@@ -92,7 +92,11 @@ export function renderMonthDetail() {
     html += renderPaymentList(gid, viewMonth, members, f, readOnly, group, isOpen || isClosed);
   }
 
-  if (isOpen) {
+  // Hidden while a transfer selection is in progress (see the floating
+  // transfer bar below) — its Remove/amount-edit controls have nothing to
+  // do with handing off payments, and would just be a second set of
+  // interactive rows competing with the transfer bar for attention.
+  if (isOpen && !state.ui.transferSelection) {
     html += renderWinnerCard(f, members, readOnly);
     if (!readOnly) html += renderPayoutCard(f, members);
   }
