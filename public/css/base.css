@@ -9,6 +9,20 @@ html, body {
   font-family: var(--font-sans);
   color: var(--color-text);
   -webkit-tap-highlight-color: transparent;
+  /* This is a tap-driven app shell, not a document to read — without this,
+     any press-and-hold (touch-scrolling, or the payment list's own
+     long-press-to-select-for-transfer gesture) falls through to the
+     browser's native text selection on whatever label/button/card it
+     landed on. Inputs opt back in below, since typing still needs it. */
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+input, textarea, [contenteditable] {
+  -webkit-user-select: text;
+  user-select: text;
+  -webkit-touch-callout: default;
 }
 
 #app {
