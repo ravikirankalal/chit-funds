@@ -70,7 +70,11 @@ export async function removeWinner(memberId) {
   var gid = state.activeGroupId, m = state.viewMonth;
   var group = groupsById.get(gid);
   var monthDoc = monthsCache.get(monthKey(gid, m));
-  if (monthDoc && monthDoc.status === 'closed') return;
+  // No blanket "month closed" block: a winner added via addWinner AFTER
+  // close (see its own comment above) starts genuinely unpaid, and an
+  // admin catching a mistaken addition should be able to remove them the
+  // same as any other not-yet-started winner. winnerLocked below is what
+  // actually protects a payout in progress, closed month or not.
   var scheduled = (group.payoutSchedule && group.payoutSchedule[m - 1]) || 0;
   var current = getMonthWinners(monthDoc, scheduled);
   var target = current.find(function (w) { return w.memberId === memberId; });
