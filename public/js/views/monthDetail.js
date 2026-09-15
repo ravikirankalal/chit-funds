@@ -449,6 +449,9 @@ function renderPayoutModalOverlay(f, members) {
       '<div style="text-align:center;padding:8px 0 4px;">' +
         '<div style="font-size:11px;color:var(--color-text-muted);margin-bottom:2px;">Remaining</div>' +
         '<div class="mono" style="font-size:32px;font-weight:700;color:' + (draftRemaining > 0 ? 'var(--color-gold)' : 'var(--color-success)') + ';">' + fmt(draftRemaining) + '</div>' +
+        (otherAmount > 0
+          ? '<div style="display:flex;align-items:center;justify-content:center;gap:5px;font-size:11.5px;color:var(--color-text-muted);margin-top:4px;">' + adminDot(otherAdmin(state.currentAdmin)) + escapeHtml(adminName(otherAdmin(state.currentAdmin))) + ' already paid <span class="mono" style="font-weight:700;color:var(--color-text);">' + fmt(otherAmount) + '</span></div>'
+          : '') +
       '</div>' +
       '<div>' +
         '<div style="font-size:12px;font-weight:600;color:var(--color-text-muted);margin-bottom:8px;">Your contribution</div>' +
