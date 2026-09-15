@@ -34,6 +34,13 @@ export function renderClosedSummary(f, members, readOnly, gid, viewMonth) {
     var winner = members.find(function (mm) { return mm.id === w.memberId; });
     var winnerIdx = winner ? members.indexOf(winner) : -1;
     var paidLine = winnerPaidLine(w);
+    // A winner added via "Add another winner" after close (actions/winners/
+    // picker.js's addWinner) can still be undone here — same as removeWinner
+    // itself only allows — right up until a payout contribution is actually
+    // recorded for them (winnerLocked in actions/winners/picker.js). No
+    // separate card just for this: it's the same per-winner card everyone
+    // else's payout already shows.
+    var removable = !readOnly && !((w.paidByA || 0) > 0 || (w.paidByB || 0) > 0);
     return '<div class="card" style="display:flex;align-items:center;gap:12px;position:relative;overflow:hidden;">' +
       '<div style="position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--color-gold);"></div>' +
       (winner ? '<div class="avatar" style="background:' + colorFor(winnerIdx) + ';box-shadow:0 0 0 2px var(--color-surface),0 0 0 3.5px var(--color-gold);">' + initialsOf(winner.name) + '</div>' : '') +
@@ -45,6 +52,7 @@ export function renderClosedSummary(f, members, readOnly, gid, viewMonth) {
       '<div style="text-align:right; flex-shrink:0;">' +
         '<div style="font-size:11px;color:var(--color-text-muted);">Payout</div>' +
         '<div class="mono" style="font-size:18px;font-weight:700;color:var(--color-gold);">' + fmt(w.payoutAmount) + '</div>' +
+        (removable ? '<div data-action="remove-winner" data-mid="' + w.memberId + '" style="cursor:pointer;color:var(--color-danger);font-size:11px;font-weight:600;margin-top:4px;">Remove</div>' : '') +
       '</div>' +
     '</div>';
   }).join('') || '<div class="card" style="color:var(--color-text-muted);font-size:13px;text-align:center;">No winner recorded.</div>';

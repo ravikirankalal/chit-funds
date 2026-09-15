@@ -107,13 +107,12 @@ export function renderMonthDetail() {
   // Hidden while a transfer selection is in progress (see the floating
   // transfer bar below) — its Remove/amount-edit controls have nothing to
   // do with handing off payments, and would just be a second set of
-  // interactive rows competing with the transfer bar for attention.
-  // Also shown on a closed month for any winner that's still unpaid (see
-  // renderWinnerCard's closedMode) — a winner added via "Add another
-  // winner" after close can still be a mistake worth undoing, so removal
-  // stays available up until their payout actually starts.
-  if ((isOpen || (isClosed && !f.allPayoutCovered)) && !state.ui.transferSelection) {
-    html += renderWinnerCard(f, members, readOnly, isClosed);
+  // interactive rows competing with the transfer bar for attention. Closed
+  // months don't get this card at all — a still-unpaid winner there gets
+  // its own Remove link on the closed summary's per-winner card instead
+  // (monthDetail/summary.js), so it isn't listed twice.
+  if (isOpen && !state.ui.transferSelection) {
+    html += renderWinnerCard(f, members, readOnly);
   }
   // Also shown on a closed month once a winner still has something owed —
   // a winner added via "Add another winner" AFTER close (see addWinner in
