@@ -23,7 +23,7 @@ export var state = {
     newGroup: null,        // set when entering createGroup screen
     memberForm: null,      // { id, name } — add/edit overlay on the members screen
     addMemberToGroup: null, // { gid, draftName } — "add member to this group" overlay on groupDetail
-    paymentTab: null, // 'unpaid' | 'A' | 'B' — which Member payments tab is active; falls back to monthDetail.js's default when unset or the tab has no rows for the current month
+    paymentTab: null, // 'unpaid' | 'A' | 'B' — which Member payments tab is active; falls back to monthDetail/paymentList.js's default when unset or the tab has no rows for the current month
     ledgerFilter: 'all', // 'all' | 'collection' | 'payout' | 'transfer' — Admin & Ledger screen's type filter
     transferSelection: null // { mids: [] } — paid entries selected (long-press to start, tap more to add) in the logged-in admin's own section, offering to hand them all to the other admin
   }

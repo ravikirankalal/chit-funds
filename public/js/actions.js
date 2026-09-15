@@ -295,7 +295,7 @@ export async function markUnpaidFromModal() {
 
 // Long-pressing a paid entry in the logged-in admin's own "collected by"
 // section selects it for a hand-off to the other admin — see
-// renderTransferBar in monthDetail.js. A long press starts the selection
+// renderTransferBar in views/monthDetail/transferBar.js. A long press starts the selection
 // with one entry; once active, a plain tap on another eligible entry in
 // the same section toggles it too (see the 'open-payment-modal' case in
 // events.js) — so this single toggle covers both the long-press and the
@@ -322,7 +322,7 @@ export function cancelTransferSelection() {
 
 // Proposes handing the selected already-collected payments off to the
 // other admin — it no longer moves them immediately. A handoffRequests doc
-// is created instead (see renderHandoffRequests in monthDetail.js); the
+// is created instead (see renderHandoffRequests in views/monthDetail/handoffRequests.js); the
 // amount stays counted with the sender (collectedBy is untouched) until
 // the other admin accepts via acceptHandoffRequest below, or the sender
 // cancels / the other admin declines.

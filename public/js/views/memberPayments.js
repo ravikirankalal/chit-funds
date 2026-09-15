@@ -56,7 +56,7 @@ export function renderMemberPayments() {
   }
 
   // Same paid=full/green, unpaid=short/red bar strip as the month detail
-  // page's "Who's paid" (public/js/views/monthDetail.js), but one bar per
+  // page's "Who's paid" (public/js/views/monthDetail/shared.js), but one bar per
   // MONTH for this one member instead of one bar per member for one month
   // — a quick visual read of this member's overall reliability. Each bar
   // reuses the row list's own 'open-month' action, so it's another way to
