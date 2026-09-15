@@ -5,6 +5,7 @@ firebase-debug.*.log
 firestore-debug.log
 ui-debug.log
 *.log
+.emulator-data/
 
 # Node (no build step here, but just in case)
 node_modules/

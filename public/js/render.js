@@ -12,7 +12,7 @@ import { renderGroupDetail, scrollToActiveMonth } from './views/groupDetail.js';
 import { renderGroupMembers } from './views/groupMembers.js';
 import { renderMemberPayments } from './views/memberPayments.js';
 import { renderCreateGroup } from './views/createGroup.js';
-import { renderMonthDetail } from './views/monthDetail.js';
+import { renderMonthDetail } from './views/monthDetail/index.js';
 import { renderBootSkeleton } from './skeleton.js';
 
 // Tracks whether the group detail screen still owes its one-time scroll to

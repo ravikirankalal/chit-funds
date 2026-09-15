@@ -9,8 +9,8 @@ import {
   runTransaction, writeBatch, arrayUnion, arrayRemove
 } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
 import { db } from './firebase.js';
-import { state, groupsById, membersById, monthsCache, paymentsCache, transferReqCache, closeReqCache, handoffReqCache, monthKey } from './store.js';
-import { isSuper, monthLabel, flatPayoutSchedule, otherAdmin } from './helpers.js';
+import { state, groupsById, membersById, monthsCache, paymentsCache, transferReqCache, handoffReqCache, monthKey } from './store.js';
+import { isSuper, monthLabel, flatPayoutSchedule, otherAdmin, fmt } from './helpers.js';
 import { monthFinances, memberHasPaidInGroup, getMonthWinners } from './finance.js';
 import { goTo, pushNav } from './router.js';
 import { render, setBusyOverlay } from './render.js';
@@ -106,7 +106,7 @@ export async function submitCreateGroup() {
       createdAt: serverTimestamp()
     });
     batch.set(doc(db, 'groups', groupRef.id, 'months', '1'), {
-      status: 'open', winners: [], payoutAdmin: null, transferNet: 0, closedAt: null, closedLabel: null
+      status: 'open', winners: [], transferNet: 0, closedAt: null, closedLabel: null
     });
     await batch.commit();
     state.ui.newGroup = null;
@@ -295,7 +295,7 @@ export async function markUnpaidFromModal() {
 
 // Long-pressing a paid entry in the logged-in admin's own "collected by"
 // section selects it for a hand-off to the other admin — see
-// renderTransferBar in monthDetail.js. A long press starts the selection
+// renderTransferBar in views/monthDetail/transferBar.js. A long press starts the selection
 // with one entry; once active, a plain tap on another eligible entry in
 // the same section toggles it too (see the 'open-payment-modal' case in
 // events.js) — so this single toggle covers both the long-press and the
@@ -322,7 +322,7 @@ export function cancelTransferSelection() {
 
 // Proposes handing the selected already-collected payments off to the
 // other admin — it no longer moves them immediately. A handoffRequests doc
-// is created instead (see renderHandoffRequests in monthDetail.js); the
+// is created instead (see renderHandoffRequests in views/monthDetail/handoffRequests.js); the
 // amount stays counted with the sender (collectedBy is untouched) until
 // the other admin accepts via acceptHandoffRequest below, or the sender
 // cancels / the other admin declines.
@@ -411,14 +411,26 @@ export function openWinnerPicker() {
 }
 export function closeWinnerPicker() { history.back(); }
 
+// Once any admin has recorded a real contribution toward THIS winner's
+// payout, THIS winner locks — changing who they are or their target amount
+// after money has already started moving toward them would leave paidByA/
+// paidByB pointing at the wrong thing. Scoped to the one winner rather than
+// the whole month: with more than one winner (see getMonthWinners in
+// finance.js), a payout already in progress for one shouldn't block adding
+// a brand-new winner or editing a different, not-yet-started one.
+function winnerLocked(w) {
+  return !!w && ((w.paidByA || 0) > 0 || (w.paidByB || 0) > 0);
+}
+
 // Almost every month has exactly one winner, but admins occasionally pay
 // out to more than one member within the same month (most often when
 // group.durationMonths < members.length) — so winners are a list, appended
-// to rather than replaced. See getMonthWinners in finance.js.
+// to rather than replaced. See getMonthWinners in finance.js. Adding a new
+// winner never conflicts with an existing one's payout, so there's nothing
+// to lock here.
 export async function addWinner(memberId) {
   if (isSuper()) return;
   var gid = state.activeGroupId, m = state.viewMonth;
-  if (closeReqCache.get(monthKey(gid, m))) return; // locked while a close is pending the other admin's acceptance
   var group = groupsById.get(gid);
   var monthDoc = monthsCache.get(monthKey(gid, m));
   var scheduled = (group.payoutSchedule && group.payoutSchedule[m - 1]) || 0;
@@ -436,12 +448,13 @@ export async function addWinner(memberId) {
 export async function removeWinner(memberId) {
   if (isSuper()) return;
   var gid = state.activeGroupId, m = state.viewMonth;
-  if (closeReqCache.get(monthKey(gid, m))) return; // locked while a close is pending the other admin's acceptance
   var group = groupsById.get(gid);
   var monthDoc = monthsCache.get(monthKey(gid, m));
   if (monthDoc && monthDoc.status === 'closed') return;
   var scheduled = (group.payoutSchedule && group.payoutSchedule[m - 1]) || 0;
   var current = getMonthWinners(monthDoc, scheduled);
+  var target = current.find(function (w) { return w.memberId === memberId; });
+  if (winnerLocked(target)) return; // locked once a payout contribution has been recorded for THIS winner
   var updated = current.filter(function (w) { return w.memberId !== memberId; });
   if (updated.length === current.length) return;
   setBusy(true);
@@ -453,11 +466,12 @@ export async function removeWinner(memberId) {
 export function setWinnerAmount(memberId, amount) {
   if (isSuper()) return;
   var gid = state.activeGroupId, m = state.viewMonth;
-  if (closeReqCache.get(monthKey(gid, m))) return; // locked while a close is pending the other admin's acceptance
   var group = groupsById.get(gid);
   var monthDoc = monthsCache.get(monthKey(gid, m));
   var scheduled = (group.payoutSchedule && group.payoutSchedule[m - 1]) || 0;
   var current = getMonthWinners(monthDoc, scheduled);
+  var target = current.find(function (w) { return w.memberId === memberId; });
+  if (winnerLocked(target)) return; // locked once a payout contribution has been recorded for THIS winner
   var updated = current.map(function (w) { return w.memberId === memberId ? { memberId: memberId, payoutAmount: amount } : w; });
   setBusy(true);
   updateDoc(doc(db, 'groups', gid, 'months', String(m)), { winners: updated })
@@ -465,96 +479,103 @@ export function setWinnerAmount(memberId, amount) {
     .finally(function () { setBusy(false); });
 }
 
-// Closing a month is now propose-then-accept: this creates a closeRequest
-// (the month doc itself is untouched, still 'open') naming the proposer as
-// the would-be payoutAdmin; only once the OTHER admin calls
-// acceptCloseRequest does the month actually close. Rejecting just deletes
-// the request, leaving the winner/amount exactly as they were for the
-// proposer to adjust and re-propose.
-export async function proposeCloseMonth() {
+export function openPayoutModal(memberId) {
   if (isSuper()) return;
   var gid = state.activeGroupId, m = state.viewMonth;
   var group = groupsById.get(gid);
   var monthDoc = monthsCache.get(monthKey(gid, m));
+  if (monthDoc && monthDoc.status === 'closed') return;
   var scheduled = (group.payoutSchedule && group.payoutSchedule[m - 1]) || 0;
-  if (!monthDoc || !getMonthWinners(monthDoc, scheduled).length) return;
-  if (transferReqCache.get(monthKey(gid, m))) {
-    alert('There is a pending transfer request for this month — accept, decline, or cancel it before closing.');
+  var target = getMonthWinners(monthDoc, scheduled).find(function (w) { return w.memberId === memberId; });
+  var myAmount = target ? ((state.currentAdmin === 'A' ? target.paidByA : target.paidByB) || 0) : 0;
+  var otherAmount = target ? ((state.currentAdmin === 'A' ? target.paidByB : target.paidByA) || 0) : 0;
+  var maxForMe = target ? Math.max(0, (target.payoutAmount || 0) - otherAmount) : 0;
+  // draftAmount is local UI state, not yet saved — the input is state-
+  // controlled (see events.js's 'payoutDraftAmount' field) so every
+  // keystroke re-renders with a live before/after holdings preview,
+  // committed to Firestore only on Save (setPayoutContribution below).
+  // Defaults to the full remaining share on a first-time entry (most
+  // admins opening this mean to cover what's left, and can dial it down
+  // for a genuinely partial contribution) — but to whatever was already
+  // saved when reopening to review or adjust it, so tapping Save without
+  // changing anything can't silently bump a deliberate partial payment
+  // up to the full remaining share.
+  state.ui.payoutModal = { memberId: memberId, draftAmount: myAmount > 0 ? myAmount : maxForMe };
+  render();
+  pushNav();
+}
+export function closePayoutModal() { history.back(); }
+
+// Each admin records only their OWN contribution toward a winner's payout —
+// there's nothing for the other admin to approve, since neither can ever
+// touch the other's half. Replaces the old propose/accept close-request
+// flow entirely: once every winner's paidByA + paidByB reaches its
+// payoutAmount, this same write closes the month, in one transaction so a
+// partial-close never gets stuck half-applied.
+export async function setPayoutContribution(memberId, amount) {
+  if (isSuper()) return;
+  var gid = state.activeGroupId, m = state.viewMonth;
+  var group = groupsById.get(gid);
+  var monthDoc = monthsCache.get(monthKey(gid, m));
+  if (!monthDoc || monthDoc.status === 'closed') return;
+  var scheduled = (group.payoutSchedule && group.payoutSchedule[m - 1]) || 0;
+  var current = getMonthWinners(monthDoc, scheduled);
+  var target = current.find(function (w) { return w.memberId === memberId; });
+  if (!target) return;
+  var myField = state.currentAdmin === 'A' ? 'paidByA' : 'paidByB';
+  var otherAmount = (state.currentAdmin === 'A' ? target.paidByB : target.paidByA) || 0;
+  amount = amount || 0;
+  if (amount < 0) return;
+  // Reject outright rather than silently clamping — an admin who typed
+  // more than what's left should see why it didn't save, not have their
+  // number quietly rewritten to something else.
+  if (otherAmount + amount > (target.payoutAmount || 0) + 0.01) {
+    alert('That would exceed the payout total — up to ' + fmt(Math.max(0, (target.payoutAmount || 0) - otherAmount)) + ' is available for you to contribute.');
     return;
   }
-  if (closeReqCache.get(monthKey(gid, m))) return; // already proposed, awaiting the other admin
+  var updated = current.map(function (w) {
+    if (w.memberId !== memberId) return w;
+    var next = { memberId: w.memberId, payoutAmount: w.payoutAmount, paidByA: w.paidByA || 0, paidByB: w.paidByB || 0 };
+    next[myField] = amount;
+    return next;
+  });
+  var allCovered = updated.length > 0 && updated.every(function (w) {
+    return (w.paidByA || 0) + (w.paidByB || 0) >= (w.payoutAmount || 0);
+  });
+
   setBusy(true);
   try {
-    await setDoc(doc(db, 'groups', gid, 'closeRequests', String(m)), {
-      month: m, proposedBy: state.currentAdmin, createdAt: serverTimestamp()
-    });
-  } catch (err) {
-    alert('Could not propose closing this month: ' + err.message);
-  } finally { setBusy(false); }
-}
+    if (allCovered) {
+      await runTransaction(db, async function (tx) {
+        var groupRef = doc(db, 'groups', gid);
+        var groupSnap = await tx.get(groupRef);
+        var gData = groupSnap.data();
+        var nextMonth = m + 1;
+        var hasNext = nextMonth <= gData.durationMonths;
+        var nextRef = hasNext ? doc(db, 'groups', gid, 'months', String(nextMonth)) : null;
+        var nextSnap = hasNext ? await tx.get(nextRef) : null;
 
-export async function acceptCloseRequest() {
-  if (isSuper()) return;
-  var gid = state.activeGroupId, m = state.viewMonth;
-  setBusy(true);
-  try {
-    await runTransaction(db, async function (tx) {
-      // Firestore transactions require every read before any write, so all
-      // three gets happen up front, then the update/set/delete calls follow.
-      var reqRef = doc(db, 'groups', gid, 'closeRequests', String(m));
-      var reqSnap = await tx.get(reqRef);
-      if (!reqSnap.exists()) return;
-      var req = reqSnap.data();
-      if (req.proposedBy === state.currentAdmin) return; // only the other admin may accept
-
-      var groupRef = doc(db, 'groups', gid);
-      var groupSnap = await tx.get(groupRef);
-      var gData = groupSnap.data();
-      var nextMonth = m + 1;
-      var hasNext = nextMonth <= gData.durationMonths;
-      var nextRef = hasNext ? doc(db, 'groups', gid, 'months', String(nextMonth)) : null;
-      var nextSnap = hasNext ? await tx.get(nextRef) : null;
-
-      var closedLabel = monthLabel(gData.startYear, gData.startMonthIndex, m);
-      tx.update(doc(db, 'groups', gid, 'months', String(m)), {
-        status: 'closed', payoutAdmin: req.proposedBy,
-        closedAt: serverTimestamp(), closedLabel: closedLabel
-      });
-      if (hasNext) {
-        if (!nextSnap.exists()) {
-          tx.set(nextRef, { status: 'open', winners: [], payoutAdmin: null, transferNet: 0, closedAt: null, closedLabel: null });
+        var closedLabel = monthLabel(gData.startYear, gData.startMonthIndex, m);
+        tx.update(doc(db, 'groups', gid, 'months', String(m)), {
+          winners: updated, status: 'closed', closedAt: serverTimestamp(), closedLabel: closedLabel
+        });
+        if (hasNext) {
+          if (!nextSnap.exists()) {
+            tx.set(nextRef, { status: 'open', winners: [], transferNet: 0, closedAt: null, closedLabel: null });
+          }
+          tx.update(groupRef, { currentMonth: nextMonth });
+        } else {
+          tx.update(groupRef, { status: 'completed' });
         }
-        tx.update(groupRef, { currentMonth: nextMonth });
-      } else {
-        tx.update(groupRef, { status: 'completed' });
-      }
-      tx.delete(reqRef);
-    });
-    var updatedGroup = groupsById.get(gid);
-    goTo('groupDetail', { activeGroupId: gid, viewMonth: updatedGroup ? updatedGroup.currentMonth : m });
+      });
+    } else {
+      await updateDoc(doc(db, 'groups', gid, 'months', String(m)), { winners: updated });
+    }
+    state.ui.payoutModal = null;
+    history.back(); // see savePaymentModal() above
   } catch (err) {
-    alert('Could not accept: ' + err.message);
+    alert('Could not record payout: ' + err.message);
   } finally { setBusy(false); }
-}
-
-export function rejectCloseRequest() {
-  if (isSuper()) return;
-  var gid = state.activeGroupId, m = state.viewMonth;
-  var req = closeReqCache.get(monthKey(gid, m));
-  if (!req || req.proposedBy === state.currentAdmin) return; // only the other admin may reject
-  setBusy(true);
-  deleteDoc(doc(db, 'groups', gid, 'closeRequests', String(m)))
-    .catch(function (err) { alert(err.message); }).finally(function () { setBusy(false); });
-}
-
-export function cancelCloseRequest() {
-  if (isSuper()) return;
-  var gid = state.activeGroupId, m = state.viewMonth;
-  var req = closeReqCache.get(monthKey(gid, m));
-  if (!req || req.proposedBy !== state.currentAdmin) return; // only the proposer may cancel their own
-  setBusy(true);
-  deleteDoc(doc(db, 'groups', gid, 'closeRequests', String(m)))
-    .catch(function (err) { alert(err.message); }).finally(function () { setBusy(false); });
 }
 
 function requestTransfer(direction) {

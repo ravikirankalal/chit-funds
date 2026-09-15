@@ -15,7 +15,7 @@ import {
   startCreateGroup, createGroupStep2, addDraftMember, addExistingDraftMember, removeDraftMember, submitCreateGroup,
   openGroupDetail, openGroupMembers, openMemberPayments, removeMemberFromGroup, openMonth, openPaymentModal, closePaymentModal, setModalMode,
   savePaymentModal, markUnpaidFromModal, selectPaymentTab, setLedgerFilter, openWinnerPicker, closeWinnerPicker, addWinner, removeWinner, setWinnerAmount,
-  proposeCloseMonth, acceptCloseRequest, rejectCloseRequest, cancelCloseRequest,
+  openPayoutModal, closePayoutModal, setPayoutContribution,
   requestTransferToB, requestTransferToA,
   acceptTransferRequest, declineTransferRequest, cancelTransferRequest,
   openMemberForm, closeMemberForm, saveMemberForm,
@@ -106,10 +106,10 @@ document.addEventListener('click', function (e) {
     case 'close-winner-picker': closeWinnerPicker(); break;
     case 'add-winner': addWinner(el.getAttribute('data-mid')); break;
     case 'remove-winner': removeWinner(el.getAttribute('data-mid')); break;
-    case 'propose-close-month': proposeCloseMonth(); break;
-    case 'accept-close-request': acceptCloseRequest(); break;
-    case 'reject-close-request': rejectCloseRequest(); break;
-    case 'cancel-close-request': cancelCloseRequest(); break;
+    case 'open-payout-modal': openPayoutModal(el.getAttribute('data-mid')); break;
+    case 'close-payout-modal': closePayoutModal(); break;
+    case 'save-payout': setPayoutContribution(el.getAttribute('data-mid'), (state.ui.payoutModal && state.ui.payoutModal.draftAmount) || 0); break;
+    case 'fill-remaining-payout': setPayoutContribution(el.getAttribute('data-mid'), parseFloat(el.getAttribute('data-amount')) || 0); break;
     case 'request-transfer-b': requestTransferToB(); break;
     case 'request-transfer-a': requestTransferToA(); break;
     case 'accept-transfer-request': acceptTransferRequest(); break;
@@ -148,6 +148,15 @@ document.addEventListener('input', function (e) {
   }
   if (field === 'addMemberDraftName' && state.ui.addMemberToGroup) {
     state.ui.addMemberToGroup.draftName = e.target.value;
+    render();
+    return;
+  }
+  if (field === 'payoutDraftAmount' && state.ui.payoutModal) {
+    // Re-rendering on every keystroke (rather than committing on blur like
+    // setWinnerAmount) is what makes the before/after holdings preview in
+    // renderPayoutModalOverlay live — nothing is written to Firestore until
+    // Save (see setPayoutContribution in actions.js).
+    state.ui.payoutModal.draftAmount = parseFloat(e.target.value) || 0;
     render();
     return;
   }

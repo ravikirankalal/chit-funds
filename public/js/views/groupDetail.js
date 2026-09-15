@@ -1,5 +1,5 @@
-import { state, groupsById, membersByGroup, closeReqCache, monthKey } from '../store.js';
-import { fmt, escapeHtml, monthLabel, adminName, adminDot, otherAdmin } from '../helpers.js';
+import { state, groupsById, membersByGroup } from '../store.js';
+import { fmt, escapeHtml, monthLabel, adminName, adminDot, adminAvatarColor } from '../helpers.js';
 import { monthFinances } from '../finance.js';
 import { iconChevronLeft, iconChevronRight, iconWallet, iconPeopleSmall, iconTrendingUp, iconCalendar, iconTrophy, iconGroupStack } from '../icons.js';
 import { bar, skeletonTopbar, skeletonListRow } from '../skeleton.js';
@@ -62,6 +62,30 @@ function progressSliver(pct, barColor) {
   return '<div class="progress-track" style="height:3px;margin-top:5px;"><div class="progress-fill" style="width:' + pct + '%; background:' + barColor + ';"></div></div>';
 }
 
+// An admin's own dot + label, colored in that admin's avatar color — reused
+// wherever a per-admin figure (a payout split, who paid what) needs to read
+// as belonging to that admin at a glance, the same visual language as the
+// "X holds" stat cells above.
+function adminAmountSpan(id, label) {
+  return '<span style="display:inline-flex;align-items:center;gap:4px;color:' + adminAvatarColor(id) + ';font-weight:600;white-space:nowrap;">' + adminDot(id) + label + '</span>';
+}
+
+// The right-hand column of a month row — profit as the headline (the
+// number a row gets tapped open to check), collected and payout below it
+// as supporting detail. Collection and payout are fixed colors (blue and
+// red — each reads as "this kind of figure" regardless of amount), but
+// profit is sign-dependent like the profit-margin figure on the
+// create-group screen: red when the month ran at a loss, green otherwise.
+function rightMoneyColumn(collected, payout) {
+  var profit = collected - payout;
+  var profitColor = profit < 0 ? 'var(--color-danger)' : 'var(--color-success)';
+  return '<div style="text-align:right; flex-shrink:0;">' +
+    '<div style="font-size:13px;font-weight:700;color:' + profitColor + ';">' + signed(profit) + '</div>' +
+    '<div style="font-size:10px;color:var(--color-text-muted);margin-top:2px;white-space:nowrap;">Collected <span class="mono" style="color:var(--color-primary);font-weight:700;">' + fmt(collected) + '</span></div>' +
+    '<div style="font-size:10px;color:var(--color-text-muted);margin-top:1px;white-space:nowrap;">Payout <span class="mono" style="color:var(--color-danger);font-weight:700;">−' + fmt(payout) + '</span></div>' +
+  '</div>';
+}
+
 export function renderGroupDetail() {
   var gid = state.activeGroupId;
   var group = groupsById.get(gid);
@@ -107,9 +131,26 @@ export function renderGroupDetail() {
         var closedFg = hasUnpaid ? 'var(--color-warning)' : 'var(--color-success)';
         // Which admin handed the winner the payout — same field month
         // detail's closed summary shows, surfaced here too so it doesn't
-        // take an extra tap to see who paid out a given month.
-        var payoutBy = f.monthDoc && f.monthDoc.payoutAdmin ? ' · Paid by ' + escapeHtml(adminName(f.monthDoc.payoutAdmin)) : '';
-        var subtitle = '<span style="display:inline-flex;align-items:center;gap:4px;">' + iconTrophy() + (winnerNames.length > 1 ? 'Winners: ' : 'Winner: ') + (winnerNames.length ? winnerNames.map(escapeHtml).join(', ') : '—') + '</span>' + payoutBy + (hasUnpaid ? ' · ' + unpaidCount + ' unpaid' : '');
+        // take an extra tap to see who paid out a given month. Split
+        // across its own lines rather than crammed into one subtitle —
+        // a winner list, the payout split, and the unpaid count are three
+        // separate facts, each worth its own line now that a payout can
+        // be a genuine split rather than always "by one admin".
+        // Winner names get the same gold used for "this month's winner"
+        // everywhere else (month detail, dashboard), the payout split gets
+        // each admin's own color (matching the "X holds" stat cells above),
+        // and an unpaid warning always reads as warning-amber regardless of
+        // the row's own closed/warning background — three distinct facts,
+        // three distinct colors, instead of one blanket tone for all of them.
+        var winnerNamesHtml = winnerNames.length
+          ? winnerNames.map(function (n) { return '<span style="color:var(--color-gold);font-weight:600;">' + escapeHtml(n) + '</span>'; }).join(', ')
+          : '—';
+        var winnerLine = '<div style="display:flex;align-items:center;gap:4px;">' + iconTrophy('var(--color-gold)') + (winnerNames.length > 1 ? 'Winners: ' : 'Winner: ') + winnerNamesHtml + '</div>';
+        var paidByParts = [];
+        if (f.payoutPaidA > 0) paidByParts.push(adminAmountSpan('A', adminName('A') + (f.payoutPaidB > 0 ? ' (' + fmt(f.payoutPaidA) + ')' : '')));
+        if (f.payoutPaidB > 0) paidByParts.push(adminAmountSpan('B', adminName('B') + (f.payoutPaidA > 0 ? ' (' + fmt(f.payoutPaidB) + ')' : '')));
+        var payoutByLine = paidByParts.length ? '<div>Paid by ' + paidByParts.join(' + ') + '</div>' : '';
+        var unpaidLine = hasUnpaid ? '<div style="color:var(--color-warning);font-weight:600;">' + unpaidCount + ' member' + (unpaidCount === 1 ? '' : 's') + ' still unpaid</div>' : '';
         // The trend sparkline uses one rule everywhere it appears (here,
         // the dashboard, and the per-member charts): green once every due
         // is in, red if anything's outstanding — regardless of the row's
@@ -118,31 +159,62 @@ export function renderGroupDetail() {
         rows.push('<div class="list-row" data-action="open-month" data-gid="' + gid + '" data-m="' + m + '"' + (hasUnpaid ? ' style="border-color:' + closedFg + ';"' : '') + '>' +
           '<div class="avatar sm" style="background:' + closedBg + '; color:' + closedFg + ';">' + m + '</div>' +
           '<div style="flex:1 1 auto; min-width:0;"><div style="font-size:13px;font-weight:600;">' + monthLabel(group.startYear, group.startMonthIndex, m) + '</div>' +
-          '<div style="font-size:11.5px;color:' + (hasUnpaid ? closedFg : 'var(--color-text-muted)') + ';margin-top:1px;">' + subtitle + '</div></div>' +
-          '<div style="text-align:right; flex-shrink:0;"><div style="font-size:13px;font-weight:700;color:' + closedFg + ';">' + fmt(f.payoutAmount) + '</div>' +
-          '<div style="font-size:11px;color:var(--color-text-muted);">won</div></div>' +
+          '<div style="display:flex;flex-direction:column;gap:2px;font-size:11.5px;color:var(--color-text-muted);margin-top:2px;">' + winnerLine + payoutByLine + unpaidLine + '</div></div>' +
+          rightMoneyColumn(f.totalCollected, f.payoutAmount) +
         '</div>');
       } else {
         var pct = members.length > 0 ? Math.min(100, Math.round((f.paidCount / members.length) * 100)) : 0;
         trend.push({ m: m, pct: pct, color: pct === 100 ? 'var(--color-success)' : 'var(--color-danger)' });
-        // A pending close request (see proposeCloseMonth in actions.js)
-        // means the month isn't just "open" anymore — it's waiting on the
-        // other admin's approval to actually close, so it gets its own
-        // amber treatment instead of the usual secondary "open" styling.
-        var pendingClose = closeReqCache.get(monthKey(gid, m));
-        var rowColor = pendingClose ? 'var(--color-warning)' : 'var(--color-secondary)';
-        var rowBg = pendingClose ? 'var(--color-warning-soft)' : 'var(--color-secondary-soft)';
-        var rowLabel = pendingClose ? ' · Pending close' : ' · Open';
-        var rowSubtitle = pendingClose ? 'Awaiting ' + adminName(otherAdmin(pendingClose.proposedBy)) + "'s approval" : f.paidCount + ' / ' + members.length + ' paid so far';
+        // A payout in progress (some but not all of a winner's amount
+        // recorded — see setPayoutContribution in actions.js) means the
+        // month isn't just "open" anymore, so it gets its own gold
+        // treatment instead of the usual secondary "open" styling. Gold
+        // matches the payout color used on the dashboard and the winner
+        // card, so it reads the same everywhere it shows up.
+        var payoutStarted = f.winners.length > 0 && (f.payoutPaidA > 0 || f.payoutPaidB > 0);
+        var rowColor = payoutStarted ? 'var(--color-gold)' : 'var(--color-secondary)';
+        var rowBg = payoutStarted ? 'var(--color-gold-soft)' : 'var(--color-secondary-soft)';
+        var rowLabel = '<span style="color:' + rowColor + ';font-weight:600;">' + (payoutStarted ? ' · Payout in progress' : ' · Open') + '</span>';
+        var rowSubtitle = f.paidCount + ' / ' + members.length + ' paid so far';
+        // Once there's a winner, show a fuller picture than the collection
+        // bar alone: who won (gold, matching the winner styling used
+        // everywhere else), each admin's own contribution so far in their
+        // own color, and a second progress bar tracking the payout itself —
+        // a genuinely different number from "% collected" now that a
+        // payout can be split and can lag behind collection instead of
+        // always trailing it in lockstep.
+        var winnerRows = f.winners.map(function (w) {
+          var mm = members.find(function (x) { return x.id === w.memberId; });
+          return '<div style="display:flex;justify-content:space-between;gap:8px;">' +
+            '<span style="display:flex;align-items:center;gap:4px;min-width:0;color:var(--color-gold);font-weight:600;">' + iconTrophy('var(--color-gold)') + (mm ? escapeHtml(mm.name) : '—') + '</span>' +
+            '<span class="mono" style="flex-shrink:0;color:var(--color-accent);font-weight:700;">' + fmt(w.payoutAmount) + '</span>' +
+          '</div>';
+        }).join('');
+        var payoutPct = f.payoutAmount > 0 ? Math.min(100, Math.round(((f.payoutPaidA + f.payoutPaidB) / f.payoutAmount) * 100)) : 0;
+        var payoutSection = f.winners.length
+          ? '<div style="display:flex;flex-direction:column;gap:4px;font-size:11.5px;color:var(--color-text-muted);padding-top:2px;">' +
+              winnerRows +
+              (payoutStarted
+                ? '<div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;">' +
+                    '<span style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">' +
+                      adminAmountSpan('A', adminName('A') + ': ' + fmt(f.payoutPaidA)) +
+                      adminAmountSpan('B', adminName('B') + ': ' + fmt(f.payoutPaidB)) +
+                    '</span>' +
+                    '<span style="flex-shrink:0;color:var(--color-gold);font-weight:600;">' + payoutPct + '% paid out</span>' +
+                  '</div>' +
+                  '<div class="progress-track"><div class="progress-fill" style="width:' + payoutPct + '%; background:var(--color-gold);"></div></div>'
+                : '') +
+            '</div>'
+          : '';
         rows.push('<div class="list-row" data-action="open-month" data-gid="' + gid + '" data-m="' + m + '" style="border-color:' + rowColor + ';background:' + rowBg + ';flex-direction:column;align-items:stretch;gap:6px;">' +
           '<div style="display:flex;align-items:center;gap:10px;">' +
             '<div class="avatar sm" style="background:' + rowColor + '; color:var(--on-brand);">' + m + '</div>' +
             '<div style="flex:1 1 auto; min-width:0;"><div style="font-size:13px;font-weight:600;">' + monthLabel(group.startYear, group.startMonthIndex, m) + rowLabel + '</div>' +
             '<div style="font-size:11.5px;color:var(--color-text-muted);margin-top:1px;">' + rowSubtitle + '</div></div>' +
-            '<div style="text-align:right; flex-shrink:0;"><div style="font-size:13px;font-weight:700;color:' + rowColor + ';">' + fmt(f.payoutAmount) + '</div>' +
-            '<div style="font-size:11px;color:var(--color-text-muted);">' + pct + '% collected</div></div>' +
+            rightMoneyColumn(f.totalCollected, f.payoutAmount) +
           '</div>' +
           '<div class="progress-track"><div class="progress-fill" style="width:' + pct + '%; background:' + rowColor + ';"></div></div>' +
+          payoutSection +
         '</div>');
       }
     } else {
@@ -159,6 +231,8 @@ export function renderGroupDetail() {
 
   var collectedPct = totalCollection > 0 ? Math.min(100, Math.round((collectedSoFar / totalCollection) * 100)) : 0;
   var payoutPct = totalPayout > 0 ? Math.min(100, Math.round((payoutSoFar / totalPayout) * 100)) : 0;
+  var profitSoFar = collectedSoFar - payoutSoFar;
+  var profitSoFarColor = profitSoFar < 0 ? 'var(--color-danger)' : 'var(--color-success)';
   var pctTag = function (pct) { return '<span style="font-size:10.5px;color:var(--color-text-muted);font-weight:600;flex-shrink:0;">' + pct + '%</span>'; };
 
   // Sparkline of each month's collection %, one skinny bar per month —
@@ -186,8 +260,9 @@ export function renderGroupDetail() {
       statCell(iconPeopleSmall() + 'Members', '<span>' + members.length + '</span>' + iconChevronRight(), { border: true, style: 'cursor:pointer;', attrs: ' data-action="open-group-members" data-gid="' + gid + '"' })
     ) +
     statRow(
-      statCell('Collected so far', '<span>' + fmt(collectedSoFar) + '</span>' + pctTag(collectedPct), { below: progressSliver(collectedPct, 'var(--color-success)') }) +
-      statCell('Payouts so far', '<span>' + fmt(payoutSoFar) + '</span>' + pctTag(payoutPct), { border: true, below: progressSliver(payoutPct, 'var(--color-accent)') }),
+      statCell('Collections', '<span>' + fmt(collectedSoFar) + '</span>' + pctTag(collectedPct), { below: progressSliver(collectedPct, 'var(--color-success)') }) +
+      statCell('Payouts', '<span>' + fmt(payoutSoFar) + '</span>' + pctTag(payoutPct), { border: true, below: progressSliver(payoutPct, 'var(--color-accent)') }) +
+      statCell('Profit', '<span style="color:' + profitSoFarColor + ';">' + signed(profitSoFar) + '</span>', { border: true }),
       true
     ) +
     statRow(

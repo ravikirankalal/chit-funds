@@ -13,11 +13,21 @@ cd "$(dirname "$0")/.."
 
 PROJECT=localbc-41b52
 BASE="http://127.0.0.1:8080/v1/projects/$PROJECT/databases/(default)/documents"
+DATA_DIR=".emulator-data"
 
 cmd_up() {
   echo "Starting emulators — auth :9099, firestore :8080, hosting :5050 (Ctrl+C to stop)..."
   echo "public/js/firebase.js will pick these up automatically once they're reachable — nothing to edit."
-  firebase emulators:start --only auth,firestore,hosting --project "$PROJECT"
+  # Firestore/Auth emulator state is in-memory only by default and vanishes
+  # on every restart. --export-on-exit writes it to $DATA_DIR on a clean
+  # shutdown (Ctrl+C); --import reloads it on the next 'up' if that
+  # directory exists yet (skipped on the very first run). A crash or
+  # `kill -9` skips the export, same as any unsaved local state.
+  if [ -d "$DATA_DIR" ]; then
+    firebase emulators:start --only auth,firestore,hosting --project "$PROJECT" --import="$DATA_DIR" --export-on-exit="$DATA_DIR"
+  else
+    firebase emulators:start --only auth,firestore,hosting --project "$PROJECT" --export-on-exit="$DATA_DIR"
+  fi
 }
 
 # Firestore emulator writes/reads normally go through firestore.rules like a
