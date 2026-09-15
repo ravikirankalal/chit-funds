@@ -10,6 +10,18 @@ import { bar, skeletonListRow } from '../skeleton.js';
 
 function signed(n) { return (n < 0 ? '−' : '') + fmt(Math.abs(n)); }
 
+// One labeled figure in the Collections / Payouts / Profit stats row that
+// opens both the open and closed month summary cards — a compact
+// label-above-value cell, three of which sit side by side (each flex:1 1 0,
+// dividers instead of per-cell chrome) mirroring the same pattern used for
+// the group detail screen's stats card.
+function summaryStat(labelHtml, valueHtml, border) {
+  return '<div style="flex:1 1 0;min-width:0;' + (border ? 'border-left:1px solid var(--color-border);padding-left:12px;' : '') + '">' +
+    '<div style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--color-text-muted);">' + labelHtml + '</div>' +
+    '<div class="mono" style="font-size:16px;font-weight:700;margin-top:2px;">' + valueHtml + '</div>' +
+  '</div>';
+}
+
 // Matches the real layout's rhythm — topbar with a status-pill chip, a tall
 // summary card (renderOpenSummary/renderClosedSummary), a "Member payments"
 // section label + list, then another card (winner/payout) — rather than the
@@ -192,6 +204,8 @@ function renderHandoffRequests(gid, viewMonth, readOnly, members, f, isClosed) {
 
 function renderClosedSummary(f, members, readOnly, gid, viewMonth) {
   var unpaidCount = members.length - f.paidCount;
+  var closedProfit = f.totalCollected - f.payoutAmount;
+  var closedProfitColor = closedProfit < 0 ? 'var(--color-danger)' : 'var(--color-success)';
   // Almost always exactly one winner — this loop renders identically to the
   // old single-card layout in that case. A closed month occasionally has
   // more than one (see getMonthWinners in finance.js), each with its own
@@ -222,9 +236,13 @@ function renderClosedSummary(f, members, readOnly, gid, viewMonth) {
     winnerCards +
     (readOnly ? '' : '<button class="btn btn-primary" style="width:100%;" data-action="open-winner-picker">Add another winner</button>') +
     '<div class="card">' + renderMemberPaymentStrip(gid, viewMonth, members, readOnly) + '</div>' +
-    '<div class="card" style="display:flex;justify-content:space-between;align-items:center;">' +
-      '<div><div style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--color-text-muted);">' + iconWallet() + 'Collected</div><div class="mono" style="font-size:16px;font-weight:700;color:var(--color-success);">' + fmt(f.totalCollected) + '</div></div>' +
-      '<div style="text-align:right;"><div style="font-size:12px;color:var(--color-text-muted);">Paid out by</div><div style="font-size:14px;font-weight:700;">' + escapeHtml(payoutByLabel(f) || '—') + '</div></div>' +
+    '<div class="card" style="display:flex;flex-direction:column;gap:8px;">' +
+      '<div style="display:flex;">' +
+        summaryStat(iconWallet() + 'Collections', '<span style="color:var(--color-success);">' + fmt(f.totalCollected) + '</span>') +
+        summaryStat('Payouts', '<span style="color:var(--color-accent);">' + fmt(f.payoutAmount) + '</span>', true) +
+        summaryStat('Profit', '<span style="color:' + closedProfitColor + ';">' + signed(closedProfit) + '</span>', true) +
+      '</div>' +
+      '<div style="font-size:12px;color:var(--color-text-muted);">Paid out by <span style="font-weight:700;color:var(--color-text);">' + escapeHtml(payoutByLabel(f) || '—') + '</span></div>' +
     '</div>' +
     '<div class="stat-row">' +
       '<div class="stat"><div class="label">' + adminDot('A') + ADMINS.A.name + ' holds</div><div class="value" style="' + (f.finalA < 0 ? 'color:var(--color-danger);' : '') + '">' + signed(f.finalA) + '</div></div>' +
@@ -242,10 +260,14 @@ function renderUpcomingNotice(group, viewMonth) {
 function renderOpenSummary(f, members, group, readOnly, gid, viewMonth) {
   var expected = members.length * group.monthlyDeposit;
   var pct = expected > 0 ? Math.min(100, Math.round((f.totalCollected / expected) * 100)) : 0;
+  var setupPayout = (group.payoutSchedule && group.payoutSchedule[viewMonth - 1]) || 0;
+  var openProfit = f.totalCollected - f.payoutAmount;
+  var openProfitColor = openProfit < 0 ? 'var(--color-danger)' : 'var(--color-success)';
   return '<div class="card" style="display:flex;flex-direction:column;gap:10px;">' +
-    '<div style="display:flex;justify-content:space-between;align-items:center;">' +
-      '<div><div style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--color-text-muted);">' + iconWallet() + 'Collected</div><div class="mono" style="font-size:16px;font-weight:700;">' + fmt(f.totalCollected) + ' <span style="font-size:12px;color:var(--color-text-muted);font-weight:400;">/ ' + fmt(expected) + '</span></div></div>' +
-      '<div style="text-align:right;"><div style="display:flex;align-items:center;justify-content:flex-end;gap:4px;font-size:12px;color:var(--color-text-muted);">' + iconTrophy() + (f.winners.length ? 'Payout' : 'Scheduled payout') + '</div><div class="mono" style="font-size:16px;font-weight:700;color:var(--color-accent);">' + fmt(f.payoutAmount) + '</div></div>' +
+    '<div style="display:flex;">' +
+      summaryStat(iconWallet() + 'Collections', fmt(f.totalCollected) + ' <span style="font-size:12px;color:var(--color-text-muted);font-weight:400;">/ ' + fmt(expected) + '</span>') +
+      summaryStat(iconTrophy() + 'Payout', '<span style="color:var(--color-accent);">' + fmt(f.payoutAmount) + '</span> <span style="font-size:12px;color:var(--color-text-muted);font-weight:400;">/ ' + fmt(setupPayout) + '</span>', true) +
+      summaryStat('Profit', '<span style="color:' + openProfitColor + ';">' + signed(openProfit) + '</span>', true) +
     '</div>' +
     '<div>' +
       '<div style="display:flex;justify-content:space-between;margin-bottom:4px;"><div style="font-size:11px;color:var(--color-text-muted);">' + f.paidCount + ' / ' + members.length + ' paid</div><div style="font-size:11px;color:var(--color-text-muted);font-weight:600;">' + pct + '%</div></div>' +

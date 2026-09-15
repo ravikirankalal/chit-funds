@@ -231,6 +231,8 @@ export function renderGroupDetail() {
 
   var collectedPct = totalCollection > 0 ? Math.min(100, Math.round((collectedSoFar / totalCollection) * 100)) : 0;
   var payoutPct = totalPayout > 0 ? Math.min(100, Math.round((payoutSoFar / totalPayout) * 100)) : 0;
+  var profitSoFar = collectedSoFar - payoutSoFar;
+  var profitSoFarColor = profitSoFar < 0 ? 'var(--color-danger)' : 'var(--color-success)';
   var pctTag = function (pct) { return '<span style="font-size:10.5px;color:var(--color-text-muted);font-weight:600;flex-shrink:0;">' + pct + '%</span>'; };
 
   // Sparkline of each month's collection %, one skinny bar per month —
@@ -258,8 +260,9 @@ export function renderGroupDetail() {
       statCell(iconPeopleSmall() + 'Members', '<span>' + members.length + '</span>' + iconChevronRight(), { border: true, style: 'cursor:pointer;', attrs: ' data-action="open-group-members" data-gid="' + gid + '"' })
     ) +
     statRow(
-      statCell('Collected so far', '<span>' + fmt(collectedSoFar) + '</span>' + pctTag(collectedPct), { below: progressSliver(collectedPct, 'var(--color-success)') }) +
-      statCell('Payouts so far', '<span>' + fmt(payoutSoFar) + '</span>' + pctTag(payoutPct), { border: true, below: progressSliver(payoutPct, 'var(--color-accent)') }),
+      statCell('Collections', '<span>' + fmt(collectedSoFar) + '</span>' + pctTag(collectedPct), { below: progressSliver(collectedPct, 'var(--color-success)') }) +
+      statCell('Payouts', '<span>' + fmt(payoutSoFar) + '</span>' + pctTag(payoutPct), { border: true, below: progressSliver(payoutPct, 'var(--color-accent)') }) +
+      statCell('Profit', '<span style="color:' + profitSoFarColor + ';">' + signed(profitSoFar) + '</span>', { border: true }),
       true
     ) +
     statRow(
