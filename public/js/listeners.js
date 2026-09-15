@@ -5,7 +5,7 @@
 
 import { onSnapshot, collection, collectionGroup } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
 import { db } from './firebase.js';
-import { state, groupsById, membersById, membersByGroup, monthsCache, paymentsCache, transferReqCache, closeReqCache, handoffReqCache, monthKey, clearCaches } from './store.js';
+import { state, groupsById, membersById, membersByGroup, monthsCache, paymentsCache, transferReqCache, handoffReqCache, monthKey, clearCaches } from './store.js';
 import { pathParts } from './helpers.js';
 import { recompute } from './finance.js';
 import { render } from './render.js';
@@ -103,20 +103,10 @@ export function startListeners() {
     scheduleRecompute();
   }));
 
-  unsubs.push(onSnapshot(collectionGroup(db, 'closeRequests'), function (snap) {
-    snap.docChanges().forEach(function (change) {
-      var parts = pathParts(change.doc.ref.path); // groups/GID/closeRequests/MNUM
-      var gid = parts[1], m = parseInt(parts[3], 10);
-      if (change.type === 'removed') closeReqCache.delete(monthKey(gid, m));
-      else closeReqCache.set(monthKey(gid, m), change.doc.data());
-    });
-    scheduleRecompute();
-  }));
-
   // One month can have several pending hand-offs at once (e.g. a second
   // batch proposed before the first is resolved), so each month's cache
   // entry is a { reqId: data } map rather than a single doc, unlike
-  // transferRequests/closeRequests above which are one-per-month singletons.
+  // transferRequests above which is a one-per-month singleton.
   unsubs.push(onSnapshot(collectionGroup(db, 'handoffRequests'), function (snap) {
     snap.docChanges().forEach(function (change) {
       var parts = pathParts(change.doc.ref.path); // groups/GID/months/MNUM/handoffRequests/REQID

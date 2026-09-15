@@ -29,16 +29,12 @@ function renderLoadingSkeleton() {
   return hero + statRow + '<div>' + bar('60px', '13px', 'margin-bottom:10px;') + '<div class="row-list">' + groupCards + '</div></div>';
 }
 
-// Pending approvals are two DIFFERENT categories, not one generic "needs
-// attention" bucket — a payout (closing a month) and a transfer (a
-// hand-off or the net-balance request) mean different things, so they get
-// different accent colors reusing meanings already established elsewhere:
-// gold is the winner/payout color (see the month detail winner card),
-// secondary is the transfer/info color (see the handoff banner in month
-// detail, which is also `.banner.info` = secondary). Both render as a
-// solid gradient card at the same visual weight as the hero "Total fund"
-// card — pending approvals are the one thing on this screen an admin
-// must act on, so they shouldn't read as quieter than a static balance.
+// Pending approvals still needing THIS admin's action are hand-offs and
+// the net-balance transfer request — payouts no longer need approval (see
+// setPayoutContribution in actions.js: each admin just records their own
+// share). Secondary is the transfer/info color used everywhere else money
+// moves between admins (see the handoff banner in month detail, which is
+// also `.banner.info` = secondary).
 function approvalCardConfig(a) {
   var monthText = (function () {
     var ag = groupsById.get(a.groupId);
@@ -47,13 +43,6 @@ function approvalCardConfig(a) {
   // `who` and `amount` are the two facts worth a second look at a glance;
   // everything else in headline/subtitle stays plain/muted so those two
   // don't have to compete with a wall of same-weight text.
-  if (a.kind === 'close') {
-    return {
-      colorVar: 'gold', icon: iconTrophy('var(--color-gold)'),
-      who: adminName(a.requestedBy), amountText: fmt(a.amount), headlineRest: ' wants to pay out ',
-      subtitle: escapeHtml(a.groupName) + ' · ' + monthText
-    };
-  }
   if (a.kind === 'handoff') {
     return {
       colorVar: 'secondary', icon: iconTransfer('var(--color-secondary)'),

@@ -1,6 +1,6 @@
-import { state, groupsById, membersByGroup, closeReqCache, monthKey } from '../store.js';
-import { fmt, escapeHtml, monthLabel, adminName, adminDot, otherAdmin } from '../helpers.js';
-import { monthFinances } from '../finance.js';
+import { state, groupsById, membersByGroup } from '../store.js';
+import { fmt, escapeHtml, monthLabel, adminName, adminDot } from '../helpers.js';
+import { monthFinances, payoutByLabel } from '../finance.js';
 import { iconChevronLeft, iconChevronRight, iconWallet, iconPeopleSmall, iconTrendingUp, iconCalendar, iconTrophy, iconGroupStack } from '../icons.js';
 import { bar, skeletonTopbar, skeletonListRow } from '../skeleton.js';
 
@@ -107,9 +107,15 @@ export function renderGroupDetail() {
         var closedFg = hasUnpaid ? 'var(--color-warning)' : 'var(--color-success)';
         // Which admin handed the winner the payout — same field month
         // detail's closed summary shows, surfaced here too so it doesn't
-        // take an extra tap to see who paid out a given month.
-        var payoutBy = f.monthDoc && f.monthDoc.payoutAdmin ? ' · Paid by ' + escapeHtml(adminName(f.monthDoc.payoutAdmin)) : '';
-        var subtitle = '<span style="display:inline-flex;align-items:center;gap:4px;">' + iconTrophy() + (winnerNames.length > 1 ? 'Winners: ' : 'Winner: ') + (winnerNames.length ? winnerNames.map(escapeHtml).join(', ') : '—') + '</span>' + payoutBy + (hasUnpaid ? ' · ' + unpaidCount + ' unpaid' : '');
+        // take an extra tap to see who paid out a given month. Split
+        // across its own lines rather than crammed into one subtitle —
+        // a winner list, the payout split, and the unpaid count are three
+        // separate facts, each worth its own line now that a payout can
+        // be a genuine split rather than always "by one admin".
+        var payoutLabel = payoutByLabel(f);
+        var winnerLine = '<div style="display:flex;align-items:center;gap:4px;">' + iconTrophy() + (winnerNames.length > 1 ? 'Winners: ' : 'Winner: ') + (winnerNames.length ? winnerNames.map(escapeHtml).join(', ') : '—') + '</div>';
+        var payoutByLine = payoutLabel ? '<div>Paid by ' + escapeHtml(payoutLabel) + '</div>' : '';
+        var unpaidLine = hasUnpaid ? '<div>' + unpaidCount + ' member' + (unpaidCount === 1 ? '' : 's') + ' still unpaid</div>' : '';
         // The trend sparkline uses one rule everywhere it appears (here,
         // the dashboard, and the per-member charts): green once every due
         // is in, red if anything's outstanding — regardless of the row's
@@ -118,25 +124,50 @@ export function renderGroupDetail() {
         rows.push('<div class="list-row" data-action="open-month" data-gid="' + gid + '" data-m="' + m + '"' + (hasUnpaid ? ' style="border-color:' + closedFg + ';"' : '') + '>' +
           '<div class="avatar sm" style="background:' + closedBg + '; color:' + closedFg + ';">' + m + '</div>' +
           '<div style="flex:1 1 auto; min-width:0;"><div style="font-size:13px;font-weight:600;">' + monthLabel(group.startYear, group.startMonthIndex, m) + '</div>' +
-          '<div style="font-size:11.5px;color:' + (hasUnpaid ? closedFg : 'var(--color-text-muted)') + ';margin-top:1px;">' + subtitle + '</div></div>' +
+          '<div style="display:flex;flex-direction:column;gap:2px;font-size:11.5px;color:' + (hasUnpaid ? closedFg : 'var(--color-text-muted)') + ';margin-top:2px;">' + winnerLine + payoutByLine + unpaidLine + '</div></div>' +
           '<div style="text-align:right; flex-shrink:0;"><div style="font-size:13px;font-weight:700;color:' + closedFg + ';">' + fmt(f.payoutAmount) + '</div>' +
           '<div style="font-size:11px;color:var(--color-text-muted);">won</div></div>' +
         '</div>');
       } else {
         var pct = members.length > 0 ? Math.min(100, Math.round((f.paidCount / members.length) * 100)) : 0;
         trend.push({ m: m, pct: pct, color: pct === 100 ? 'var(--color-success)' : 'var(--color-danger)' });
-        // A pending close request (see proposeCloseMonth in actions.js)
-        // means the month isn't just "open" anymore — it's waiting on the
-        // other admin's approval to actually close, so it gets its own
-        // amber treatment instead of the usual secondary "open" styling.
-        var pendingClose = closeReqCache.get(monthKey(gid, m));
-        // Gold matches the payout-approval color used on the dashboard and
-        // the winner card — a pending close is a payout awaiting
-        // acceptance, so it gets the same accent everywhere it shows up.
-        var rowColor = pendingClose ? 'var(--color-gold)' : 'var(--color-secondary)';
-        var rowBg = pendingClose ? 'var(--color-gold-soft)' : 'var(--color-secondary-soft)';
-        var rowLabel = pendingClose ? ' · Pending close' : ' · Open';
-        var rowSubtitle = pendingClose ? 'Awaiting ' + adminName(otherAdmin(pendingClose.proposedBy)) + "'s approval" : f.paidCount + ' / ' + members.length + ' paid so far';
+        // A payout in progress (some but not all of a winner's amount
+        // recorded — see setPayoutContribution in actions.js) means the
+        // month isn't just "open" anymore, so it gets its own gold
+        // treatment instead of the usual secondary "open" styling. Gold
+        // matches the payout color used on the dashboard and the winner
+        // card, so it reads the same everywhere it shows up.
+        var payoutStarted = f.winners.length > 0 && (f.payoutPaidA > 0 || f.payoutPaidB > 0);
+        var rowColor = payoutStarted ? 'var(--color-gold)' : 'var(--color-secondary)';
+        var rowBg = payoutStarted ? 'var(--color-gold-soft)' : 'var(--color-secondary-soft)';
+        var rowLabel = payoutStarted ? ' · Payout in progress' : ' · Open';
+        var rowSubtitle = f.paidCount + ' / ' + members.length + ' paid so far';
+        // Once there's a winner, show a fuller picture than the collection
+        // bar alone: who won (and their individual target, if more than
+        // one), each admin's contribution so far, and a second progress
+        // bar tracking the payout itself — a genuinely different number
+        // from "% collected" now that a payout can be split and can lag
+        // behind collection instead of always trailing it in lockstep.
+        var winnerRows = f.winners.map(function (w) {
+          var mm = members.find(function (x) { return x.id === w.memberId; });
+          return '<div style="display:flex;justify-content:space-between;gap:8px;">' +
+            '<span style="display:flex;align-items:center;gap:4px;min-width:0;">' + iconTrophy() + (mm ? escapeHtml(mm.name) : '—') + '</span>' +
+            '<span class="mono" style="flex-shrink:0;">' + fmt(w.payoutAmount) + '</span>' +
+          '</div>';
+        }).join('');
+        var payoutPct = f.payoutAmount > 0 ? Math.min(100, Math.round(((f.payoutPaidA + f.payoutPaidB) / f.payoutAmount) * 100)) : 0;
+        var payoutSection = f.winners.length
+          ? '<div style="display:flex;flex-direction:column;gap:4px;font-size:11.5px;color:var(--color-text-muted);padding-top:2px;">' +
+              winnerRows +
+              (payoutStarted
+                ? '<div style="display:flex;justify-content:space-between;gap:8px;">' +
+                    '<span>' + adminName('A') + ': ' + fmt(f.payoutPaidA) + ' · ' + adminName('B') + ': ' + fmt(f.payoutPaidB) + '</span>' +
+                    '<span style="flex-shrink:0;color:var(--color-gold);font-weight:600;">' + payoutPct + '% paid out</span>' +
+                  '</div>' +
+                  '<div class="progress-track"><div class="progress-fill" style="width:' + payoutPct + '%; background:var(--color-gold);"></div></div>'
+                : '') +
+            '</div>'
+          : '';
         rows.push('<div class="list-row" data-action="open-month" data-gid="' + gid + '" data-m="' + m + '" style="border-color:' + rowColor + ';background:' + rowBg + ';flex-direction:column;align-items:stretch;gap:6px;">' +
           '<div style="display:flex;align-items:center;gap:10px;">' +
             '<div class="avatar sm" style="background:' + rowColor + '; color:var(--on-brand);">' + m + '</div>' +
@@ -146,6 +177,7 @@ export function renderGroupDetail() {
             '<div style="font-size:11px;color:var(--color-text-muted);">' + pct + '% collected</div></div>' +
           '</div>' +
           '<div class="progress-track"><div class="progress-fill" style="width:' + pct + '%; background:' + rowColor + ';"></div></div>' +
+          payoutSection +
         '</div>');
       }
     } else {

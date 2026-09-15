@@ -8,7 +8,7 @@
 // this module from ever needing to import render.js.
 
 import {
-  state, groupsById, membersByGroup, monthsCache, paymentsCache, transferReqCache, closeReqCache, handoffReqCache, monthKey
+  state, groupsById, membersByGroup, monthsCache, paymentsCache, transferReqCache, handoffReqCache, monthKey
 } from './store.js';
 import { fmt, adminName, monthLabel, formatDateTime } from './helpers.js';
 
@@ -43,10 +43,38 @@ export function getMonthWinners(monthDoc, defaultAmount) {
   return [];
 }
 
+// Each admin now contributes their own partial share of a winner's payout
+// (w.paidByA / w.paidByB) — no more single monthDoc.payoutAdmin deciding
+// the whole thing (see setPayoutContribution in actions.js). Older, already-
+// closed months only ever wrote that single field for the WHOLE month's
+// payout; this attributes it back to whichever admin closed it, so old data
+// still renders correctly without a migration.
+function getWinnerPaid(w, monthDoc) {
+  if (typeof w.paidByA === 'number' || typeof w.paidByB === 'number') {
+    return { paidByA: w.paidByA || 0, paidByB: w.paidByB || 0 };
+  }
+  if (monthDoc && monthDoc.status === 'closed' && monthDoc.payoutAdmin) {
+    return monthDoc.payoutAdmin === 'A'
+      ? { paidByA: w.payoutAmount || 0, paidByB: 0 }
+      : { paidByA: 0, paidByB: w.payoutAmount || 0 };
+  }
+  return { paidByA: 0, paidByB: 0 };
+}
+
+// "Nagendramma" when only one admin ever contributed (matches the old
+// single-payoutAdmin display exactly), "Nagendramma (₹X) + Subhash (₹Y)"
+// once a payout is actually split. null when nobody's paid anything yet.
+export function payoutByLabel(f) {
+  var parts = [];
+  if (f.payoutPaidA > 0) parts.push(adminName('A') + (f.payoutPaidB > 0 ? ' (' + fmt(f.payoutPaidA) + ')' : ''));
+  if (f.payoutPaidB > 0) parts.push(adminName('B') + (f.payoutPaidA > 0 ? ' (' + fmt(f.payoutPaidB) + ')' : ''));
+  return parts.join(' + ') || null;
+}
+
 // Derives, for one month, who holds what: raw collections split by
 // collector, the net amount ever moved between admins for that month, and
-// (once closed) the payout deduction — the single source of truth
-// everything else (balances, ledger, UI) is built from.
+// each admin's own partial payout contributions so far — the single source
+// of truth everything else (balances, ledger, UI) is built from.
 export function monthFinances(gid, group, monthNum) {
   var monthDoc = monthsCache.get(monthKey(gid, monthNum)) || null;
   var payments = paymentsCache.get(monthKey(gid, monthNum)) || {};
@@ -60,21 +88,35 @@ export function monthFinances(gid, group, monthNum) {
     }
   });
   var net = (monthDoc && monthDoc.transferNet) || 0;
-  var adjA = rawA - net, adjB = rawB + net;
   var scheduledPayout = (group.payoutSchedule && group.payoutSchedule[monthNum - 1]) || 0;
-  var winners = getMonthWinners(monthDoc, scheduledPayout);
+  var rawWinners = getMonthWinners(monthDoc, scheduledPayout);
+  var payoutPaidA = 0, payoutPaidB = 0;
+  var winners = rawWinners.map(function (w) {
+    var paid = getWinnerPaid(w, monthDoc);
+    payoutPaidA += paid.paidByA; payoutPaidB += paid.paidByB;
+    var target = w.payoutAmount || 0;
+    return {
+      memberId: w.memberId, payoutAmount: target,
+      paidByA: paid.paidByA, paidByB: paid.paidByB,
+      remaining: Math.max(0, target - paid.paidByA - paid.paidByB)
+    };
+  });
   var payoutAmount = winners.length
-    ? winners.reduce(function (sum, w) { return sum + (w.payoutAmount || 0); }, 0)
+    ? winners.reduce(function (sum, w) { return sum + w.payoutAmount; }, 0)
     : scheduledPayout;
-  var finalA = adjA, finalB = adjB;
+  // Each admin's contribution reduces what they hold the moment it's
+  // recorded — a partial payout is money leaving that admin's hand right
+  // away, whether or not the month has fully closed yet (see
+  // setPayoutContribution in actions.js, which auto-closes the month once
+  // every winner's contributions add up to their full payoutAmount).
+  var adjA = rawA - net - payoutPaidA, adjB = rawB + net - payoutPaidB;
   var closed = !!monthDoc && monthDoc.status === 'closed';
-  if (closed) {
-    if (monthDoc.payoutAdmin === 'A') finalA -= payoutAmount; else if (monthDoc.payoutAdmin === 'B') finalB -= payoutAmount;
-  }
+  var allPayoutCovered = winners.length > 0 && winners.every(function (w) { return w.remaining <= 0; });
   return {
     monthDoc: monthDoc, paidCount: paidCount, totalCollected: paidCount * group.monthlyDeposit,
     rawA: rawA, rawB: rawB, net: net, adjA: adjA, adjB: adjB,
-    winners: winners, payoutAmount: payoutAmount, closed: closed, finalA: finalA, finalB: finalB
+    winners: winners, payoutAmount: payoutAmount, payoutPaidA: payoutPaidA, payoutPaidB: payoutPaidB,
+    allPayoutCovered: allPayoutCovered, closed: closed, finalA: adjA, finalB: adjB
   };
 }
 
@@ -123,7 +165,7 @@ export function recompute() {
         ledger.push({
           group: group.name, type: 'payout',
           title: 'Payout — ' + group.name + ' ' + mLabel,
-          subtitle: 'Paid to ' + winnerNames + ' by ' + adminName(f.monthDoc.payoutAdmin) + ' · ' + (f.monthDoc.closedLabel || ''),
+          subtitle: 'Paid to ' + winnerNames + ' by ' + (payoutByLabel(f) || '—') + ' · ' + (f.monthDoc.closedLabel || ''),
           amountFormatted: '−' + fmt(f.payoutAmount), amountColor: 'var(--color-text)',
           atRaw: f.monthDoc.closedAt, time: formatDateTime(f.monthDoc.closedAt)
         });
@@ -174,16 +216,6 @@ export function recompute() {
       var req = transferReqCache.get(monthKey(gid, m));
       if (req) {
         approvals.push({ kind: 'transfer', groupId: gid, groupName: group.name, month: m, direction: req.direction, amount: req.amount, requestedBy: req.requestedBy });
-      }
-
-      // Closing a month is now propose (by whichever admin picks the
-      // winner and taps close) then accept (by the other admin) — see
-      // proposeCloseMonth/acceptCloseRequest in actions.js. Until accepted
-      // the month doc's own status is still 'open' (f.closed stays false),
-      // so this doesn't duplicate the closed-month ledger entry above.
-      var closeReq = closeReqCache.get(monthKey(gid, m));
-      if (closeReq) {
-        approvals.push({ kind: 'close', groupId: gid, groupName: group.name, month: m, amount: f.payoutAmount, requestedBy: closeReq.proposedBy });
       }
 
       // Each pending hand-off (see confirmTransfer/acceptHandoffRequest in

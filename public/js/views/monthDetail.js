@@ -1,7 +1,7 @@
 import { ADMINS } from '../../firebase-config.js';
-import { state, groupsById, membersByGroup, paymentsCache, monthsCache, transferReqCache, closeReqCache, handoffReqCache, monthKey } from '../store.js';
+import { state, groupsById, membersByGroup, paymentsCache, monthsCache, transferReqCache, handoffReqCache, monthKey } from '../store.js';
 import { fmt, escapeHtml, initialsOf, colorFor, adminName, adminDot, isSuper, monthLabel, formatDateTime, otherAdmin } from '../helpers.js';
-import { monthFinances } from '../finance.js';
+import { monthFinances, payoutByLabel } from '../finance.js';
 import {
   iconChevronLeft, iconCheck, iconClose,
   iconTrophy, iconWallet, iconWarningTriangle, iconClock, iconCash, iconCard, iconTransfer, iconCalendar
@@ -42,19 +42,21 @@ export function renderMonthDetail() {
   var isClosed = f.closed;
   var isOpen = viewMonth === group.currentMonth && !isClosed;
   var isUpcoming = viewMonth > group.currentMonth;
-  // A pending close request means someone already proposed closing this
-  // (still-open) month and it's waiting on the other admin — see
-  // proposeCloseMonth/acceptCloseRequest in actions.js. Winner/amount
-  // editing locks while this is pending (see renderWinnerCard below).
-  var closeReq = isOpen ? closeReqCache.get(monthKey(gid, viewMonth)) : null;
+  // True once either admin has recorded a real contribution toward a
+  // winner's payout but the total isn't fully covered yet — see
+  // setPayoutContribution in actions.js, which closes the month itself the
+  // instant every winner's paidByA + paidByB reaches its payoutAmount, so
+  // this can never be true at the same time as isClosed. Winner/amount
+  // editing locks while this is true (see renderWinnerCard below).
+  var payoutStarted = f.winners.length > 0 && (f.payoutPaidA > 0 || f.payoutPaidB > 0);
 
-  // Gold matches the payout-approval color used on the dashboard and group
-  // detail's pending-close row — a pending close is a payout awaiting
-  // acceptance, so this status pill uses the same accent.
-  var statusLabel = isClosed ? 'Closed' : (closeReq ? 'Pending close' : (isOpen ? 'Open' : 'Upcoming'));
-  var statusBg = isClosed ? 'var(--color-success-soft)' : (closeReq ? 'var(--color-gold-soft)' : (isOpen ? 'var(--color-secondary)' : 'var(--color-border)'));
-  var statusColor = isClosed ? 'var(--color-success)' : (closeReq ? 'var(--color-gold)' : (isOpen ? 'var(--on-brand)' : 'var(--color-text-faint)'));
-  var statusIcon = isClosed ? iconCheck(statusColor) : (closeReq ? iconClock(statusColor) : (isUpcoming ? iconClock(statusColor) : ''));
+  // Gold matches the payout color used on the dashboard, the winner card,
+  // and group detail's month rows — a payout in progress gets that same
+  // accent everywhere it shows up.
+  var statusLabel = isClosed ? 'Closed' : (payoutStarted ? 'Payout in progress' : (isOpen ? 'Open' : 'Upcoming'));
+  var statusBg = isClosed ? 'var(--color-success-soft)' : (payoutStarted ? 'var(--color-gold-soft)' : (isOpen ? 'var(--color-secondary)' : 'var(--color-border)'));
+  var statusColor = isClosed ? 'var(--color-success)' : (payoutStarted ? 'var(--color-gold)' : (isOpen ? 'var(--on-brand)' : 'var(--color-text-faint)'));
+  var statusIcon = isClosed ? iconCheck(statusColor) : (payoutStarted ? iconClock(statusColor) : (isUpcoming ? iconClock(statusColor) : ''));
 
   var html = '<div class="screen">' +
     '<div class="topbar">' +
@@ -79,14 +81,15 @@ export function renderMonthDetail() {
   }
 
   if (isOpen) {
-    html += renderWinnerCard(f, members, readOnly, !!closeReq);
-    if (!readOnly) html += renderPayoutCard(f, closeReq);
+    html += renderWinnerCard(f, members, readOnly);
+    if (!readOnly) html += renderPayoutCard(f, members);
   }
 
   html += '</div>';
 
   if (state.ui.showWinnerPicker) html += renderWinnerPickerOverlay(gid, group, f, members);
   if (state.ui.paymentModal) html += renderPaymentModalOverlay(gid, viewMonth, group, members);
+  if (state.ui.payoutModal) html += renderPayoutModalOverlay(f, members);
   if (state.ui.transferSelection) html += renderTransferBar(gid, viewMonth, group);
 
   return html;
@@ -221,7 +224,7 @@ function renderClosedSummary(f, members, readOnly, gid, viewMonth) {
     '<div class="card">' + renderMemberPaymentStrip(gid, viewMonth, members, readOnly) + '</div>' +
     '<div class="card" style="display:flex;justify-content:space-between;align-items:center;">' +
       '<div><div style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--color-text-muted);">' + iconWallet() + 'Collected</div><div class="mono" style="font-size:16px;font-weight:700;color:var(--color-success);">' + fmt(f.totalCollected) + '</div></div>' +
-      '<div style="text-align:right;"><div style="font-size:12px;color:var(--color-text-muted);">Paid out by</div><div style="font-size:14px;font-weight:700;">' + adminName(f.monthDoc.payoutAdmin) + '</div></div>' +
+      '<div style="text-align:right;"><div style="font-size:12px;color:var(--color-text-muted);">Paid out by</div><div style="font-size:14px;font-weight:700;">' + escapeHtml(payoutByLabel(f) || '—') + '</div></div>' +
     '</div>' +
     '<div class="stat-row">' +
       '<div class="stat"><div class="label">' + adminDot('A') + ADMINS.A.name + ' holds</div><div class="value" style="' + (f.finalA < 0 ? 'color:var(--color-danger);' : '') + '">' + signed(f.finalA) + '</div></div>' +
@@ -351,18 +354,24 @@ function renderPaymentList(gid, viewMonth, members, f, readOnly, group, canTrans
 // Almost always exactly one winner; occasionally an admin adds more than
 // one within the same month (see getMonthWinners in finance.js), each with
 // its own editable payout amount. "Remove" + "Add another winner" covers
-// what used to be a single "Change" link.
-function renderWinnerCard(f, members, readOnly, locked) {
-  var editable = !readOnly && !locked;
+// what used to be a single "Change" link. Each winner locks independently
+// once a payout contribution has been recorded toward THEM specifically
+// (see winnerLocked in actions.js) — one winner's payout already being
+// underway never blocks adding a new winner or editing a different,
+// not-yet-started one.
+function renderWinnerCard(f, members, readOnly) {
   var html = '<div class="card" style="display:flex;flex-direction:column;gap:10px;">' +
     '<div style="display:flex;align-items:center;gap:5px;font-size:13px;font-weight:600;">' + iconTrophy() + (f.winners.length > 1 ? 'This month\'s winners' : 'This month\'s winner') + '</div>';
   if (f.winners.length) {
     html += f.winners.map(function (w) {
       var winner = members.find(function (mm) { return mm.id === w.memberId; });
       var widx = winner ? members.indexOf(winner) : -1;
+      var locked = (w.paidByA > 0 || w.paidByB > 0);
+      var editable = !readOnly && !locked;
       return '<div class="list-row" style="border-left:3px solid var(--color-gold);cursor:default;">' +
         '<div class="avatar sm" style="background:' + colorFor(widx) + ';box-shadow:0 0 0 2px var(--color-surface),0 0 0 3px var(--color-gold);">' + (winner ? initialsOf(winner.name) : '?') + '</div>' +
-        '<div style="flex:1 1 auto;font-size:13px;font-weight:600;color:var(--color-gold);min-width:0;">' + (winner ? escapeHtml(winner.name) : '—') + '</div>' +
+        '<div style="flex:1 1 auto;font-size:13px;font-weight:600;color:var(--color-gold);min-width:0;">' + (winner ? escapeHtml(winner.name) : '—') +
+          (locked ? '<div style="font-size:10.5px;font-weight:500;color:var(--color-text-muted);">Locked — payout underway</div>' : '') + '</div>' +
         (editable
           ? '<input data-winner-amount="' + w.memberId + '" type="text" inputmode="numeric" value="' + w.payoutAmount + '" style="width:100px;text-align:right;font-size:13px;font-weight:600;padding:6px 8px;border-radius:10px;border:1px solid var(--color-border);" />' +
             '<div data-action="remove-winner" data-mid="' + w.memberId + '" style="cursor:pointer;color:var(--color-danger);font-size:12px;font-weight:600;margin-left:10px;">Remove</div>'
@@ -372,44 +381,92 @@ function renderWinnerCard(f, members, readOnly, locked) {
   } else if (readOnly) {
     html += '<div style="font-size:12.5px;color:var(--color-text-muted);">No winner selected yet.</div>';
   }
-  if (editable) {
+  if (!readOnly) {
     html += '<button class="btn btn-primary" style="width:100%;" data-action="open-winner-picker">' + (f.winners.length ? 'Add another winner' : 'Select Winner') + '</button>';
-  } else if (locked) {
-    html += '<div style="font-size:11.5px;color:var(--color-text-muted);text-align:center;">Locked while the close is pending approval.</div>';
   }
   html += '</div>';
   return html;
 }
 
-function renderPayoutCard(f, closeReq) {
-  var req = transferReqCache.get(monthKey(state.activeGroupId, state.viewMonth));
-
-  if (closeReq) {
-    var iProposed = closeReq.proposedBy === state.currentAdmin;
-    return '<div class="card" style="display:flex;flex-direction:column;gap:12px;">' +
-      '<div style="display:flex;align-items:center;gap:5px;font-size:13px;font-weight:600;">' + iconWallet() + 'Record payout</div>' +
-      '<div style="display:flex;align-items:center;justify-content:space-between;">' +
-        '<div style="font-size:12px;color:var(--color-text-muted);">Payout</div>' +
-        '<div class="mono" style="font-size:16px;font-weight:700;color:var(--color-gold);">' + fmt(f.payoutAmount) + '</div>' +
-      '</div>' +
-      (iProposed
-        ? '<div style="display:flex;align-items:center;gap:4px;font-size:11.5px;color:var(--color-gold);">' + iconClock('var(--color-gold)') + 'Waiting for ' + adminName(otherAdmin(state.currentAdmin)) + ' to accept.</div>' +
-          '<button class="btn btn-danger-soft" style="width:100%;" data-action="cancel-close-request">Cancel request</button>'
-        : '<div style="font-size:11.5px;color:var(--color-text-muted);">' + adminName(closeReq.proposedBy) + ' wants to close this month and pay out the amount above.</div>' +
-          '<div style="display:flex;gap:8px;">' +
-            '<button class="btn btn-danger-soft" style="flex:1 1 0;" data-action="reject-close-request">Reject</button>' +
-            '<button class="btn btn-primary" style="flex:1 1 0;background:var(--color-gold);" data-action="accept-close-request">Accept</button>' +
-          '</div>') +
+// Each admin records their own contribution toward a winner's payout —
+// there's no approval step (see setPayoutContribution in actions.js): the
+// month closes itself automatically the moment every winner's paidByA +
+// paidByB reaches its payoutAmount. Tapping a winner row opens
+// renderPayoutModalOverlay to enter/adjust the signed-in admin's own share.
+function renderPayoutCard(f, members) {
+  if (!f.winners.length) return '';
+  var rows = f.winners.map(function (w) {
+    var winner = members.find(function (mm) { return mm.id === w.memberId; });
+    var widx = winner ? members.indexOf(winner) : -1;
+    var covered = w.remaining <= 0;
+    return '<div class="list-row" data-action="open-payout-modal" data-mid="' + w.memberId + '" style="cursor:pointer;' + (covered ? 'border-left:3px solid var(--color-success);' : '') + '">' +
+      '<div class="avatar sm" style="background:' + colorFor(widx) + ';">' + (winner ? initialsOf(winner.name) : '?') + '</div>' +
+      '<div style="flex:1 1 auto;min-width:0;"><div style="font-size:13px;font-weight:600;">' + (winner ? escapeHtml(winner.name) : '—') + '</div>' +
+      '<div style="font-size:11px;color:var(--color-text-muted);margin-top:1px;">' + adminName('A') + ': ' + fmt(w.paidByA) + ' · ' + adminName('B') + ': ' + fmt(w.paidByB) + '</div></div>' +
+      (covered
+        ? '<div style="flex-shrink:0;display:flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;padding:5px 10px;border-radius:20px;background:var(--color-success-soft);color:var(--color-success);">' + iconCheck('var(--color-success)') + 'Paid</div>'
+        : '<div style="text-align:right;flex-shrink:0;"><div style="font-size:10.5px;color:var(--color-text-muted);">Remaining</div><div class="mono" style="font-size:13px;font-weight:700;color:var(--color-gold);">' + fmt(w.remaining) + '</div></div>') +
     '</div>';
-  }
-
-  var canClose = f.winners.length && !req;
-  return '<div class="card" style="display:flex;flex-direction:column;gap:12px;">' +
+  }).join('');
+  return '<div class="card" style="display:flex;flex-direction:column;gap:10px;">' +
     '<div style="display:flex;align-items:center;gap:5px;font-size:13px;font-weight:600;">' + iconWallet() + 'Record payout</div>' +
-    (req ? '<div style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--color-warning);">' + iconWarningTriangle('var(--color-warning)') + 'Resolve the pending transfer request above before closing this month.</div>' : '') +
-    '<button class="btn btn-primary ' + (canClose ? '' : 'disabled') + '" style="width:100%; background:' + (canClose ? 'var(--color-accent)' : 'var(--color-disabled)') + ';" data-action="propose-close-month">Close Month &amp; Pay ' + fmt(f.payoutAmount) + '</button>' +
-    (f.winners.length ? '<div style="font-size:11px;color:var(--color-text-muted);text-align:center;">' + adminName(otherAdmin(state.currentAdmin)) + ' will need to accept before this is final.</div>' : '') +
+    rows +
   '</div>';
+}
+
+function renderPayoutModalOverlay(f, members) {
+  var pm = state.ui.payoutModal;
+  var w = f.winners.find(function (x) { return x.memberId === pm.memberId; });
+  if (!w) return '';
+  var winner = members.find(function (mm) { return mm.id === w.memberId; });
+  var widx = winner ? members.indexOf(winner) : -1;
+  var myField = state.currentAdmin === 'A' ? 'paidByA' : 'paidByB';
+  var otherField = state.currentAdmin === 'A' ? 'paidByB' : 'paidByA';
+  var myAmount = w[myField] || 0;
+  var otherAmount = w[otherField] || 0;
+  var maxForMe = Math.max(0, w.payoutAmount - otherAmount);
+  // Live preview of what Save would do, recomputed on every keystroke (see
+  // the 'payoutDraftAmount' input handler in events.js). Typing past
+  // maxForMe is allowed (so the raw number stays visible with an error),
+  // but setPayoutContribution in actions.js rejects it outright rather
+  // than clamping — so the preview below freezes at the valid max instead
+  // of showing a false "what if" for an amount that won't actually save.
+  var rawDraft = pm.draftAmount || 0;
+  var exceeds = rawDraft > maxForMe;
+  var draftAmount = exceeds ? maxForMe : rawDraft;
+  var draftRemaining = Math.max(0, w.payoutAmount - otherAmount - draftAmount);
+  var myBefore = state.currentAdmin === 'A' ? f.adjA : f.adjB;
+  var myAfter = myBefore - (draftAmount - myAmount);
+
+  return '<div class="overlay"><div class="sheet">' +
+    '<div class="sheet-header">' +
+      '<div class="avatar sm" style="background:' + colorFor(widx) + ';">' + (winner ? initialsOf(winner.name) : '?') + '</div>' +
+      '<div style="flex:1 1 auto;min-width:0;"><div style="font-size:14px;font-weight:700;">' + (winner ? escapeHtml(winner.name) : '—') + '</div>' +
+      '<div style="font-size:11.5px;color:var(--color-text-muted);">Payout target ' + fmt(w.payoutAmount) + '</div></div>' +
+      '<div class="sheet-close" data-action="close-payout-modal">' + iconClose() + '</div>' +
+    '</div>' +
+    '<div class="sheet-body">' +
+      '<div style="text-align:center;padding:8px 0 4px;">' +
+        '<div style="font-size:11px;color:var(--color-text-muted);margin-bottom:2px;">Remaining</div>' +
+        '<div class="mono" style="font-size:32px;font-weight:700;color:' + (draftRemaining > 0 ? 'var(--color-gold)' : 'var(--color-success)') + ';">' + fmt(draftRemaining) + '</div>' +
+      '</div>' +
+      '<div>' +
+        '<div style="font-size:12px;font-weight:600;color:var(--color-text-muted);margin-bottom:8px;">Your contribution</div>' +
+        '<div style="display:flex;gap:8px;">' +
+          '<input data-field="payoutDraftAmount" type="text" inputmode="numeric" value="' + rawDraft + '" style="flex:1 1 auto;min-width:0;font-size:16px;font-weight:700;padding:10px 12px;border-radius:10px;border:1px solid ' + (exceeds ? 'var(--color-danger)' : 'var(--color-border)') + ';" />' +
+          '<button class="btn btn-outline" style="flex-shrink:0;" data-action="fill-remaining-payout" data-mid="' + w.memberId + '" data-amount="' + maxForMe + '">Fill remaining</button>' +
+        '</div>' +
+        (exceeds
+          ? '<div style="font-size:11px;color:var(--color-danger);margin-top:6px;">Exceeds the payout total by ' + fmt(rawDraft - maxForMe) + ' — reduce to save.</div>'
+          : '<div style="font-size:11px;color:var(--color-text-muted);margin-top:6px;">Up to ' + fmt(maxForMe) + ' — the rest of the target after ' + adminName(otherAdmin(state.currentAdmin)) + '\'s share.</div>') +
+      '</div>' +
+      '<div>' +
+        '<div style="font-size:12px;font-weight:600;color:var(--color-text-muted);margin-bottom:8px;">Your holdings, if you save this</div>' +
+        '<div class="stat"><div class="label">' + adminDot(state.currentAdmin) + adminName(state.currentAdmin) + '</div><div class="value" style="' + (myAfter < 0 ? 'color:var(--color-danger);' : '') + '">' + signed(myBefore) + ' <span style="color:var(--color-text-faint);font-weight:400;">→</span> ' + signed(myAfter) + '</div></div>' +
+      '</div>' +
+      '<button class="btn btn-primary ' + (exceeds ? 'disabled' : '') + '" style="width:100%;" data-action="save-payout" data-mid="' + w.memberId + '">Save</button>' +
+    '</div>' +
+  '</div></div>';
 }
 
 function renderWinnerPickerOverlay(gid, group, f, members) {
