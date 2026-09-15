@@ -16,7 +16,7 @@
 // upcoming, the status pill, which overlay is showing) and assembly only.
 import { state, groupsById, membersByGroup } from '../../store.js';
 import { isSuper, escapeHtml, monthLabel } from '../../helpers.js';
-import { monthFinances } from '../../finance.js';
+import { monthFinances } from '../../finance/monthFinances.js';
 import { iconChevronLeft, iconCheck, iconClock, iconCalendar } from '../../icons.js';
 import { bar, skeletonListRow } from '../../skeleton.js';
 import { renderHandoffRequests } from './handoffRequests.js';

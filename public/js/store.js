@@ -14,7 +14,7 @@ export var state = {
   balances: { A: 0, B: 0, total: 0 },
   groupsLoaded: false, // true once the groups listener has delivered its first snapshot — lets the dashboard tell "no groups yet" apart from "still loading" instead of flashing an empty state
   ledgerEntries: [],
-  pendingApprovals: [],   // [{kind:'transfer'|'handoff', groupId, groupName, month, requestedBy, amount, ...}] — see recompute() in finance.js
+  pendingApprovals: [],   // [{kind:'transfer'|'handoff', groupId, groupName, month, requestedBy, amount, ...}] — see recompute() in finance/ledger.js
   busy: false,
   ui: {
     showWinnerPicker: false,

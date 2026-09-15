@@ -2,7 +2,7 @@ import { doc, setDoc, deleteDoc, runTransaction, serverTimestamp } from 'https:/
 import { db } from '../firebase.js';
 import { state, groupsById, transferReqCache, monthKey } from '../store.js';
 import { isSuper } from '../helpers.js';
-import { monthFinances } from '../finance.js';
+import { monthFinances } from '../finance/monthFinances.js';
 import { setBusy } from './shared.js';
 
 // A whole-month, admin-to-admin holdings transfer — distinct from a

@@ -2,7 +2,7 @@ import { doc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.14.1/fireb
 import { db } from '../../firebase.js';
 import { state, groupsById, monthsCache, monthKey } from '../../store.js';
 import { isSuper } from '../../helpers.js';
-import { getMonthWinners } from '../../finance.js';
+import { getMonthWinners } from '../../finance/shared.js';
 import { pushNav } from '../../router.js';
 import { render } from '../../render.js';
 import { setBusy } from '../shared.js';
@@ -21,7 +21,7 @@ export function closeWinnerPicker() { history.back(); }
 // after money has already started moving toward them would leave paidByA/
 // paidByB pointing at the wrong thing. Scoped to the one winner rather than
 // the whole month: with more than one winner (see getMonthWinners in
-// finance.js), a payout already in progress for one shouldn't block adding
+// finance/shared.js), a payout already in progress for one shouldn't block adding
 // a brand-new winner or editing a different, not-yet-started one.
 function winnerLocked(w) {
   return !!w && ((w.paidByA || 0) > 0 || (w.paidByB || 0) > 0);
@@ -30,7 +30,7 @@ function winnerLocked(w) {
 // Almost every month has exactly one winner, but admins occasionally pay
 // out to more than one member within the same month (most often when
 // group.durationMonths < members.length) — so winners are a list, appended
-// to rather than replaced. See getMonthWinners in finance.js. Adding a new
+// to rather than replaced. See getMonthWinners in finance/shared.js. Adding a new
 // winner never conflicts with an existing one's payout, so there's nothing
 // to lock here.
 export async function addWinner(memberId) {
