@@ -17,6 +17,7 @@ function navSnapshot() {
   var pm = state.ui.paymentModal;
   var mf = state.ui.memberForm;
   var amg = state.ui.addMemberToGroup;
+  var pom = state.ui.payoutModal;
   return {
     screen: state.screen,
     activeGroupId: state.activeGroupId,
@@ -26,6 +27,7 @@ function navSnapshot() {
     paymentModalMemberId: pm ? pm.memberId : null,
     paymentModalMode: pm ? pm.mode : null,
     paymentModalEditing: pm ? pm.isEditing : null,
+    payoutModalMemberId: pom ? pom.memberId : null,
     createGroupStep: state.ui.newGroup ? state.ui.newGroup.step : null,
     memberFormMode: mf ? (mf.id ? 'edit' : 'new') : null,
     memberFormId: mf ? mf.id : null,
@@ -80,6 +82,12 @@ window.addEventListener('popstate', function (e) {
   state.ui.paymentModal = snap.paymentModalMemberId
     ? { memberId: snap.paymentModalMemberId, mode: snap.paymentModalMode, isEditing: !!snap.paymentModalEditing }
     : null;
+  // draftAmount isn't part of the snapshot (same "an overlay draft isn't
+  // preserved" convention as paymentModal above) — reopening via Back/
+  // Forward starts it at 0 rather than the share-remaining default
+  // openPayoutModal() would compute, since that computation needs the
+  // month's finance data this handler doesn't have.
+  state.ui.payoutModal = snap.payoutModalMemberId ? { memberId: snap.payoutModalMemberId, draftAmount: 0 } : null;
   if (state.ui.newGroup && snap.createGroupStep) state.ui.newGroup.step = snap.createGroupStep;
   state.ui.memberForm = snap.memberFormMode
     ? { id: snap.memberFormMode === 'edit' ? snap.memberFormId : null,
@@ -95,6 +103,7 @@ export function goTo(screen, extra) {
   state.screen = screen;
   state.ui.showWinnerPicker = false;
   state.ui.paymentModal = null;
+  state.ui.payoutModal = null;
   state.ui.memberForm = null;
   state.ui.addMemberToGroup = null;
   state.ui.transferSelection = null;
