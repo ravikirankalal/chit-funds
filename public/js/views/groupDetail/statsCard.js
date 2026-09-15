@@ -61,7 +61,7 @@ export function renderStatsCard(gid, group, members, figures, trend) {
       statCell(iconPeopleSmall() + 'Members', '<span>' + members.length + '</span>' + iconChevronRight(), { border: true, style: 'cursor:pointer;', attrs: ' data-action="open-group-members" data-gid="' + gid + '"' })
     ) +
     statRow(
-      statCell('Collections', '<span>' + fmt(collectedSoFar) + '</span>' + pctTag(collectedPct), { below: progressSliver(collectedPct, 'var(--color-success)') }) +
+      statCell('Collections', '<span style="color:var(--color-primary);">' + fmt(collectedSoFar) + '</span>' + pctTag(collectedPct), { below: progressSliver(collectedPct, 'var(--color-primary)') }) +
       statCell('Payouts', '<span>' + fmt(payoutSoFar) + '</span>' + pctTag(payoutPct), { border: true, below: progressSliver(payoutPct, 'var(--color-accent)') }) +
       statCell('Profit', '<span style="color:' + profitSoFarColor + ';">' + signed(profitSoFar) + '</span>', { border: true }),
       true

@@ -29,6 +29,7 @@ export function renderClosedSummary(f, members, readOnly, gid, viewMonth) {
       '</div>' +
     '</div>';
   }).join('') || '<div class="card" style="color:var(--color-text-muted);font-size:13px;text-align:center;">No winner recorded.</div>';
+  var paidOutByLine = '<div style="font-size:12px;color:var(--color-text-muted);padding:0 2px;">Paid out by <span style="font-weight:700;color:var(--color-text);">' + escapeHtml(payoutByLabel(f) || '—') + '</span></div>';
 
   return '<div style="display:flex;flex-direction:column;gap:10px;">' +
     (unpaidCount > 0
@@ -36,15 +37,13 @@ export function renderClosedSummary(f, members, readOnly, gid, viewMonth) {
         '<div style="font-size:12.5px;color:var(--color-text-muted);">This month is closed but dues are outstanding — tap an unpaid member below to record their payment.</div></div>'
       : '') +
     winnerCards +
+    paidOutByLine +
     (readOnly ? '' : '<button class="btn btn-primary" style="width:100%;" data-action="open-winner-picker">Add another winner</button>') +
     '<div class="card">' + renderMemberPaymentStrip(gid, viewMonth, members, readOnly) + '</div>' +
-    '<div class="card" style="display:flex;flex-direction:column;gap:8px;">' +
-      '<div style="display:flex;">' +
-        summaryStat(iconWallet() + 'Collections', '<span style="color:var(--color-success);">' + fmt(f.totalCollected) + '</span>') +
-        summaryStat('Payouts', '<span style="color:var(--color-accent);">' + fmt(f.payoutAmount) + '</span>', true) +
-        summaryStat('Profit', '<span style="color:' + closedProfitColor + ';">' + signed(closedProfit) + '</span>', true) +
-      '</div>' +
-      '<div style="font-size:12px;color:var(--color-text-muted);">Paid out by <span style="font-weight:700;color:var(--color-text);">' + escapeHtml(payoutByLabel(f) || '—') + '</span></div>' +
+    '<div class="card" style="display:flex;">' +
+      summaryStat(iconWallet() + 'Collections', '<span style="color:var(--color-primary);">' + fmt(f.totalCollected) + '</span>') +
+      summaryStat('Payouts', '<span style="color:var(--color-accent);">' + fmt(f.payoutAmount) + '</span>', true) +
+      summaryStat('Profit', '<span style="color:' + closedProfitColor + ';">' + signed(closedProfit) + '</span>', true) +
     '</div>' +
     '<div class="stat-row">' +
       '<div class="stat"><div class="label">' + adminDot('A') + ADMINS.A.name + ' holds</div><div class="value" style="' + (f.finalA < 0 ? 'color:var(--color-danger);' : '') + '">' + signed(f.finalA) + '</div><div style="font-size:10.5px;color:var(--color-text-muted);margin-top:1px;">' + f.paidCountA + ' member' + (f.paidCountA === 1 ? '' : 's') + ' collected</div></div>' +
@@ -67,7 +66,7 @@ export function renderOpenSummary(f, members, group, readOnly, gid, viewMonth) {
   var openProfitColor = openProfit < 0 ? 'var(--color-danger)' : 'var(--color-success)';
   return '<div class="card" style="display:flex;flex-direction:column;gap:10px;">' +
     '<div style="display:flex;">' +
-      summaryStat(iconWallet() + 'Collections', fmt(f.totalCollected) + ' <span style="font-size:12px;color:var(--color-text-muted);font-weight:400;">/ ' + fmt(expected) + '</span>') +
+      summaryStat(iconWallet() + 'Collections', '<span style="color:var(--color-primary);">' + fmt(f.totalCollected) + '</span> <span style="font-size:12px;color:var(--color-text-muted);font-weight:400;">/ ' + fmt(expected) + '</span>') +
       summaryStat(iconTrophy() + 'Payout', '<span style="color:var(--color-accent);">' + fmt(f.payoutAmount) + '</span> <span style="font-size:12px;color:var(--color-text-muted);font-weight:400;">/ ' + fmt(setupPayout) + '</span>', true) +
       summaryStat('Profit', '<span style="color:' + openProfitColor + ';">' + signed(openProfit) + '</span>', true) +
     '</div>' +
