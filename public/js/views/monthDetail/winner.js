@@ -1,51 +1,13 @@
-import { fmt, escapeHtml, colorFor, initialsOf } from '../../helpers.js';
+import { colorFor, initialsOf, escapeHtml } from '../../helpers.js';
 import { monthFinances } from '../../finance/monthFinances.js';
 import { iconTrophy, iconClose } from '../../icons.js';
 
-// Almost always exactly one winner; occasionally an admin adds more than
-// one within the same month (see getMonthWinners in finance/shared.js), each with
-// its own editable payout amount. "Remove" + "Add another winner" covers
-// what used to be a single "Change" link. Each winner locks independently
-// once a payout contribution has been recorded toward THEM specifically
-// (see winnerLocked in actions/winners/picker.js) — one winner's payout already being
-// underway never blocks adding a new winner or editing a different,
-// not-yet-started one.
-//
-// Open months only — a closed month's winners (including one added via
-// "Add another winner" after close) get their Remove affordance on the
-// per-winner card in the closed summary instead (monthDetail/summary.js),
-// right where they're already shown; a second, separate card here would
-// just duplicate that listing.
-export function renderWinnerCard(f, members, readOnly) {
-  var winners = f.winners;
-  var html = '<div class="card" style="display:flex;flex-direction:column;gap:10px;">' +
-    '<div style="display:flex;align-items:center;gap:5px;font-size:13px;font-weight:600;">' + iconTrophy() + (winners.length > 1 ? 'This month\'s winners' : 'This month\'s winner') + '</div>';
-  if (winners.length) {
-    html += winners.map(function (w) {
-      var winner = members.find(function (mm) { return mm.id === w.memberId; });
-      var widx = winner ? members.indexOf(winner) : -1;
-      var locked = (w.paidByA > 0 || w.paidByB > 0);
-      var editable = !readOnly && !locked;
-      return '<div class="list-row" style="border-left:3px solid var(--color-gold);cursor:default;">' +
-        '<div class="avatar sm" style="background:' + colorFor(widx) + ';box-shadow:0 0 0 2px var(--color-surface),0 0 0 3px var(--color-gold);">' + (winner ? initialsOf(winner.name) : '?') + '</div>' +
-        '<div style="flex:1 1 auto;font-size:13px;font-weight:600;color:var(--color-gold);min-width:0;">' + (winner ? escapeHtml(winner.name) : '—') +
-          (locked ? '<div style="font-size:10.5px;font-weight:500;color:var(--color-text-muted);">Locked — payout underway</div>' : '') + '</div>' +
-        (editable
-          ? '<input data-winner-amount="' + w.memberId + '" type="text" inputmode="numeric" value="' + w.payoutAmount + '" style="width:100px;text-align:right;font-size:13px;font-weight:600;padding:6px 8px;border-radius:10px;border:1px solid var(--color-border);" />' +
-            '<div data-action="remove-winner" data-mid="' + w.memberId + '" style="cursor:pointer;color:var(--color-danger);font-size:12px;font-weight:600;margin-left:10px;">Remove</div>'
-          : '<div class="mono" style="font-size:13px;font-weight:700;color:var(--color-gold);">' + fmt(w.payoutAmount) + '</div>') +
-      '</div>';
-    }).join('');
-  } else if (readOnly) {
-    html += '<div style="font-size:12.5px;color:var(--color-text-muted);">No winner selected yet.</div>';
-  }
-  if (!readOnly) {
-    html += '<button class="btn btn-primary" style="width:100%;" data-action="open-winner-picker">' + (f.winners.length ? 'Add another winner' : 'Select Winner') + '</button>';
-  }
-  html += '</div>';
-  return html;
-}
-
+// The winner picker overlay only — the winner(s) themselves are shown on
+// their own card at the top of the month's summary instead (monthDetail/
+// summary.js's renderWinnerTopCards), for both open and closed months alike,
+// complete with payout status and a Remove link while removable. That's
+// also where "Add another winner"/"Select Winner" opens this from
+// (monthDetail/index.js), so nothing here needs its own winner-listing card.
 export function renderWinnerPickerOverlay(gid, group, f, members) {
   var wonIds = {};
   for (var m2 = 1; m2 <= group.durationMonths; m2++) {

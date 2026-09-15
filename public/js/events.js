@@ -14,7 +14,7 @@ import { flatPayoutSchedule } from './helpers.js';
 import {
   startCreateGroup, createGroupStep2, addDraftMember, addExistingDraftMember, removeDraftMember, submitCreateGroup,
   openGroupDetail, openGroupMembers, openMemberPayments, removeMemberFromGroup, openMonth, openPaymentModal, closePaymentModal, setModalMode,
-  savePaymentModal, markUnpaidFromModal, selectPaymentTab, setLedgerFilter, openWinnerPicker, closeWinnerPicker, addWinner, removeWinner, setWinnerAmount,
+  savePaymentModal, markUnpaidFromModal, selectPaymentTab, setLedgerFilter, openWinnerPicker, closeWinnerPicker, addWinner, removeWinner,
   openPayoutModal, closePayoutModal, setPayoutContribution,
   requestTransferToB, requestTransferToA,
   acceptTransferRequest, declineTransferRequest, cancelTransferRequest,
@@ -152,10 +152,10 @@ document.addEventListener('input', function (e) {
     return;
   }
   if (field === 'payoutDraftAmount' && state.ui.payoutModal) {
-    // Re-rendering on every keystroke (rather than committing on blur like
-    // setWinnerAmount) is what makes the before/after holdings preview in
-    // renderPayoutModalOverlay live — nothing is written to Firestore until
-    // Save (see setPayoutContribution in actions/winners/payout.js).
+    // Re-rendering on every keystroke is what makes the before/after
+    // holdings preview in renderPayoutModalOverlay live — nothing is
+    // written to Firestore until Save (see setPayoutContribution in
+    // actions/winners/payout.js).
     state.ui.payoutModal.draftAmount = parseFloat(e.target.value) || 0;
     render();
     return;
@@ -180,13 +180,4 @@ document.addEventListener('input', function (e) {
   }
   else if (field === 'draftMemberName') g.draftMemberName = e.target.value;
   render(); // render() itself preserves focus/caret on the field being typed in
-});
-
-// A winner's payout amount is already-persisted Firestore data, not local
-// draft state — commit on 'change' (blur/Enter) rather than on every
-// keystroke like the draft fields above, so it doesn't write on each digit.
-document.addEventListener('change', function (e) {
-  var mid = e.target.getAttribute && e.target.getAttribute('data-winner-amount');
-  if (!mid) return;
-  setWinnerAmount(mid, parseFloat(e.target.value) || 0);
 });
