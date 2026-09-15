@@ -31,7 +31,7 @@ export function timelineRow(dotColor, title, status, statusStyle, amount) {
 // visual index into the "X / Y paid" count above, since the count alone
 // doesn't say WHICH members are still outstanding without opening the
 // payment list below. Mirrors the collection-trend sparkline on the group
-// detail screen (public/js/views/groupDetail.js), but the per-item value
+// detail screen (public/js/views/groupDetail/statsCard.js), but the per-item value
 // here is binary (paid/unpaid) rather than a percentage. Each bar reuses
 // the existing 'open-payment-modal' action so tapping one jumps straight
 // to that member, same as tapping their row in the payment list.

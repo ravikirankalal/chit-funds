@@ -22,7 +22,7 @@ export function renderPaymentModalOverlay(gid, viewMonth, group, members) {
     // collectedBy/transferredAt only ever reflect the CURRENT holder — the
     // full chain of hand-offs (an amount can move A->B, then later B->A
     // again) lives in transferLog, appended to on every confirmTransfer
-    // (see actions.js). Its first entry's `from` is who originally
+    // (see actions/handoffs.js). Its first entry's `from` is who originally
     // collected it, before any transfer happened.
     var log = existingP.transferLog || [];
     var originalCollector = log.length ? log[0].from : existingP.collectedBy;

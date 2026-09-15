@@ -8,7 +8,7 @@ import { renderLogin } from './views/login.js';
 import { renderDashboard } from './views/dashboard.js';
 import { renderMembers } from './views/members.js';
 import { renderLedger } from './views/ledger.js';
-import { renderGroupDetail, scrollToActiveMonth } from './views/groupDetail.js';
+import { renderGroupDetail, scrollToActiveMonth } from './views/groupDetail/index.js';
 import { renderGroupMembers } from './views/groupMembers.js';
 import { renderMemberPayments } from './views/memberPayments.js';
 import { renderCreateGroup } from './views/createGroup.js';
@@ -105,7 +105,7 @@ function addBusyOverlay(root) {
   root.appendChild(overlay);
 }
 
-// setBusy(true) (actions.js) calls this directly instead of going through
+// setBusy(true) (actions/shared.js) calls this directly instead of going through
 // the full render() above, specifically to avoid triggering one. A full
 // render() replaces root.innerHTML — rebuilding every DOM node, including
 // whatever overlay/sheet is currently open — which restarts its CSS

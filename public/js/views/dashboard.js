@@ -31,7 +31,7 @@ function renderLoadingSkeleton() {
 
 // Pending approvals still needing THIS admin's action are hand-offs and
 // the net-balance transfer request — payouts no longer need approval (see
-// setPayoutContribution in actions.js: each admin just records their own
+// setPayoutContribution in actions/winners/payout.js: each admin just records their own
 // share). Secondary is the transfer/info color used everywhere else money
 // moves between admins (see the handoff banner in month detail, which is
 // also `.banner.info` = secondary).
