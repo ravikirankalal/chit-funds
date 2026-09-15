@@ -1,4 +1,4 @@
-import { monthFinances } from '../../../finance.js';
+import { monthFinances } from '../../../finance/monthFinances.js';
 import { renderClosedMonthRow } from './closedRow.js';
 import { renderOpenMonthRow } from './openRow.js';
 import { renderUpcomingMonthRow } from './upcomingRow.js';

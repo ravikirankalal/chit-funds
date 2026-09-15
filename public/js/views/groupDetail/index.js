@@ -11,7 +11,7 @@
 // (collected/payout/holds so far), the loading skeleton, and assembly.
 import { state, groupsById, membersByGroup } from '../../store.js';
 import { escapeHtml, monthLabel } from '../../helpers.js';
-import { monthFinances } from '../../finance.js';
+import { monthFinances } from '../../finance/monthFinances.js';
 import { iconChevronLeft, iconCalendar, iconGroupStack } from '../../icons.js';
 import { bar, skeletonTopbar, skeletonListRow } from '../../skeleton.js';
 import { renderStatsCard } from './statsCard.js';

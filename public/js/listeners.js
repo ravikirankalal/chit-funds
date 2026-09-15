@@ -7,7 +7,7 @@ import { onSnapshot, collection, collectionGroup } from 'https://www.gstatic.com
 import { db } from './firebase.js';
 import { state, groupsById, membersById, membersByGroup, monthsCache, paymentsCache, transferReqCache, handoffReqCache, monthKey, clearCaches } from './store.js';
 import { pathParts } from './helpers.js';
-import { recompute } from './finance.js';
+import { recompute } from './finance/ledger.js';
 import { render } from './render.js';
 
 var recomputeScheduled = false;

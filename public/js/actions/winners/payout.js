@@ -2,7 +2,7 @@ import { doc, updateDoc, runTransaction, serverTimestamp } from 'https://www.gst
 import { db } from '../../firebase.js';
 import { state, groupsById, monthsCache, monthKey } from '../../store.js';
 import { isSuper, monthLabel, fmt } from '../../helpers.js';
-import { getMonthWinners } from '../../finance.js';
+import { getMonthWinners } from '../../finance/shared.js';
 import { pushNav } from '../../router.js';
 import { render } from '../../render.js';
 import { setBusy } from '../shared.js';

@@ -1,9 +1,9 @@
 import { fmt, escapeHtml, colorFor, initialsOf } from '../../helpers.js';
-import { monthFinances } from '../../finance.js';
+import { monthFinances } from '../../finance/monthFinances.js';
 import { iconTrophy, iconClose } from '../../icons.js';
 
 // Almost always exactly one winner; occasionally an admin adds more than
-// one within the same month (see getMonthWinners in finance.js), each with
+// one within the same month (see getMonthWinners in finance/shared.js), each with
 // its own editable payout amount. "Remove" + "Add another winner" covers
 // what used to be a single "Change" link. Each winner locks independently
 // once a payout contribution has been recorded toward THEM specifically

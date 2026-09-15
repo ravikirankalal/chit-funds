@@ -1,7 +1,7 @@
 import { ADMINS } from '../../firebase-config.js';
 import { state, groupsById, membersByGroup } from '../store.js';
 import { fmt, escapeHtml, adminName, adminAvatarColor, adminDot, initialsOf, isSuper, monthLabel } from '../helpers.js';
-import { monthFinances } from '../finance.js';
+import { monthFinances } from '../finance/monthFinances.js';
 import { iconChevronRight, iconPlus, iconWallet, iconGroupStack, iconPeopleSmall, iconCalendar, iconTrophy, iconTrendingUp, iconTransfer, iconClock } from '../icons.js';
 import { renderBottomNav } from './bottomNav.js';
 import { bar } from '../skeleton.js';
@@ -105,7 +105,7 @@ export function renderDashboard() {
       ? '<span style="font-size:12px;color:var(--color-primary);font-weight:600;">Completed</span>'
       : '<span style="display:flex;align-items:center;gap:4px;font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;background:' + (allPaid ? 'var(--color-success-soft)' : 'var(--color-warning-soft)') + ';color:' + (allPaid ? 'var(--color-success)' : 'var(--color-warning)') + ';">' + f.paidCount + '/' + memberCount + ' paid</span>';
     // Winner names resolved here rather than stored — a month doc only
-    // ever holds memberIds (see getMonthWinners in finance.js).
+    // ever holds memberIds (see getMonthWinners in finance/shared.js).
     var winnerNames = f.winners.map(function (w) {
       var mm = members.find(function (x) { return x.id === w.memberId; });
       return mm ? mm.name : '—';

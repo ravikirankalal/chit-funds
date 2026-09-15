@@ -1,6 +1,6 @@
 import { ADMINS } from '../../../firebase-config.js';
 import { fmt, escapeHtml, initialsOf, colorFor, adminDot, monthLabel } from '../../helpers.js';
-import { payoutByLabel } from '../../finance.js';
+import { payoutByLabel } from '../../finance/shared.js';
 import { iconTrophy, iconWallet, iconWarningTriangle, iconClock, iconCheck } from '../../icons.js';
 import { signed, summaryStat, renderMemberPaymentStrip } from './shared.js';
 
@@ -10,7 +10,7 @@ export function renderClosedSummary(f, members, readOnly, gid, viewMonth) {
   var closedProfitColor = closedProfit < 0 ? 'var(--color-danger)' : 'var(--color-success)';
   // Almost always exactly one winner — this loop renders identically to the
   // old single-card layout in that case. A closed month occasionally has
-  // more than one (see getMonthWinners in finance.js), each with its own
+  // more than one (see getMonthWinners in finance/shared.js), each with its own
   // payout amount. A closed month isn't frozen — an admin can still add a
   // winner they missed, same as late payments are still editable post-close.
   var winnerCards = f.winners.map(function (w) {

@@ -4,7 +4,7 @@ import {
 import { db } from '../firebase.js';
 import { state, groupsById, membersById } from '../store.js';
 import { isSuper } from '../helpers.js';
-import { memberHasPaidInGroup } from '../finance.js';
+import { memberHasPaidInGroup } from '../finance/membership.js';
 import { pushNav } from '../router.js';
 import { render } from '../render.js';
 import { setBusy } from './shared.js';

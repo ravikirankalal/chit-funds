@@ -1,6 +1,6 @@
 import { state, groupsById, membersById, monthKey, paymentsCache } from '../store.js';
 import { fmt, escapeHtml, monthLabel, adminName, formatDateTime } from '../helpers.js';
-import { monthFinances } from '../finance.js';
+import { monthFinances } from '../finance/monthFinances.js';
 import { iconChevronLeft, iconCheck, iconWallet, iconTrophy, iconCalendar, iconPeopleSmall } from '../icons.js';
 import { bar, skeletonTopbar, skeletonListRow } from '../skeleton.js';
 

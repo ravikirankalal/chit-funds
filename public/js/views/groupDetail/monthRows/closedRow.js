@@ -6,7 +6,7 @@ import { adminAmountSpan, rightMoneyColumn } from './shared.js';
 // monthFinances() result and `monthPct` its raw (unclamped) paid percentage.
 export function renderClosedMonthRow(gid, group, m, f, members, monthPct) {
   // Almost always one winner; occasionally more than one (see
-  // getMonthWinners in finance.js) — join their names for the subtitle.
+  // getMonthWinners in finance/shared.js) — join their names for the subtitle.
   var winnerNames = f.winners.map(function (w) {
     var mm = members.find(function (x) { return x.id === w.memberId; });
     return mm ? mm.name : '—';
