@@ -41,6 +41,21 @@ export async function addWinner(memberId) {
   var scheduled = (group.payoutSchedule && group.payoutSchedule[m - 1]) || 0;
   var current = getMonthWinners(monthDoc, scheduled);
   if (current.some(function (w) { return w.memberId === memberId; })) { state.ui.showWinnerPicker = false; render(); history.back(); return; }
+  // Migrating off the legacy single-winnerId field (monthDoc.winners
+  // doesn't exist yet) loses monthDoc.payoutAdmin's meaning the moment a
+  // real winners array is written — finance/monthFinances.js's
+  // getWinnerPaid only honors payoutAdmin while monthDoc.winners is still
+  // absent, so it can tell "old data" apart from a genuinely-unpaid entry
+  // in a real array. Stamp the synthesized winner(s) with their historical
+  // paidByA/paidByB now, before adding the brand-new (actually unpaid) one,
+  // so a month that was already closed doesn't retroactively look unpaid.
+  if (!(monthDoc && monthDoc.winners) && monthDoc && monthDoc.status === 'closed' && monthDoc.payoutAdmin) {
+    current = current.map(function (w) {
+      return monthDoc.payoutAdmin === 'A'
+        ? { memberId: w.memberId, payoutAmount: w.payoutAmount, paidByA: w.payoutAmount || 0, paidByB: 0 }
+        : { memberId: w.memberId, payoutAmount: w.payoutAmount, paidByA: 0, paidByB: w.payoutAmount || 0 };
+    });
+  }
   setBusy(true);
   try {
     await updateDoc(doc(db, 'groups', gid, 'months', String(m)), { winners: current.concat([{ memberId: memberId, payoutAmount: scheduled }]) });

@@ -97,6 +97,15 @@ export function renderMonthDetail() {
     html += renderPaymentList(gid, viewMonth, members, f, readOnly, group, isOpen || isClosed);
   }
 
+  // Closed-month "Add another winner" lives at the very end of the page,
+  // not up with the winner card(s) — it's a rare correction (an admin
+  // catching a winner they missed after closing), not part of the normal
+  // reading flow, so it shouldn't compete for attention with the summary
+  // or payment list above it.
+  if (isClosed && !readOnly) {
+    html += '<button class="btn btn-primary" style="width:100%;" data-action="open-winner-picker">Add another winner</button>';
+  }
+
   // Hidden while a transfer selection is in progress (see the floating
   // transfer bar below) — its Remove/amount-edit controls have nothing to
   // do with handing off payments, and would just be a second set of

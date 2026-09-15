@@ -11,7 +11,14 @@ function getWinnerPaid(w, monthDoc) {
   if (typeof w.paidByA === 'number' || typeof w.paidByB === 'number') {
     return { paidByA: w.paidByA || 0, paidByB: w.paidByB || 0 };
   }
-  if (monthDoc && monthDoc.status === 'closed' && monthDoc.payoutAdmin) {
+  // Only the legacy single-winner synthesis (getMonthWinners, when monthDoc
+  // has no `winners` array at all — see finance/shared.js) should fall back
+  // to the month-level payoutAdmin. A real entry inside monthDoc.winners
+  // with no paidByA/paidByB — e.g. one added via "Add another winner" after
+  // the month already closed — is genuinely unpaid, not old-schema data;
+  // attributing it to payoutAdmin would silently invent a payment nobody
+  // made.
+  if (monthDoc && !monthDoc.winners && monthDoc.status === 'closed' && monthDoc.payoutAdmin) {
     return monthDoc.payoutAdmin === 'A'
       ? { paidByA: w.payoutAmount || 0, paidByB: 0 }
       : { paidByA: 0, paidByB: w.payoutAmount || 0 };
