@@ -48,9 +48,12 @@ export function renderMonthDetail() {
   // editing locks while this is pending (see renderWinnerCard below).
   var closeReq = isOpen ? closeReqCache.get(monthKey(gid, viewMonth)) : null;
 
+  // Gold matches the payout-approval color used on the dashboard and group
+  // detail's pending-close row — a pending close is a payout awaiting
+  // acceptance, so this status pill uses the same accent.
   var statusLabel = isClosed ? 'Closed' : (closeReq ? 'Pending close' : (isOpen ? 'Open' : 'Upcoming'));
-  var statusBg = isClosed ? 'var(--color-success-soft)' : (closeReq ? 'var(--color-warning-soft)' : (isOpen ? 'var(--color-secondary)' : 'var(--color-border)'));
-  var statusColor = isClosed ? 'var(--color-success)' : (closeReq ? 'var(--color-warning)' : (isOpen ? 'var(--on-brand)' : 'var(--color-text-faint)'));
+  var statusBg = isClosed ? 'var(--color-success-soft)' : (closeReq ? 'var(--color-gold-soft)' : (isOpen ? 'var(--color-secondary)' : 'var(--color-border)'));
+  var statusColor = isClosed ? 'var(--color-success)' : (closeReq ? 'var(--color-gold)' : (isOpen ? 'var(--on-brand)' : 'var(--color-text-faint)'));
   var statusIcon = isClosed ? iconCheck(statusColor) : (closeReq ? iconClock(statusColor) : (isUpcoming ? iconClock(statusColor) : ''));
 
   var html = '<div class="screen">' +
@@ -224,7 +227,7 @@ function renderOpenSummary(f, members, group, readOnly, gid, viewMonth) {
 function paymentRow(r, readOnly, transferable, pending) {
   var paidAtLabel = formatDateTime(r.paidAt);
   var subtitle = r.paid
-    ? 'Collected by <span style="font-weight:600;color:var(--color-success);">' + adminName(r.collectedBy) + '</span> · ' + (r.mode === 'online' ? 'Online' : 'Cash') + (paidAtLabel ? ' · ' + paidAtLabel : '') + (r.transferred ? ' · <span style="display:inline-flex;align-items:center;gap:3px;color:var(--color-secondary);">' + iconTransfer('var(--color-secondary)') + 'Transferred</span>' : '') + (pending ? ' · <span style="color:var(--color-warning);">Pending transfer</span>' : '')
+    ? 'Collected by <span style="font-weight:600;color:var(--color-success);">' + adminName(r.collectedBy) + '</span> · ' + (r.mode === 'online' ? 'Online' : 'Cash') + (paidAtLabel ? ' · ' + paidAtLabel : '') + (r.transferred ? ' · <span style="display:inline-flex;align-items:center;gap:3px;color:var(--color-secondary);">' + iconTransfer('var(--color-secondary)') + 'Transferred</span>' : '') + (pending ? ' · <span style="font-weight:600;color:var(--color-secondary);">Pending transfer</span>' : '')
     : '<span style="color:var(--color-danger);">Not paid yet' + (readOnly ? '' : ' · tap to record') + '</span>';
   var selection = state.ui.transferSelection;
   var canTransfer = transferable && r.paid && !readOnly && !pending;
@@ -358,12 +361,12 @@ function renderPayoutCard(f, closeReq) {
         '<div class="mono" style="font-size:16px;font-weight:700;color:var(--color-gold);">' + fmt(f.payoutAmount) + '</div>' +
       '</div>' +
       (iProposed
-        ? '<div style="display:flex;align-items:center;gap:4px;font-size:11.5px;color:var(--color-warning);">' + iconClock('var(--color-warning)') + 'Waiting for ' + adminName(otherAdmin(state.currentAdmin)) + ' to accept.</div>' +
+        ? '<div style="display:flex;align-items:center;gap:4px;font-size:11.5px;color:var(--color-gold);">' + iconClock('var(--color-gold)') + 'Waiting for ' + adminName(otherAdmin(state.currentAdmin)) + ' to accept.</div>' +
           '<button class="btn btn-danger-soft" style="width:100%;" data-action="cancel-close-request">Cancel request</button>'
         : '<div style="font-size:11.5px;color:var(--color-text-muted);">' + adminName(closeReq.proposedBy) + ' wants to close this month and pay out the amount above.</div>' +
           '<div style="display:flex;gap:8px;">' +
             '<button class="btn btn-danger-soft" style="flex:1 1 0;" data-action="reject-close-request">Reject</button>' +
-            '<button class="btn btn-primary" style="flex:1 1 0;background:var(--color-accent);" data-action="accept-close-request">Accept</button>' +
+            '<button class="btn btn-primary" style="flex:1 1 0;background:var(--color-gold);" data-action="accept-close-request">Accept</button>' +
           '</div>') +
     '</div>';
   }
@@ -434,13 +437,13 @@ function renderPaymentModalOverlay(gid, viewMonth, group, members) {
     }
     var pendingReq = transferReqCache.get(monthKey(gid, viewMonth));
     if (pendingReq) {
-      rows += timelineRow('var(--color-warning)', (pendingReq.direction === 'AtoB' ? ADMINS.A.name + ' → ' + ADMINS.B.name : ADMINS.B.name + ' → ' + ADMINS.A.name),
-        'Pending acceptance', 'color:var(--color-warning);', fmt(pendingReq.amount));
+      rows += timelineRow('var(--color-secondary)', (pendingReq.direction === 'AtoB' ? ADMINS.A.name + ' → ' + ADMINS.B.name : ADMINS.B.name + ' → ' + ADMINS.A.name),
+        'Pending acceptance', 'color:var(--color-secondary);', fmt(pendingReq.amount));
     }
     if (pendingHandoffId) {
       var pendingHandoff = handoffReqs[pendingHandoffId];
-      rows += timelineRow('var(--color-warning)', adminName(pendingHandoff.from) + ' → ' + adminName(pendingHandoff.to),
-        'Pending acceptance', 'color:var(--color-warning);', fmt(group.monthlyDeposit));
+      rows += timelineRow('var(--color-secondary)', adminName(pendingHandoff.from) + ' → ' + adminName(pendingHandoff.to),
+        'Pending acceptance', 'color:var(--color-secondary);', fmt(group.monthlyDeposit));
     }
     transferHistory = '<div><div style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--color-text-muted);margin-bottom:8px;">' + iconTransfer() + 'Transfer history</div><div style="display:flex;flex-direction:column;gap:10px;">' + rows + '</div></div>';
   }

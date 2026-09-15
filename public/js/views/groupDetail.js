@@ -130,8 +130,11 @@ export function renderGroupDetail() {
         // other admin's approval to actually close, so it gets its own
         // amber treatment instead of the usual secondary "open" styling.
         var pendingClose = closeReqCache.get(monthKey(gid, m));
-        var rowColor = pendingClose ? 'var(--color-warning)' : 'var(--color-secondary)';
-        var rowBg = pendingClose ? 'var(--color-warning-soft)' : 'var(--color-secondary-soft)';
+        // Gold matches the payout-approval color used on the dashboard and
+        // the winner card — a pending close is a payout awaiting
+        // acceptance, so it gets the same accent everywhere it shows up.
+        var rowColor = pendingClose ? 'var(--color-gold)' : 'var(--color-secondary)';
+        var rowBg = pendingClose ? 'var(--color-gold-soft)' : 'var(--color-secondary-soft)';
         var rowLabel = pendingClose ? ' · Pending close' : ' · Open';
         var rowSubtitle = pendingClose ? 'Awaiting ' + adminName(otherAdmin(pendingClose.proposedBy)) + "'s approval" : f.paidCount + ' / ' + members.length + ' paid so far';
         rows.push('<div class="list-row" data-action="open-month" data-gid="' + gid + '" data-m="' + m + '" style="border-color:' + rowColor + ';background:' + rowBg + ';flex-direction:column;align-items:stretch;gap:6px;">' +

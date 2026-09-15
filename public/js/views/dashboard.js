@@ -2,7 +2,7 @@ import { ADMINS } from '../../firebase-config.js';
 import { state, groupsById, membersByGroup } from '../store.js';
 import { fmt, escapeHtml, adminName, adminAvatarColor, adminDot, initialsOf, isSuper, monthLabel } from '../helpers.js';
 import { monthFinances } from '../finance.js';
-import { iconChevronRight, iconPlus, iconWarningTriangle, iconWallet, iconGroupStack, iconPeopleSmall, iconCalendar, iconTrophy, iconTrendingUp } from '../icons.js';
+import { iconChevronRight, iconPlus, iconWallet, iconGroupStack, iconPeopleSmall, iconCalendar, iconTrophy, iconTrendingUp, iconTransfer, iconClock } from '../icons.js';
 import { renderBottomNav } from './bottomNav.js';
 import { bar } from '../skeleton.js';
 
@@ -29,42 +29,58 @@ function renderLoadingSkeleton() {
   return hero + statRow + '<div>' + bar('60px', '13px', 'margin-bottom:10px;') + '<div class="row-list">' + groupCards + '</div></div>';
 }
 
-// One line per pending-approval kind — see recompute() in finance.js for
-// how each kind's fields are shaped. Only ever called for approvals where
-// requestedBy !== the signed-in admin (see renderDashboard below), so the
-// wording always reads as something for THIS admin to act on.
-function approvalBannerText(a) {
+// Pending approvals are two DIFFERENT categories, not one generic "needs
+// attention" bucket — a payout (closing a month) and a transfer (a
+// hand-off or the net-balance request) mean different things, so they get
+// different accent colors reusing meanings already established elsewhere:
+// gold is the winner/payout color (see the month detail winner card),
+// secondary is the transfer/info color (see the handoff banner in month
+// detail, which is also `.banner.info` = secondary). Both render as a
+// solid gradient card at the same visual weight as the hero "Total fund"
+// card — pending approvals are the one thing on this screen an admin
+// must act on, so they shouldn't read as quieter than a static balance.
+function approvalCardConfig(a) {
   var monthText = (function () {
     var ag = groupsById.get(a.groupId);
     return ag ? monthLabel(ag.startYear, ag.startMonthIndex, a.month) : 'Month ' + a.month;
   })();
+  // `who` and `amount` are the two facts worth a second look at a glance;
+  // everything else in headline/subtitle stays plain/muted so those two
+  // don't have to compete with a wall of same-weight text.
   if (a.kind === 'close') {
     return {
-      title: 'Payout needs your approval',
-      body: adminName(a.requestedBy) + ' wants to close ' + monthText + ' and pay out ' + fmt(a.amount) + ' (' + escapeHtml(a.groupName) + ')'
+      colorVar: 'gold', icon: iconTrophy('var(--color-gold)'),
+      who: adminName(a.requestedBy), amountText: fmt(a.amount), headlineRest: ' wants to pay out ',
+      subtitle: escapeHtml(a.groupName) + ' · ' + monthText
     };
   }
   if (a.kind === 'handoff') {
     return {
-      title: 'Transfer needs your approval',
-      body: adminName(a.requestedBy) + ' wants to send you ' + fmt(a.amount) + ' · ' + a.count + ' payment' + (a.count === 1 ? '' : 's') + ' (' + escapeHtml(a.groupName) + ', ' + monthText + ')'
+      colorVar: 'secondary', icon: iconTransfer('var(--color-secondary)'),
+      who: adminName(a.requestedBy), amountText: fmt(a.amount), headlineRest: ' wants to send you ',
+      subtitle: escapeHtml(a.groupName) + ' · ' + monthText + ' · ' + a.count + ' payment' + (a.count === 1 ? '' : 's')
     };
   }
   // kind === 'transfer' — the net-balance request.
   return {
-    title: 'Transfer needs your approval',
-    body: adminName(a.requestedBy) + ' wants to send ' + fmt(a.amount) + ' · ' +
-      (a.direction === 'AtoB' ? adminName('A') + ' → ' + adminName('B') : adminName('B') + ' → ' + adminName('A')) +
-      ' (' + escapeHtml(a.groupName) + ', ' + monthText + ')'
+    colorVar: 'secondary', icon: iconTransfer('var(--color-secondary)'),
+    who: adminName(a.requestedBy), amountText: fmt(a.amount), headlineRest: ' wants to send ',
+    subtitle: escapeHtml(a.groupName) + ' · ' + monthText + ' · ' +
+      (a.direction === 'AtoB' ? adminName('A') + ' → ' + adminName('B') : adminName('B') + ' → ' + adminName('A'))
   };
 }
 
 function renderApprovalBanner(a) {
-  var text = approvalBannerText(a);
-  return '<div class="banner warn" data-action="open-month" data-gid="' + a.groupId + '" data-m="' + a.month + '">' +
-    '<div class="banner-title">' + iconWarningTriangle('var(--color-warning)') + text.title + '</div>' +
-    '<div style="font-size:12.5px;">' + text.body + '</div>' +
-    '<div style="font-size:11.5px;color:var(--color-warning);font-weight:600;">Tap to review →</div></div>';
+  var c = approvalCardConfig(a);
+  return '<div data-action="open-month" data-gid="' + a.groupId + '" data-m="' + a.month + '" style="cursor:pointer; background:var(--color-' + c.colorVar + '-soft); border-radius:14px; padding:10px 12px; display:flex; align-items:center; gap:10px; box-shadow:var(--shadow-xs);">' +
+    '<div style="width:26px;height:26px;border-radius:8px;background:var(--color-surface);display:flex;align-items:center;justify-content:center;flex-shrink:0;">' + c.icon + '</div>' +
+    '<div style="flex:1 1 auto;min-width:0;font-size:12.5px;color:var(--color-text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' +
+      '<span style="font-weight:700;color:var(--color-' + c.colorVar + ');">' + c.who + '</span>' + c.headlineRest +
+      '<span style="font-weight:700;color:var(--color-' + c.colorVar + ');">' + c.amountText + '</span>' +
+      ' <span style="opacity:0.8;">· ' + c.subtitle + '</span>' +
+    '</div>' +
+    '<div style="flex-shrink:0;font-size:13px;font-weight:700;color:var(--color-' + c.colorVar + ');">→</div>' +
+  '</div>';
 }
 
 export function renderDashboard() {
@@ -164,7 +180,7 @@ export function renderDashboard() {
         '<div data-action="logout" class="avatar" style="cursor:pointer; background:' + adminAvatarColor(state.currentAdmin) + ';">' + initialsOf(adminName(state.currentAdmin)) + '</div>' +
       '</div>' +
       '<div class="content">' +
-        approvals.map(renderApprovalBanner).join('') +
+        (approvals.length ? '<div><div class="section-label">' + iconClock() + 'Signature</div><div class="row-list">' + approvals.map(renderApprovalBanner).join('') + '</div></div>' : '') +
         '<div style="background:linear-gradient(155deg, var(--color-primary) 0%, var(--color-primary-strong) 100%); border-radius:20px; padding:20px; color:var(--on-brand); box-shadow:var(--shadow-md);">' +
           '<div style="display:flex;align-items:center;gap:5px;font-size:12px;opacity:0.85;font-weight:500;">' + iconWallet('var(--on-brand)') + 'Total fund available</div>' +
           '<div class="mono" style="font-size:30px;font-weight:700;margin-top:4px;">' + fmt(state.balances.total) + '</div>' +
