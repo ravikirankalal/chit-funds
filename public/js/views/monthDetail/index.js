@@ -97,22 +97,30 @@ export function renderMonthDetail() {
     html += renderPaymentList(gid, viewMonth, members, f, readOnly, group, isOpen || isClosed);
   }
 
-  // Closed-month "Add another winner" lives at the very end of the page,
-  // not up with the winner card(s) — it's a rare correction (an admin
-  // catching a winner they missed after closing), not part of the normal
-  // reading flow, so it shouldn't compete for attention with the summary
-  // or payment list above it.
-  if (isClosed && !readOnly) {
-    html += '<button class="btn btn-primary" style="width:100%;" data-action="open-winner-picker">Add another winner</button>';
-  }
-
   // Hidden while a transfer selection is in progress (see the floating
   // transfer bar below) — its Remove/amount-edit controls have nothing to
   // do with handing off payments, and would just be a second set of
   // interactive rows competing with the transfer bar for attention.
   if (isOpen && !state.ui.transferSelection) {
     html += renderWinnerCard(f, members, readOnly);
-    if (!readOnly) html += renderPayoutCard(f, members);
+  }
+  // Also shown on a closed month once a winner still has something owed —
+  // a winner added via "Add another winner" AFTER close (see addWinner in
+  // actions/winners/picker.js) starts genuinely unpaid, and this is the
+  // only way to actually start their payment cycle (openPayoutModal stays
+  // locked for any winner that was already fully covered when the month
+  // closed).
+  if (!readOnly && !state.ui.transferSelection && (isOpen || (isClosed && !f.allPayoutCovered))) {
+    html += renderPayoutCard(f, members);
+  }
+
+  // Closed-month "Add another winner" lives at the very end of the page,
+  // not up with the winner/payout card(s) — it's a rare correction (an
+  // admin catching a winner they missed after closing), not part of the
+  // normal reading flow, so it shouldn't compete for attention with the
+  // summary or payment list above it.
+  if (isClosed && !readOnly) {
+    html += '<button class="btn btn-primary" style="width:100%;" data-action="open-winner-picker">Add another winner</button>';
   }
 
   html += '</div>';
