@@ -1,6 +1,6 @@
 import { state } from '../../store.js';
 import { fmt, escapeHtml, colorFor, initialsOf, adminName, adminDot, adminAvatarColor, otherAdmin } from '../../helpers.js';
-import { iconWallet, iconCheck, iconClose } from '../../icons.js';
+import { iconWallet, iconCheck, iconClose, iconFillToMax } from '../../icons.js';
 import { signed } from './shared.js';
 
 // Each admin records their own contribution toward a winner's payout —
@@ -86,7 +86,7 @@ export function renderPayoutModalOverlay(f, members) {
       '<div style="text-align:center;padding:8px 0 4px;">' +
         '<div style="font-size:11px;color:var(--color-text);margin-bottom:2px;">Your contribution</div>' +
         '<div class="mono" style="font-size:36px;font-weight:700;color:' + pctColor + ';">' + fmt(draftAmount) + '</div>' +
-        '<div style="font-size:13px;color:' + pctColor + ';margin-top:2px;font-weight:600;">' + pct + '% of the <span style="color:var(--color-primary);">' + fmt(w.payoutAmount) + '</span> payout</div>' +
+        '<div style="font-size:13px;color:var(--color-text);margin-top:2px;font-weight:600;"><span style="color:' + pctColor + ';">' + pct + '%</span> of the <span style="color:var(--color-primary);">' + fmt(w.payoutAmount) + '</span> payout</div>' +
         (otherAmount > 0
           // Only worth a line when it's actually true — with nothing from
           // the other admin yet, this contribution and the before/after
@@ -97,7 +97,7 @@ export function renderPayoutModalOverlay(f, members) {
       '<div>' +
         '<div style="display:flex;gap:8px;">' +
           '<input data-field="payoutDraftAmount" type="text" inputmode="numeric" value="' + rawDraft + '" style="flex:1 1 auto;min-width:0;font-size:16px;font-weight:700;padding:10px 12px;border-radius:10px;border:1px solid ' + (exceeds ? 'var(--color-danger)' : 'var(--color-border)') + ';" />' +
-          '<button class="btn btn-outline" style="flex-shrink:0;" data-action="fill-remaining-payout" data-mid="' + w.memberId + '" data-amount="' + maxForMe + '">Fill remaining</button>' +
+          '<button class="btn btn-outline" style="flex-shrink:0;display:flex;align-items:center;justify-content:center;" data-action="fill-remaining-payout" data-mid="' + w.memberId + '" data-amount="' + maxForMe + '" title="Fill remaining">' + iconFillToMax() + '</button>' +
         '</div>' +
         (exceeds
           ? '<div style="font-size:11px;color:var(--color-danger);margin-top:6px;">Exceeds the payout total by ' + fmt(rawDraft - maxForMe) + ' — reduce to save.</div>'
