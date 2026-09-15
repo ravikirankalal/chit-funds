@@ -105,7 +105,11 @@ export function renderGroupDetail() {
         var hasUnpaid = unpaidCount > 0;
         var closedBg = hasUnpaid ? 'var(--color-warning-soft)' : 'var(--color-success-soft)';
         var closedFg = hasUnpaid ? 'var(--color-warning)' : 'var(--color-success)';
-        var subtitle = '<span style="display:inline-flex;align-items:center;gap:4px;">' + iconTrophy() + (winnerNames.length > 1 ? 'Winners: ' : 'Winner: ') + (winnerNames.length ? winnerNames.map(escapeHtml).join(', ') : '—') + '</span>' + (hasUnpaid ? ' · ' + unpaidCount + ' unpaid' : '');
+        // Which admin handed the winner the payout — same field month
+        // detail's closed summary shows, surfaced here too so it doesn't
+        // take an extra tap to see who paid out a given month.
+        var payoutBy = f.monthDoc && f.monthDoc.payoutAdmin ? ' · Paid by ' + escapeHtml(adminName(f.monthDoc.payoutAdmin)) : '';
+        var subtitle = '<span style="display:inline-flex;align-items:center;gap:4px;">' + iconTrophy() + (winnerNames.length > 1 ? 'Winners: ' : 'Winner: ') + (winnerNames.length ? winnerNames.map(escapeHtml).join(', ') : '—') + '</span>' + payoutBy + (hasUnpaid ? ' · ' + unpaidCount + ' unpaid' : '');
         // The trend sparkline uses one rule everywhere it appears (here,
         // the dashboard, and the per-member charts): green once every due
         // is in, red if anything's outstanding — regardless of the row's
