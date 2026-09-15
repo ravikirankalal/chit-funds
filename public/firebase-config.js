@@ -16,8 +16,8 @@ export const firebaseConfig = {
 // IMPORTANT: these emails are also duplicated in firestore.rules (rules
 // can't import this file) — if you change one here, change it there too.
 export const ADMINS = {
-  A: { email: "ramesh@gmail.com", name: "Ramesh" },
-  B: { email: "ravikiran.kalal@gmail.com", name: "Suresh" }
+  A: { email: "nagendramma.guttedar@gmail.com", name: "Nagendramma" },
+  B: { email: "ravikiran.kalal@gmail.com", name: "Subhash" }
 };
 
 // A third account with view-only oversight: can sign in and see every group,

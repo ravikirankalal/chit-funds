@@ -14,7 +14,7 @@ export var state = {
   balances: { A: 0, B: 0, total: 0 },
   groupsLoaded: false, // true once the groups listener has delivered its first snapshot — lets the dashboard tell "no groups yet" apart from "still loading" instead of flashing an empty state
   ledgerEntries: [],
-  pendingApprovals: [],   // [{groupId, groupName, month, direction, amount, requestedBy}]
+  pendingApprovals: [],   // [{kind:'transfer'|'close'|'handoff', groupId, groupName, month, requestedBy, amount, ...}] — see recompute() in finance.js
   busy: false,
   ui: {
     showWinnerPicker: false,
@@ -33,7 +33,9 @@ export var membersById = new Map();     // memberId -> {id, name} — the shared
 export var membersByGroup = new Map();  // gid -> [{id,name}], joined from groupsById[gid].memberIds + membersById
 export var monthsCache = new Map();     // "gid|m" -> month data
 export var paymentsCache = new Map();   // "gid|m" -> { memberId: paymentData }
-export var transferReqCache = new Map(); // "gid|m" -> request data
+export var transferReqCache = new Map(); // "gid|m" -> request data — the net-balance transfer request (unchanged, separate from handoffRequests below)
+export var closeReqCache = new Map();    // "gid|m" -> { month, proposedBy, createdAt } — a proposed-but-not-yet-accepted month close
+export var handoffReqCache = new Map();  // "gid|m" -> { reqId: { mids[], from, to, amount, requestedBy, createdAt } } — pending hand-offs of specific already-collected payments (see confirmTransfer in actions.js)
 
 export function monthKey(gid, m) { return gid + '|' + m; }
 
@@ -44,5 +46,7 @@ export function clearCaches() {
   monthsCache.clear();
   paymentsCache.clear();
   transferReqCache.clear();
+  closeReqCache.clear();
+  handoffReqCache.clear();
   state.groupsLoaded = false;
 }

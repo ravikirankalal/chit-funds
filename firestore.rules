@@ -7,7 +7,7 @@ service cloud.firestore {
     // Rules can't import app code, so the emails are duplicated here.
     function isFinancialAdmin() {
       return request.auth != null &&
-        request.auth.token.email in ['ramesh@gmail.com', 'ravikiran.kalal@gmail.com'];
+        request.auth.token.email in ['nagendramma.guttedar@gmail.com', 'ravikiran.kalal@gmail.com'];
     }
     function isSuperAdmin() {
       return request.auth != null &&

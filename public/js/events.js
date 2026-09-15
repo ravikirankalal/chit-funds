@@ -15,11 +15,13 @@ import {
   startCreateGroup, createGroupStep2, addDraftMember, addExistingDraftMember, removeDraftMember, submitCreateGroup,
   openGroupDetail, openGroupMembers, openMemberPayments, removeMemberFromGroup, openMonth, openPaymentModal, closePaymentModal, setModalMode,
   savePaymentModal, markUnpaidFromModal, selectPaymentTab, setLedgerFilter, openWinnerPicker, closeWinnerPicker, addWinner, removeWinner, setWinnerAmount,
-  closeMonthAction, requestTransferToB, requestTransferToA,
+  proposeCloseMonth, acceptCloseRequest, rejectCloseRequest, cancelCloseRequest,
+  requestTransferToB, requestTransferToA,
   acceptTransferRequest, declineTransferRequest, cancelTransferRequest,
   openMemberForm, closeMemberForm, saveMemberForm,
   openAddMemberToGroup, closeAddMemberToGroup, addExistingMemberToGroup, createAndAddMemberToGroup,
-  togglePaymentSelection, cancelTransferSelection, confirmTransfer
+  togglePaymentSelection, cancelTransferSelection, confirmTransfer,
+  acceptHandoffRequest, declineHandoffRequest, cancelHandoffRequest
 } from './actions.js';
 
 // Holding a payment row (in the logged-in admin's own "collected by"
@@ -104,7 +106,10 @@ document.addEventListener('click', function (e) {
     case 'close-winner-picker': closeWinnerPicker(); break;
     case 'add-winner': addWinner(el.getAttribute('data-mid')); break;
     case 'remove-winner': removeWinner(el.getAttribute('data-mid')); break;
-    case 'close-month': closeMonthAction(); break;
+    case 'propose-close-month': proposeCloseMonth(); break;
+    case 'accept-close-request': acceptCloseRequest(); break;
+    case 'reject-close-request': rejectCloseRequest(); break;
+    case 'cancel-close-request': cancelCloseRequest(); break;
     case 'request-transfer-b': requestTransferToB(); break;
     case 'request-transfer-a': requestTransferToA(); break;
     case 'accept-transfer-request': acceptTransferRequest(); break;
@@ -112,6 +117,9 @@ document.addEventListener('click', function (e) {
     case 'cancel-transfer-request': cancelTransferRequest(); break;
     case 'cancel-transfer-selection': cancelTransferSelection(); break;
     case 'confirm-transfer': confirmTransfer(); break;
+    case 'accept-handoff-request': acceptHandoffRequest(el.getAttribute('data-req-id')); break;
+    case 'decline-handoff-request': declineHandoffRequest(el.getAttribute('data-req-id')); break;
+    case 'cancel-handoff-request': cancelHandoffRequest(el.getAttribute('data-req-id')); break;
     case 'open-member-form': openMemberForm(el.getAttribute('data-id')); break;
     case 'close-member-form': closeMemberForm(); break;
     case 'save-member-form': saveMemberForm(); break;

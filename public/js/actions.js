@@ -9,7 +9,7 @@ import {
   runTransaction, writeBatch, arrayUnion, arrayRemove
 } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
 import { db } from './firebase.js';
-import { state, groupsById, membersById, monthsCache, paymentsCache, transferReqCache, monthKey } from './store.js';
+import { state, groupsById, membersById, monthsCache, paymentsCache, transferReqCache, closeReqCache, handoffReqCache, monthKey } from './store.js';
 import { isSuper, monthLabel, flatPayoutSchedule, otherAdmin } from './helpers.js';
 import { monthFinances, memberHasPaidInGroup, getMonthWinners } from './finance.js';
 import { goTo, pushNav } from './router.js';
@@ -233,6 +233,15 @@ export function setLedgerFilter(type) {
   render();
 }
 
+// Whether this payment is named in some still-pending hand-off request for
+// the month — used to lock editing while a transfer against it is in
+// flight, same reasoning as the `transferred` lock once one actually goes
+// through (see savePaymentModal/markUnpaidFromModal below).
+function isPendingHandoff(gid, m, mid) {
+  var reqs = handoffReqCache.get(monthKey(gid, m)) || {};
+  return Object.keys(reqs).some(function (id) { return (reqs[id].mids || []).indexOf(mid) !== -1; });
+}
+
 export async function savePaymentModal() {
   if (isSuper()) return;
   var pm = state.ui.paymentModal;
@@ -240,8 +249,10 @@ export async function savePaymentModal() {
   var gid = state.activeGroupId, m = state.viewMonth;
   var existing = (paymentsCache.get(monthKey(gid, m)) || {})[pm.memberId];
   // Only the collector currently holding the amount may change its mode,
-  // and only before it's been handed off to the other admin.
+  // and only before it's been handed off to the other admin (either
+  // already-transferred, or a hand-off request against it is pending).
   if (existing && existing.paid && (existing.collectedBy !== state.currentAdmin || existing.transferred)) return;
+  if (existing && isPendingHandoff(gid, m, pm.memberId)) return;
   setBusy(true);
   try {
     var ref = doc(db, 'groups', gid, 'months', String(m), 'payments', pm.memberId);
@@ -266,8 +277,12 @@ export async function markUnpaidFromModal() {
   if (!pm) return;
   var gid = state.activeGroupId, m = state.viewMonth;
   var existing = (paymentsCache.get(monthKey(gid, m)) || {})[pm.memberId];
-  // Only whoever currently holds the amount can undo the payment.
-  if (existing && existing.collectedBy !== state.currentAdmin) return;
+  // Only whoever currently holds the amount can undo the payment, and only
+  // if it was never handed off — a payment received via transfer (or one
+  // with a hand-off still pending against it) can no longer be marked
+  // unpaid, same lock as editing its mode in savePaymentModal above.
+  if (existing && (existing.collectedBy !== state.currentAdmin || existing.transferred)) return;
+  if (existing && isPendingHandoff(gid, m, pm.memberId)) return;
   setBusy(true);
   try {
     await deleteDoc(doc(db, 'groups', gid, 'months', String(m), 'payments', pm.memberId));
@@ -292,6 +307,7 @@ export function togglePaymentSelection(mid) {
   if (!group || m > group.currentMonth) return;
   var existing = (paymentsCache.get(monthKey(gid, m)) || {})[mid];
   if (!existing || !existing.paid || existing.collectedBy !== state.currentAdmin) return;
+  if (isPendingHandoff(gid, m, mid)) return; // already offered in another still-pending request
   var sel = state.ui.transferSelection || (state.ui.transferSelection = { mids: [] });
   var idx = sel.mids.indexOf(mid);
   if (idx === -1) sel.mids.push(mid); else sel.mids.splice(idx, 1);
@@ -304,39 +320,86 @@ export function cancelTransferSelection() {
   render();
 }
 
+// Proposes handing the selected already-collected payments off to the
+// other admin — it no longer moves them immediately. A handoffRequests doc
+// is created instead (see renderHandoffRequests in monthDetail.js); the
+// amount stays counted with the sender (collectedBy is untouched) until
+// the other admin accepts via acceptHandoffRequest below, or the sender
+// cancels / the other admin declines.
 export async function confirmTransfer() {
   var sel = state.ui.transferSelection;
   if (!sel || !sel.mids.length) return;
   var gid = state.activeGroupId, m = state.viewMonth;
+  var group = groupsById.get(gid);
   var payments = paymentsCache.get(monthKey(gid, m)) || {};
   var mids = sel.mids.filter(function (mid) {
     var p = payments[mid];
-    return p && p.paid && p.collectedBy === state.currentAdmin;
+    return p && p.paid && p.collectedBy === state.currentAdmin && !isPendingHandoff(gid, m, mid);
   });
   if (!mids.length) { state.ui.transferSelection = null; render(); return; }
   setBusy(true);
   try {
     var target = otherAdmin(state.currentAdmin);
-    var now = Timestamp.now();
-    var batch = writeBatch(db);
-    mids.forEach(function (mid) {
-      // A payment can be handed off more than once (A->B, later B->A again),
-      // and collectedBy/transferredAt only ever reflect the CURRENT holder —
-      // so each hop is also appended to transferLog, the one field that
-      // keeps every hop instead of being overwritten. serverTimestamp()
-      // can't be used inside an array element, hence the client `now`
-      // shared across this whole batch.
-      var priorLog = (payments[mid] && payments[mid].transferLog) || [];
-      var updatedLog = priorLog.concat([{ from: state.currentAdmin, to: target, at: now }]);
-      batch.update(doc(db, 'groups', gid, 'months', String(m), 'payments', mid), {
-        collectedBy: target, transferred: true, transferredAt: serverTimestamp(), transferLog: updatedLog
-      });
+    await addDoc(collection(db, 'groups', gid, 'months', String(m), 'handoffRequests'), {
+      mids: mids, from: state.currentAdmin, to: target, amount: mids.length * group.monthlyDeposit,
+      requestedBy: state.currentAdmin, createdAt: serverTimestamp()
     });
-    await batch.commit();
     state.ui.transferSelection = null;
   } catch (err) {
-    alert('Could not transfer payments: ' + err.message);
+    alert('Could not request transfer: ' + err.message);
   } finally { setBusy(false); }
+}
+
+export async function acceptHandoffRequest(reqId) {
+  if (isSuper()) return;
+  var gid = state.activeGroupId, m = state.viewMonth;
+  setBusy(true);
+  try {
+    await runTransaction(db, async function (tx) {
+      var reqRef = doc(db, 'groups', gid, 'months', String(m), 'handoffRequests', reqId);
+      var reqSnap = await tx.get(reqRef);
+      if (!reqSnap.exists()) return;
+      var req = reqSnap.data();
+      if (req.to !== state.currentAdmin) return; // only the recipient may accept
+
+      // Firestore transactions require every read before any write.
+      var paymentRefs = req.mids.map(function (mid) { return doc(db, 'groups', gid, 'months', String(m), 'payments', mid); });
+      var paymentSnaps = [];
+      for (var i = 0; i < paymentRefs.length; i++) paymentSnaps.push(await tx.get(paymentRefs[i]));
+
+      var now = Timestamp.now();
+      paymentSnaps.forEach(function (snap, i) {
+        if (!snap.exists()) return; // marked unpaid since the request was made — nothing to hand off anymore
+        var data = snap.data();
+        if (data.collectedBy !== req.from) return; // no longer held by the sender — skip it
+        var priorLog = data.transferLog || [];
+        var updatedLog = priorLog.concat([{ from: req.from, to: req.to, at: now }]);
+        tx.update(paymentRefs[i], { collectedBy: req.to, transferred: true, transferredAt: serverTimestamp(), transferLog: updatedLog });
+      });
+      tx.delete(reqRef);
+    });
+  } catch (err) { alert('Could not accept transfer: ' + err.message); }
+  finally { setBusy(false); }
+}
+
+export function declineHandoffRequest(reqId) {
+  if (isSuper()) return;
+  var gid = state.activeGroupId, m = state.viewMonth;
+  var req = (handoffReqCache.get(monthKey(gid, m)) || {})[reqId];
+  if (!req || req.to !== state.currentAdmin) return;
+  setBusy(true);
+  deleteDoc(doc(db, 'groups', gid, 'months', String(m), 'handoffRequests', reqId))
+    .catch(function (err) { alert(err.message); }).finally(function () { setBusy(false); });
+}
+
+export function cancelHandoffRequest(reqId) {
+  if (isSuper()) return;
+  var gid = state.activeGroupId, m = state.viewMonth;
+  var req = (handoffReqCache.get(monthKey(gid, m)) || {})[reqId];
+  if (!req || req.requestedBy !== state.currentAdmin) return;
+  setBusy(true);
+  deleteDoc(doc(db, 'groups', gid, 'months', String(m), 'handoffRequests', reqId))
+    .catch(function (err) { alert(err.message); }).finally(function () { setBusy(false); });
 }
 
 export function openWinnerPicker() {
@@ -355,6 +418,7 @@ export function closeWinnerPicker() { history.back(); }
 export async function addWinner(memberId) {
   if (isSuper()) return;
   var gid = state.activeGroupId, m = state.viewMonth;
+  if (closeReqCache.get(monthKey(gid, m))) return; // locked while a close is pending the other admin's acceptance
   var group = groupsById.get(gid);
   var monthDoc = monthsCache.get(monthKey(gid, m));
   var scheduled = (group.payoutSchedule && group.payoutSchedule[m - 1]) || 0;
@@ -372,6 +436,7 @@ export async function addWinner(memberId) {
 export async function removeWinner(memberId) {
   if (isSuper()) return;
   var gid = state.activeGroupId, m = state.viewMonth;
+  if (closeReqCache.get(monthKey(gid, m))) return; // locked while a close is pending the other admin's acceptance
   var group = groupsById.get(gid);
   var monthDoc = monthsCache.get(monthKey(gid, m));
   if (monthDoc && monthDoc.status === 'closed') return;
@@ -388,6 +453,7 @@ export async function removeWinner(memberId) {
 export function setWinnerAmount(memberId, amount) {
   if (isSuper()) return;
   var gid = state.activeGroupId, m = state.viewMonth;
+  if (closeReqCache.get(monthKey(gid, m))) return; // locked while a close is pending the other admin's acceptance
   var group = groupsById.get(gid);
   var monthDoc = monthsCache.get(monthKey(gid, m));
   var scheduled = (group.payoutSchedule && group.payoutSchedule[m - 1]) || 0;
@@ -399,7 +465,13 @@ export function setWinnerAmount(memberId, amount) {
     .finally(function () { setBusy(false); });
 }
 
-export async function closeMonthAction() {
+// Closing a month is now propose-then-accept: this creates a closeRequest
+// (the month doc itself is untouched, still 'open') naming the proposer as
+// the would-be payoutAdmin; only once the OTHER admin calls
+// acceptCloseRequest does the month actually close. Rejecting just deletes
+// the request, leaving the winner/amount exactly as they were for the
+// proposer to adjust and re-propose.
+export async function proposeCloseMonth() {
   if (isSuper()) return;
   var gid = state.activeGroupId, m = state.viewMonth;
   var group = groupsById.get(gid);
@@ -410,11 +482,31 @@ export async function closeMonthAction() {
     alert('There is a pending transfer request for this month — accept, decline, or cancel it before closing.');
     return;
   }
+  if (closeReqCache.get(monthKey(gid, m))) return; // already proposed, awaiting the other admin
+  setBusy(true);
+  try {
+    await setDoc(doc(db, 'groups', gid, 'closeRequests', String(m)), {
+      month: m, proposedBy: state.currentAdmin, createdAt: serverTimestamp()
+    });
+  } catch (err) {
+    alert('Could not propose closing this month: ' + err.message);
+  } finally { setBusy(false); }
+}
+
+export async function acceptCloseRequest() {
+  if (isSuper()) return;
+  var gid = state.activeGroupId, m = state.viewMonth;
   setBusy(true);
   try {
     await runTransaction(db, async function (tx) {
-      // Firestore transactions require every read before any write, so both
-      // gets happen up front, then all the update/set calls follow.
+      // Firestore transactions require every read before any write, so all
+      // three gets happen up front, then the update/set/delete calls follow.
+      var reqRef = doc(db, 'groups', gid, 'closeRequests', String(m));
+      var reqSnap = await tx.get(reqRef);
+      if (!reqSnap.exists()) return;
+      var req = reqSnap.data();
+      if (req.proposedBy === state.currentAdmin) return; // only the other admin may accept
+
       var groupRef = doc(db, 'groups', gid);
       var groupSnap = await tx.get(groupRef);
       var gData = groupSnap.data();
@@ -425,7 +517,7 @@ export async function closeMonthAction() {
 
       var closedLabel = monthLabel(gData.startYear, gData.startMonthIndex, m);
       tx.update(doc(db, 'groups', gid, 'months', String(m)), {
-        status: 'closed', payoutAdmin: state.currentAdmin,
+        status: 'closed', payoutAdmin: req.proposedBy,
         closedAt: serverTimestamp(), closedLabel: closedLabel
       });
       if (hasNext) {
@@ -436,12 +528,33 @@ export async function closeMonthAction() {
       } else {
         tx.update(groupRef, { status: 'completed' });
       }
+      tx.delete(reqRef);
     });
     var updatedGroup = groupsById.get(gid);
     goTo('groupDetail', { activeGroupId: gid, viewMonth: updatedGroup ? updatedGroup.currentMonth : m });
   } catch (err) {
-    alert('Could not close month: ' + err.message);
+    alert('Could not accept: ' + err.message);
   } finally { setBusy(false); }
+}
+
+export function rejectCloseRequest() {
+  if (isSuper()) return;
+  var gid = state.activeGroupId, m = state.viewMonth;
+  var req = closeReqCache.get(monthKey(gid, m));
+  if (!req || req.proposedBy === state.currentAdmin) return; // only the other admin may reject
+  setBusy(true);
+  deleteDoc(doc(db, 'groups', gid, 'closeRequests', String(m)))
+    .catch(function (err) { alert(err.message); }).finally(function () { setBusy(false); });
+}
+
+export function cancelCloseRequest() {
+  if (isSuper()) return;
+  var gid = state.activeGroupId, m = state.viewMonth;
+  var req = closeReqCache.get(monthKey(gid, m));
+  if (!req || req.proposedBy !== state.currentAdmin) return; // only the proposer may cancel their own
+  setBusy(true);
+  deleteDoc(doc(db, 'groups', gid, 'closeRequests', String(m)))
+    .catch(function (err) { alert(err.message); }).finally(function () { setBusy(false); });
 }
 
 function requestTransfer(direction) {

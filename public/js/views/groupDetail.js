@@ -1,10 +1,23 @@
-import { state, groupsById, membersByGroup } from '../store.js';
-import { fmt, escapeHtml, monthLabel, adminName, adminDot } from '../helpers.js';
+import { state, groupsById, membersByGroup, closeReqCache, monthKey } from '../store.js';
+import { fmt, escapeHtml, monthLabel, adminName, adminDot, otherAdmin } from '../helpers.js';
 import { monthFinances } from '../finance.js';
 import { iconChevronLeft, iconChevronRight, iconWallet, iconPeopleSmall, iconTrendingUp, iconCalendar, iconTrophy, iconGroupStack } from '../icons.js';
 import { bar, skeletonTopbar, skeletonListRow } from '../skeleton.js';
 
 function signed(n) { return (n < 0 ? '−' : '') + fmt(Math.abs(n)); }
+
+// Called by render.js after mounting this screen, until it returns true —
+// group data (and so the row to scroll to) may still be loading on the
+// very first render, so render() keeps retrying on the renders that
+// follow rather than only trying once and giving up.
+export function scrollToActiveMonth(root) {
+  var group = groupsById.get(state.activeGroupId);
+  if (!group) return false;
+  var row = root.querySelector('.list-row[data-m="' + group.currentMonth + '"]');
+  if (!row) return false;
+  row.scrollIntoView({ block: 'center' });
+  return true;
+}
 
 function skeletonStatCell(border) {
   return '<div style="flex:1 1 0; min-width:0; padding:10px 12px;' + (border ? 'border-left:1px solid var(--color-border);' : '') + '">' +
@@ -66,6 +79,7 @@ export function renderGroupDetail() {
   var totalPayout = (group.payoutSchedule || []).reduce(function (a, b) { return a + b; }, 0);
 
   var rows = [];
+  var trend = []; // { m, pct, color } per month — feeds the stats card's collection-trend sparkline
   // Every month is listed — a full chit fund can run 20+ months, so the
   // list scrolls in its own fixed-height region (see months markup below)
   // rather than pushing the rest of the screen off-page. Each row is
@@ -75,6 +89,7 @@ export function renderGroupDetail() {
   for (var m = 1; m <= group.durationMonths; m++) {
     if (m <= group.currentMonth) {
       var f = monthFinances(gid, group, m);
+      var monthPct = members.length > 0 ? Math.round((f.paidCount / members.length) * 100) : 0;
       if (f.closed) {
         // Almost always one winner; occasionally more than one (see
         // getMonthWinners in finance.js) — join their names for the subtitle.
@@ -90,7 +105,16 @@ export function renderGroupDetail() {
         var hasUnpaid = unpaidCount > 0;
         var closedBg = hasUnpaid ? 'var(--color-warning-soft)' : 'var(--color-success-soft)';
         var closedFg = hasUnpaid ? 'var(--color-warning)' : 'var(--color-success)';
-        var subtitle = '<span style="display:inline-flex;align-items:center;gap:4px;">' + iconTrophy() + (winnerNames.length > 1 ? 'Winners: ' : 'Winner: ') + (winnerNames.length ? winnerNames.map(escapeHtml).join(', ') : '—') + '</span>' + (hasUnpaid ? ' · ' + unpaidCount + ' unpaid' : '');
+        // Which admin handed the winner the payout — same field month
+        // detail's closed summary shows, surfaced here too so it doesn't
+        // take an extra tap to see who paid out a given month.
+        var payoutBy = f.monthDoc && f.monthDoc.payoutAdmin ? ' · Paid by ' + escapeHtml(adminName(f.monthDoc.payoutAdmin)) : '';
+        var subtitle = '<span style="display:inline-flex;align-items:center;gap:4px;">' + iconTrophy() + (winnerNames.length > 1 ? 'Winners: ' : 'Winner: ') + (winnerNames.length ? winnerNames.map(escapeHtml).join(', ') : '—') + '</span>' + payoutBy + (hasUnpaid ? ' · ' + unpaidCount + ' unpaid' : '');
+        // The trend sparkline uses one rule everywhere it appears (here,
+        // the dashboard, and the per-member charts): green once every due
+        // is in, red if anything's outstanding — regardless of the row's
+        // own richer open/closed/warning styling above.
+        trend.push({ m: m, pct: monthPct, color: hasUnpaid ? 'var(--color-danger)' : 'var(--color-success)' });
         rows.push('<div class="list-row" data-action="open-month" data-gid="' + gid + '" data-m="' + m + '"' + (hasUnpaid ? ' style="border-color:' + closedFg + ';"' : '') + '>' +
           '<div class="avatar sm" style="background:' + closedBg + '; color:' + closedFg + ';">' + m + '</div>' +
           '<div style="flex:1 1 auto; min-width:0;"><div style="font-size:13px;font-weight:600;">' + monthLabel(group.startYear, group.startMonthIndex, m) + '</div>' +
@@ -100,22 +124,30 @@ export function renderGroupDetail() {
         '</div>');
       } else {
         var pct = members.length > 0 ? Math.min(100, Math.round((f.paidCount / members.length) * 100)) : 0;
-        // Blue (not green — green already means "closed/paid out" elsewhere,
-        // and reusing it for "in progress" would blur that distinction).
-        // Same blue already used for transfer ledger entries in finance.js.
-        rows.push('<div class="list-row" data-action="open-month" data-gid="' + gid + '" data-m="' + m + '" style="border-color:var(--color-secondary);background:var(--color-secondary-soft);flex-direction:column;align-items:stretch;gap:6px;">' +
+        trend.push({ m: m, pct: pct, color: pct === 100 ? 'var(--color-success)' : 'var(--color-danger)' });
+        // A pending close request (see proposeCloseMonth in actions.js)
+        // means the month isn't just "open" anymore — it's waiting on the
+        // other admin's approval to actually close, so it gets its own
+        // amber treatment instead of the usual secondary "open" styling.
+        var pendingClose = closeReqCache.get(monthKey(gid, m));
+        var rowColor = pendingClose ? 'var(--color-warning)' : 'var(--color-secondary)';
+        var rowBg = pendingClose ? 'var(--color-warning-soft)' : 'var(--color-secondary-soft)';
+        var rowLabel = pendingClose ? ' · Pending close' : ' · Open';
+        var rowSubtitle = pendingClose ? 'Awaiting ' + adminName(otherAdmin(pendingClose.proposedBy)) + "'s approval" : f.paidCount + ' / ' + members.length + ' paid so far';
+        rows.push('<div class="list-row" data-action="open-month" data-gid="' + gid + '" data-m="' + m + '" style="border-color:' + rowColor + ';background:' + rowBg + ';flex-direction:column;align-items:stretch;gap:6px;">' +
           '<div style="display:flex;align-items:center;gap:10px;">' +
-            '<div class="avatar sm" style="background:var(--color-secondary); color:var(--on-brand);">' + m + '</div>' +
-            '<div style="flex:1 1 auto; min-width:0;"><div style="font-size:13px;font-weight:600;">' + monthLabel(group.startYear, group.startMonthIndex, m) + ' · Open</div>' +
-            '<div style="font-size:11.5px;color:var(--color-text-muted);margin-top:1px;">' + f.paidCount + ' / ' + members.length + ' paid so far</div></div>' +
-            '<div style="text-align:right; flex-shrink:0;"><div style="font-size:13px;font-weight:700;color:var(--color-secondary);">' + fmt(f.payoutAmount) + '</div>' +
+            '<div class="avatar sm" style="background:' + rowColor + '; color:var(--on-brand);">' + m + '</div>' +
+            '<div style="flex:1 1 auto; min-width:0;"><div style="font-size:13px;font-weight:600;">' + monthLabel(group.startYear, group.startMonthIndex, m) + rowLabel + '</div>' +
+            '<div style="font-size:11.5px;color:var(--color-text-muted);margin-top:1px;">' + rowSubtitle + '</div></div>' +
+            '<div style="text-align:right; flex-shrink:0;"><div style="font-size:13px;font-weight:700;color:' + rowColor + ';">' + fmt(f.payoutAmount) + '</div>' +
             '<div style="font-size:11px;color:var(--color-text-muted);">' + pct + '% collected</div></div>' +
           '</div>' +
-          '<div class="progress-track"><div class="progress-fill" style="width:' + pct + '%; background:var(--color-secondary);"></div></div>' +
+          '<div class="progress-track"><div class="progress-fill" style="width:' + pct + '%; background:' + rowColor + ';"></div></div>' +
         '</div>');
       }
     } else {
       var scheduledAmount = (group.payoutSchedule && group.payoutSchedule[m - 1]) || 0;
+      trend.push({ m: m, pct: 0, color: 'var(--color-border)' });
       rows.push('<div class="list-row" data-action="open-month" data-gid="' + gid + '" data-m="' + m + '" style="border-style:dashed; opacity:0.65;">' +
         '<div class="avatar sm" style="background:var(--color-bg); color:var(--color-text-muted);">' + m + '</div>' +
         '<div style="flex:1 1 auto; min-width:0;"><div style="font-size:13px;font-weight:600;">' + monthLabel(group.startYear, group.startMonthIndex, m) + '</div>' +
@@ -128,6 +160,25 @@ export function renderGroupDetail() {
   var collectedPct = totalCollection > 0 ? Math.min(100, Math.round((collectedSoFar / totalCollection) * 100)) : 0;
   var payoutPct = totalPayout > 0 ? Math.min(100, Math.round((payoutSoFar / totalPayout) * 100)) : 0;
   var pctTag = function (pct) { return '<span style="font-size:10.5px;color:var(--color-text-muted);font-weight:600;flex-shrink:0;">' + pct + '%</span>'; };
+
+  // Sparkline of each month's collection %, one skinny bar per month —
+  // bars grow from the bottom of a fixed-height track so partial months
+  // are still comparable at a glance; a min-height floor keeps 0% months
+  // (not started, or genuinely uncollected) visible as a sliver instead of
+  // disappearing. The current month gets a primary-color ring so it's
+  // findable among 20+ bars; every bar reuses the existing open-month
+  // action so the sparkline doubles as another way to jump to a month.
+  var trendBars = trend.map(function (t) {
+    var h = Math.max(3, Math.round((t.pct / 100) * 28));
+    var ring = t.m === group.currentMonth ? 'box-shadow:0 0 0 1.5px var(--color-primary);' : '';
+    return '<div data-action="open-month" data-gid="' + gid + '" data-m="' + t.m + '" title="' + monthLabel(group.startYear, group.startMonthIndex, t.m) + ': ' + t.pct + '%" style="flex:1 1 0;min-width:2px;height:28px;display:flex;align-items:flex-end;cursor:pointer;">' +
+      '<div style="width:100%;height:' + h + 'px;background:' + t.color + ';border-radius:2px;' + ring + '"></div>' +
+    '</div>';
+  }).join('');
+  var trendRow = '<div style="padding:10px 12px;border-top:1px solid var(--color-border);">' +
+    '<div style="font-size:10.5px;color:var(--color-text-muted);font-weight:500;display:flex;align-items:center;gap:4px;margin-bottom:6px;">' + iconTrendingUp() + 'Collection trend</div>' +
+    '<div style="display:flex;align-items:flex-end;gap:2px;">' + trendBars + '</div>' +
+  '</div>';
 
   var statsCard = '<div class="card" style="padding:0;">' +
     statRow(
@@ -144,6 +195,7 @@ export function renderGroupDetail() {
       statCell(adminDot('B') + adminName('B') + ' holds', '<span style="' + (holdB < 0 ? 'color:var(--color-danger);' : '') + '">' + signed(holdB) + '</span>', { border: true }),
       true
     ) +
+    trendRow +
   '</div>';
 
   var html = '' +
