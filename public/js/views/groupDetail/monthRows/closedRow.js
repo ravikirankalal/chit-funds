@@ -1,5 +1,5 @@
 import { fmt, escapeHtml, monthLabel, adminName } from '../../../helpers.js';
-import { iconTrophy } from '../../../icons.js';
+import { iconTrophy, iconPayout } from '../../../icons.js';
 import { adminAmountSpan, rightMoneyColumn, payoutStatusPill, collectedStatusPill } from './shared.js';
 
 // A closed month's row and its trend-sparkline entry. `f` is that month's
@@ -36,7 +36,7 @@ export function renderClosedMonthRow(gid, group, m, f, members, monthPct) {
   var paidByParts = [];
   if (f.payoutPaidA > 0) paidByParts.push(adminAmountSpan('A', adminName('A') + (f.payoutPaidB > 0 ? ' (' + fmt(f.payoutPaidA) + ')' : '')));
   if (f.payoutPaidB > 0) paidByParts.push(adminAmountSpan('B', adminName('B') + (f.payoutPaidA > 0 ? ' (' + fmt(f.payoutPaidB) + ')' : '')));
-  var payoutByLine = paidByParts.length ? '<div>Paid by ' + paidByParts.join(' + ') + '</div>' : '';
+  var payoutByLine = paidByParts.length ? '<div style="display:flex;align-items:center;gap:4px;">' + iconPayout('var(--color-text-muted)', 14) + 'Paid by ' + paidByParts.join(' + ') + '</div>' : '';
   // The "Closed" lifecycle pill was redundant here — this component only
   // ever renders for a month that's already closed (see openRow.js for
   // the open-month counterpart), so the badge row now carries only the
