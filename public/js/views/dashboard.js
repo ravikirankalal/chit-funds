@@ -2,7 +2,7 @@ import { ADMINS } from '../../firebase-config.js';
 import { state, groupsById, membersByGroup } from '../store.js';
 import { fmt, escapeHtml, adminName, adminAvatarColor, adminDot, initialsOf, isSuper, monthLabel } from '../helpers.js';
 import { monthFinances } from '../finance/monthFinances.js';
-import { iconChevronRight, iconPlus, iconWallet, iconGroupStack, iconPeopleSmall, iconCalendar, iconTrophy, iconTrendingUp, iconTransfer, iconClock } from '../icons.js';
+import { iconChevronRight, iconPlus, iconWallet, iconGroupStack, iconPeopleSmall, iconCalendar, iconTrophy, iconTransfer, iconClock } from '../icons.js';
 import { renderBottomNav } from './bottomNav.js';
 import { bar } from '../skeleton.js';
 
@@ -113,28 +113,15 @@ export function renderDashboard() {
     var payoutLine = winnerNames.length
       ? '<div style="font-size:11.5px;color:var(--color-text-muted);"><span style="display:flex;align-items:center;gap:4px;">' + iconTrophy('var(--color-text-faint)') + (winnerNames.length > 1 ? 'Winners: ' : 'Winner: ') + escapeHtml(winnerNames.join(', ')) + '</span></div>'
       : '';
-    // Compact per-month collection-trend sparkline — one rule shared with
-    // every other trend chart in the app (group detail, member payments):
-    // green once a month's dues are fully in, red if anything's
-    // outstanding, muted for months not yet reached. Reuses f (already
-    // computed above) for the current month instead of calling
-    // monthFinances on it a second time.
     // Collected/paid-out totals across every month so far — same real
-    // (not target) paid figures as the group-detail page's own stats card,
-    // accumulated here rather than looped again separately since the
-    // trend loop below already visits every month up to currentMonth.
+    // (not target) paid figures as the group-detail page's own stats card.
+    // Reuses f (already computed above) for the current month instead of
+    // calling monthFinances on it a second time.
     var collectedSoFar = 0, payoutSoFarForGroup = 0;
-    var trend = [];
-    for (var tm = 1; tm <= g.durationMonths; tm++) {
-      if (tm <= g.currentMonth) {
-        var tf = tm === g.currentMonth ? f : monthFinances(g.id, g, tm);
-        var tpct = memberCount > 0 ? Math.round((tf.paidCount / memberCount) * 100) : 0;
-        trend.push({ m: tm, pct: tpct, color: tf.paidCount === memberCount ? 'var(--color-success)' : 'var(--color-danger)' });
-        collectedSoFar += tf.totalCollected;
-        payoutSoFarForGroup += tf.payoutPaidA + tf.payoutPaidB;
-      } else {
-        trend.push({ m: tm, pct: 0, color: 'var(--color-border)' });
-      }
+    for (var tm = 1; tm <= g.currentMonth; tm++) {
+      var tf = tm === g.currentMonth ? f : monthFinances(g.id, g, tm);
+      collectedSoFar += tf.totalCollected;
+      payoutSoFarForGroup += tf.payoutPaidA + tf.payoutPaidB;
     }
     var groupProfit = collectedSoFar - payoutSoFarForGroup;
     var groupProfitColor = groupProfit < 0 ? 'var(--color-danger)' : 'var(--color-success)';
@@ -154,17 +141,6 @@ export function renderDashboard() {
       moneyCell('Payout', fmt(payoutSoFarForGroup), 'var(--color-accent)', true) +
       moneyCell('Profit', groupProfit < 0 ? '−' + fmt(Math.abs(groupProfit)) : fmt(groupProfit), groupProfitColor, true) +
     '</div>';
-    var trendBars = trend.map(function (t) {
-      var h = Math.max(2, Math.round((t.pct / 100) * 14));
-      var ring = t.m === g.currentMonth ? 'box-shadow:0 0 0 1.5px var(--color-primary);' : '';
-      return '<div data-action="open-month" data-gid="' + g.id + '" data-m="' + t.m + '" title="' + monthLabel(g.startYear, g.startMonthIndex, t.m) + ': ' + t.pct + '%" style="flex:1 1 0;min-width:2px;height:14px;display:flex;align-items:flex-end;cursor:pointer;">' +
-        '<div style="width:100%;height:' + h + 'px;background:' + t.color + ';border-radius:1.5px;' + ring + '"></div>' +
-      '</div>';
-    }).join('');
-    var trendRow = '<div style="display:flex;align-items:center;gap:6px;">' +
-      '<span style="flex-shrink:0;color:var(--color-text-faint);">' + iconTrendingUp() + '</span>' +
-      '<div style="flex:1 1 auto;display:flex;align-items:flex-end;gap:1.5px;">' + trendBars + '</div>' +
-    '</div>';
     return '<div class="card" data-action="open-group" data-gid="' + g.id + '" style="display:flex;flex-direction:column;gap:10px;">' +
       '<div style="display:flex;justify-content:space-between;align-items:flex-start;">' +
         '<div><div style="font-size:15px;font-weight:600;">' + escapeHtml(g.name) + '</div>' +
@@ -181,7 +157,6 @@ export function renderDashboard() {
       '</div>' +
       moneyRow +
       payoutLine +
-      trendRow +
       '</div>' +
     '</div>';
   }).join('') || '<div class="card" style="color:var(--color-text-muted); font-size:13px; text-align:center;">No groups yet — tap + to create one.</div>';
