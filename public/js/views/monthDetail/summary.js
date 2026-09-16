@@ -4,18 +4,28 @@ import { fmt, escapeHtml, initialsOf, colorFor, adminDot, adminName, monthLabel 
 import { iconTrophy, iconWallet, iconWarningTriangle, iconClock, iconCheck } from '../../icons.js';
 import { signed, summaryStat, renderMemberPaymentStrip } from './shared.js';
 
+// The single color behind both the status pill and the paid-so-far figure
+// below — not started / partway / done, kept as one lookup so the two
+// never drift apart into showing different colors for the same fact.
+function winnerStatusColor(w) {
+  if (w.remaining <= 0) return 'var(--color-success)';
+  if ((w.paidByA || 0) > 0 || (w.paidByB || 0) > 0) return 'var(--color-gold-strong)';
+  return 'var(--color-text-muted)';
+}
+
 // One glance, one fact: not started / partway / done, each its own color
 // so status reads without parsing a sentence — same pill shape as the
 // paid/unpaid tag in paymentList.js, for the same reason (a color + a
 // short label beats a longer, differently-styled string per state).
 function winnerStatusPill(w) {
+  var color = winnerStatusColor(w);
   if (w.remaining <= 0) {
-    return '<span style="display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:20px;background:var(--color-success-soft);color:var(--color-success);">' + iconCheck('var(--color-success)') + 'Paid in full</span>';
+    return '<span style="display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:20px;background:var(--color-success-soft);color:' + color + ';">' + iconCheck(color) + 'Paid in full</span>';
   }
   if ((w.paidByA || 0) > 0 || (w.paidByB || 0) > 0) {
-    return '<span style="display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:20px;background:var(--color-gold-soft);color:var(--color-gold-strong);">' + iconClock('var(--color-gold-strong)') + fmt(w.remaining) + ' due</span>';
+    return '<span style="display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:20px;background:var(--color-gold-soft);color:' + color + ';">' + iconClock(color) + fmt(w.remaining) + ' due</span>';
   }
-  return '<span style="display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:20px;background:var(--color-border);color:var(--color-text-muted);">' + iconClock('var(--color-text-muted)') + 'Not paid yet</span>';
+  return '<span style="display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:20px;background:var(--color-border);color:' + color + ';">' + iconClock(color) + 'Not paid yet</span>';
 }
 
 // Per-winner, not the month-level payoutByLabel (finance/shared.js) — a
@@ -57,6 +67,8 @@ function renderWinnerTopCards(f, members, readOnly) {
     var winner = members.find(function (mm) { return mm.id === w.memberId; });
     var winnerIdx = winner ? members.indexOf(winner) : -1;
     var contribLines = winnerContribLines(w);
+    var paidSoFar = (w.paidByA || 0) + (w.paidByB || 0);
+    var statusColor = winnerStatusColor(w);
     var interactive = !readOnly && !state.ui.transferSelection;
     var removable = interactive && !((w.paidByA || 0) > 0 || (w.paidByB || 0) > 0);
     var openable = interactive && !(f.closed && w.remaining <= 0);
@@ -83,7 +95,7 @@ function renderWinnerTopCards(f, members, readOnly) {
       '</div>' +
       '<div style="text-align:right; flex-shrink:0;">' +
         '<div style="font-size:11px;color:var(--color-text-muted);">Payout</div>' +
-        '<div class="mono" style="font-size:18px;font-weight:700;color:var(--color-gold);">' + fmt(w.payoutAmount) + '</div>' +
+        '<div class="mono" style="font-size:18px;font-weight:700;"><span style="color:' + statusColor + ';">' + fmt(paidSoFar) + '</span> <span style="font-size:12px;color:var(--color-text-muted);font-weight:400;">/ ' + fmt(w.payoutAmount) + '</span></div>' +
         contribLines +
         (removable ? '<div data-action="remove-winner" data-mid="' + w.memberId + '" style="cursor:pointer;color:var(--color-danger);font-size:11px;font-weight:600;margin-top:4px;">Remove</div>' : '') +
       '</div>' +
