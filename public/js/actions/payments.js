@@ -17,13 +17,21 @@ export function openPaymentModal(memberId) {
   render();
   pushNav();
 }
-export function closePaymentModal() { history.back(); }
+export function closePaymentModal() {
+  var pm = state.ui.paymentModal;
+  // The sheet's own close button already omits data-action for this case
+  // (paymentModal.js) so a click can't normally reach here — this guard
+  // is just so nothing else that might call closePaymentModal directly
+  // can pop the nav entry savePaymentModal itself is about to pop.
+  if (pm && (pm.saveState === 'saving' || pm.saveState === 'success')) return;
+  history.back();
+}
 export function setModalMode(mode) { if (!state.ui.paymentModal) return; state.ui.paymentModal.mode = mode; render(); }
 
 export async function savePaymentModal() {
   if (isSuper()) return;
   var pm = state.ui.paymentModal;
-  if (!pm) return;
+  if (!pm || pm.saveState === 'saving') return;
   var gid = state.activeGroupId, m = state.viewMonth;
   var existing = (paymentsCache.get(monthKey(gid, m)) || {})[pm.memberId];
   // Only the collector currently holding the amount may change its mode,
@@ -31,7 +39,13 @@ export async function savePaymentModal() {
   // already-transferred, or a hand-off request against it is pending).
   if (existing && existing.paid && (existing.collectedBy !== state.currentAdmin || existing.transferred)) return;
   if (existing && isPendingHandoff(gid, m, pm.memberId)) return;
-  setBusy(true);
+  // Drives the sheet's own saving/success/error states (paymentModal.js)
+  // instead of the app-wide busy overlay — that overlay blanked the whole
+  // screen behind a dark scrim for the length of the write, reading as
+  // the page reloading rather than this one sheet doing something.
+  pm.saveState = 'saving';
+  pm.saveError = null;
+  render();
   try {
     var ref = doc(db, 'groups', gid, 'months', String(m), 'payments', pm.memberId);
     await setDoc(ref, {
@@ -39,14 +53,30 @@ export async function savePaymentModal() {
       transferred: !!(existing && existing.transferred),
       paidAt: (existing && existing.paidAt) || serverTimestamp()
     });
+    pm.saveState = 'success';
+    render();
+    // A brief beat on the success state so it's actually seen before the
+    // sheet closes itself — same amount of "did that work?" reassurance a
+    // native app's checkmark-then-dismiss pattern gives.
+    await new Promise(function (resolve) { setTimeout(resolve, 700); });
     // openPaymentModal() pushed a nav entry for this member; pop it via
     // history.back(), same as closePaymentModal() — see router.js's
-    // popstate handler for why this doesn't also cause a render flash.
+    // popstate handler for why the render this triggers is usually
+    // skipped as a no-op. That's only true because THIS render (still
+    // needed here — nothing else fires it once setBusy(false) no longer
+    // does) already applied the closed state first.
     state.ui.paymentModal = null;
+    render();
     history.back();
   } catch (err) {
-    alert('Could not save payment: ' + err.message);
-  } finally { setBusy(false); }
+    // Left open on failure, with the error shown inline (paymentModal.js)
+    // instead of a blocking alert() — the admin can see what happened,
+    // fix it (a flaky connection, a rules rejection) and press Save again
+    // without having to reopen the sheet from scratch.
+    pm.saveState = 'error';
+    pm.saveError = err.message;
+    render();
+  }
 }
 
 export async function markUnpaidFromModal() {

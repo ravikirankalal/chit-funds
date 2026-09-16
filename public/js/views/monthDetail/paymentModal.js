@@ -1,7 +1,7 @@
 import { ADMINS } from '../../../firebase-config.js';
 import { state, paymentsCache, monthsCache, transferReqCache, handoffReqCache, monthKey } from '../../store.js';
 import { fmt, escapeHtml, colorFor, initialsOf, adminName, formatDateTime, monthLabel } from '../../helpers.js';
-import { iconClose, iconCash, iconCard, iconTransfer, iconWallet } from '../../icons.js';
+import { iconClose, iconCash, iconCard, iconTransfer, iconWallet, iconCheck, iconWarningTriangle } from '../../icons.js';
 import { timelineRow } from './shared.js';
 
 export function renderPaymentModalOverlay(gid, viewMonth, group, members) {
@@ -17,6 +17,17 @@ export function renderPaymentModalOverlay(gid, viewMonth, group, members) {
   // changed or be marked unpaid out from under the pending request.
   var canEditMode = !pm.isEditing || (existingP && existingP.collectedBy === state.currentAdmin && !existingP.transferred && !pendingHandoffId);
   var canMarkUnpaid = pm.isEditing && existingP && existingP.collectedBy === state.currentAdmin && !existingP.transferred && !pendingHandoffId;
+  // savePaymentModal (actions/payments.js) drives this sheet through its
+  // own saving/success/error states instead of the app-wide busy overlay —
+  // that overlay used to blank the WHOLE screen behind a dark scrim for
+  // the length of the write, which read as the page reloading rather than
+  // this one sheet doing something. `locked` covers both saving and the
+  // brief success beat right before the sheet closes itself: nothing here
+  // should be editable once a write is in flight or has just landed.
+  var saving = pm.saveState === 'saving';
+  var justSaved = pm.saveState === 'success';
+  var saveError = pm.saveState === 'error' ? pm.saveError : null;
+  var locked = saving || justSaved;
   var transferHistory = '';
   if (pm.isEditing && existingP) {
     // collectedBy/transferredAt only ever reflect the CURRENT holder — the
@@ -54,7 +65,11 @@ export function renderPaymentModalOverlay(gid, viewMonth, group, members) {
       '<div class="avatar sm" style="background:' + colorFor(pidx) + ';">' + initialsOf(pmem.name) + '</div>' +
       '<div style="flex:1 1 auto;min-width:0;"><div style="font-size:14px;font-weight:700;">' + escapeHtml(pmem.name) + '</div>' +
       '<div style="font-size:11.5px;color:var(--color-text-muted);">' + monthLabel(group.startYear, group.startMonthIndex, viewMonth) + ' · ' + fmt(group.monthlyDeposit) + ' · collected by ' + adminName(holder) + '</div></div>' +
-      '<div class="sheet-close" data-action="close-payment-modal">' + iconClose() + '</div>' +
+      // Closing mid-save would race the write's own history.back() (see
+      // savePaymentModal) — dropped entirely rather than just visually
+      // dimmed, same "no data-action when the action shouldn't fire"
+      // convention as the winner card's openable/removable flags.
+      (locked ? '<div class="sheet-close" style="opacity:0.35;">' + iconClose() + '</div>' : '<div class="sheet-close" data-action="close-payment-modal">' + iconClose() + '</div>') +
     '</div>' +
     '<div class="sheet-body">' +
       '<div style="text-align:center;padding:8px 0 4px;">' +
@@ -63,17 +78,25 @@ export function renderPaymentModalOverlay(gid, viewMonth, group, members) {
         (pm.isEditing && existingP && formatDateTime(existingP.paidAt) ? '<div style="font-size:11px;color:var(--color-text-muted);margin-top:2px;">Paid on ' + formatDateTime(existingP.paidAt) + '</div>' : '') +
       '</div>' +
       '<div><div style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--color-text-muted);margin-bottom:8px;">' + iconWallet() + 'Payment mode</div>' +
-      (canEditMode
+      (canEditMode && !locked
         ? '<div class="pill-row">' +
             '<button class="pill ' + (pm.mode === 'cash' ? 'active' : '') + '" style="display:flex;align-items:center;justify-content:center;gap:6px;" data-action="set-modal-mode" data-mode="cash">' + iconCash() + 'Cash</button>' +
             '<button class="pill ' + (pm.mode === 'online' ? 'active' : '') + '" style="display:flex;align-items:center;justify-content:center;gap:6px;" data-action="set-modal-mode" data-mode="online">' + iconCard() + 'Online</button>' +
           '</div>'
         : '<div class="pill-row"><div class="pill active" style="pointer-events:none;display:flex;align-items:center;justify-content:center;gap:6px;">' + (pm.mode === 'online' ? iconCard() + 'Online' : iconCash() + 'Cash') + '</div></div>' +
-          '<div style="font-size:11px;color:var(--color-text-muted);margin-top:6px;">' + (existingP && existingP.transferred ? 'Locked — this amount has been transferred and can no longer be edited.' : pendingHandoffId ? 'Locked — a transfer request is pending on this amount.' : 'Only ' + adminName(holder) + ' can change this.') + '</div>'
+          (locked ? '' : '<div style="font-size:11px;color:var(--color-text-muted);margin-top:6px;">' + (existingP && existingP.transferred ? 'Locked — this amount has been transferred and can no longer be edited.' : pendingHandoffId ? 'Locked — a transfer request is pending on this amount.' : 'Only ' + adminName(holder) + ' can change this.') + '</div>')
       ) + '</div>' +
       transferHistory +
-      (canMarkUnpaid ? '<button class="btn btn-danger-soft" style="width:100%;" data-action="mark-unpaid">Mark as unpaid</button>' : '') +
-      (canEditMode && (!pm.isEditing || pm.mode !== pm.originalMode) ? '<button class="btn btn-primary" style="width:100%;" data-action="save-payment">Save Payment</button>' : '') +
+      (canMarkUnpaid && !locked ? '<button class="btn btn-danger-soft" style="width:100%;" data-action="mark-unpaid">Mark as unpaid</button>' : '') +
+      (saveError ? '<div class="error-text" style="display:flex;align-items:center;gap:6px;font-weight:600;">' + iconWarningTriangle('var(--color-danger)') + 'Could not save: ' + escapeHtml(saveError) + '</div>' : '') +
+      (justSaved
+        ? '<div class="btn" style="width:100%;background:var(--color-success-soft);color:var(--color-success);display:flex;align-items:center;justify-content:center;gap:8px;pointer-events:none;">' + iconCheck('var(--color-success)') + 'Payment saved</div>'
+        : (canEditMode && (!pm.isEditing || pm.mode !== pm.originalMode)
+          ? '<button class="btn btn-primary' + (saving ? ' disabled' : '') + '" style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px;"' + (saving ? '' : ' data-action="save-payment"') + '>' +
+              (saving ? '<div class="spinner" style="width:16px;height:16px;border-color:rgba(255,255,255,0.35);border-top-color:#fff;"></div>Saving…' : 'Save Payment') +
+            '</button>'
+          : '')
+      ) +
     '</div>' +
   '</div></div>';
 }
