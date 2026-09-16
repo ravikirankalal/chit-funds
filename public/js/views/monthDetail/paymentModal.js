@@ -1,10 +1,10 @@
 import { ADMINS } from '../../../firebase-config.js';
 import { state, paymentsCache, monthsCache, transferReqCache, handoffReqCache, monthKey } from '../../store.js';
-import { fmt, escapeHtml, colorFor, initialsOf, adminName, formatDateTime, monthLabel } from '../../helpers.js';
+import { fmt, escapeHtml, colorFor, initialsOf, adminName, adminDot, formatDateTime, monthLabel } from '../../helpers.js';
 import { iconClose, iconCash, iconCard, iconTransfer, iconWallet, iconCheck, iconWarningTriangle } from '../../icons.js';
-import { timelineRow } from './shared.js';
+import { timelineRow, signed } from './shared.js';
 
-export function renderPaymentModalOverlay(gid, viewMonth, group, members) {
+export function renderPaymentModalOverlay(gid, viewMonth, group, members, f) {
   var pm = state.ui.paymentModal;
   var pmem = members.find(function (mm) { return mm.id === pm.memberId; });
   var pidx = members.indexOf(pmem);
@@ -78,6 +78,21 @@ export function renderPaymentModalOverlay(gid, viewMonth, group, members) {
     modeSection = '<div style="font-size:11px;color:var(--color-text-muted);">' + (existingP && existingP.transferred ? 'Locked — this amount has been transferred and can no longer be edited.' : pendingHandoffId ? 'Locked — a transfer request is pending on this amount.' : 'Only ' + adminName(holder) + ' can change this.') + '</div>';
   }
 
+  // Only meaningful for an actual collection — a mode-only edit on an
+  // already-paid entry doesn't move any money, so there's nothing for a
+  // before/after to preview. Mirrors the payout modal's own "if you save
+  // this" holdings preview.
+  var holdingsPreview = '';
+  if (!pm.isEditing) {
+    var beforeHold = state.currentAdmin === 'A' ? f.adjA : f.adjB;
+    var afterHold = beforeHold + group.monthlyDeposit;
+    holdingsPreview = '<div>' +
+      '<div class="section-label">Your holdings, if you save this</div>' +
+      '<div class="stat"><div class="label">' + adminDot(state.currentAdmin) + adminName(state.currentAdmin) + '</div>' +
+      '<div class="value"><span style="color:' + (beforeHold < 0 ? 'var(--color-danger)' : 'var(--color-text)') + ';">' + signed(beforeHold) + '</span> <span style="color:var(--color-text-faint);font-weight:400;">→</span> <span style="color:' + (afterHold < 0 ? 'var(--color-danger)' : 'var(--color-text)') + ';">' + signed(afterHold) + '</span></div></div>' +
+    '</div>';
+  }
+
   var transferHistory = '';
   if (pm.isEditing && existingP) {
     // collectedBy/transferredAt only ever reflect the CURRENT holder — the
@@ -134,6 +149,7 @@ export function renderPaymentModalOverlay(gid, viewMonth, group, members) {
     '<div class="sheet-body">' +
       heroCard +
       modeSection +
+      holdingsPreview +
       transferHistory +
       actionBlock +
     '</div>' +

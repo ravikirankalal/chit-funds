@@ -131,7 +131,7 @@ export function renderMonthDetail() {
   html += '</div>';
 
   if (state.ui.showWinnerPicker) html += renderWinnerPickerOverlay(gid, group, f, members);
-  if (state.ui.paymentModal) html += renderPaymentModalOverlay(gid, viewMonth, group, members);
+  if (state.ui.paymentModal) html += renderPaymentModalOverlay(gid, viewMonth, group, members, f);
   if (state.ui.payoutModal) html += renderPayoutModalOverlay(f, members);
   if (state.ui.transferSelection) html += renderTransferBar(gid, viewMonth, group);
 
