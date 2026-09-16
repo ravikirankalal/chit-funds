@@ -23,15 +23,16 @@ function winnerStatusPill(w) {
 // completely unpaid, and paidByA/paidByB can sit below payoutAmount for a
 // while even on a closed month (openPayoutModal/setPayoutContribution in
 // actions/winners/payout.js let a contribution be recorded for them same as
-// any other winner). The status pill above already covers "how much is
-// left"; this is only the "who paid what" breakdown, so it's skipped
-// entirely once there's nothing paid yet — the pill alone says that.
-function winnerContribLine(w) {
-  var parts = [];
-  if (w.paidByA > 0) parts.push(adminName('A') + ' ' + fmt(w.paidByA));
-  if (w.paidByB > 0) parts.push(adminName('B') + ' ' + fmt(w.paidByB));
-  if (!parts.length) return '';
-  return 'By <span style="font-weight:700;color:var(--color-text);">' + escapeHtml(parts.join(' + ')) + '</span>';
+// any other winner). The status pill already covers "how much is left";
+// this is only the "who paid what" breakdown — one line per admin, right
+// under the total they're each chipping away at, rather than joined into
+// one "X + Y" sentence off to the side. Skipped entirely once there's
+// nothing paid yet, since the pill alone already says that.
+function winnerContribLines(w) {
+  var lines = [];
+  if (w.paidByA > 0) lines.push('<div style="display:flex;align-items:center;justify-content:flex-end;gap:4px;font-size:10.5px;color:var(--color-text-muted);margin-top:3px;">' + adminDot('A') + escapeHtml(adminName('A')) + ' ' + fmt(w.paidByA) + '</div>');
+  if (w.paidByB > 0) lines.push('<div style="display:flex;align-items:center;justify-content:flex-end;gap:4px;font-size:10.5px;color:var(--color-text-muted);margin-top:3px;">' + adminDot('B') + escapeHtml(adminName('B')) + ' ' + fmt(w.paidByB) + '</div>');
+  return lines.join('');
 }
 
 // The one place a winner is shown, open month or closed — each gets their
@@ -55,7 +56,7 @@ function renderWinnerTopCards(f, members, readOnly) {
   return f.winners.map(function (w) {
     var winner = members.find(function (mm) { return mm.id === w.memberId; });
     var winnerIdx = winner ? members.indexOf(winner) : -1;
-    var contribLine = winnerContribLine(w);
+    var contribLines = winnerContribLines(w);
     var interactive = !readOnly && !state.ui.transferSelection;
     var removable = interactive && !((w.paidByA || 0) > 0 || (w.paidByB || 0) > 0);
     var openable = interactive && !(f.closed && w.remaining <= 0);
@@ -79,11 +80,11 @@ function renderWinnerTopCards(f, members, readOnly) {
       '<div style="flex:1 1 auto; min-width:0;">' +
         '<div style="font-size:16px;font-weight:700;">' + (winner ? escapeHtml(winner.name) : '—') + '</div>' +
         '<div style="margin-top:4px;">' + winnerStatusPill(w) + '</div>' +
-        (contribLine ? '<div style="font-size:10.5px;color:var(--color-text-muted);margin-top:4px;">' + contribLine + '</div>' : '') +
       '</div>' +
       '<div style="text-align:right; flex-shrink:0;">' +
         '<div style="font-size:11px;color:var(--color-text-muted);">Payout</div>' +
         '<div class="mono" style="font-size:18px;font-weight:700;color:var(--color-gold);">' + fmt(w.payoutAmount) + '</div>' +
+        contribLines +
         (removable ? '<div data-action="remove-winner" data-mid="' + w.memberId + '" style="cursor:pointer;color:var(--color-danger);font-size:11px;font-weight:600;margin-top:4px;">Remove</div>' : '') +
       '</div>' +
     '</div>';
