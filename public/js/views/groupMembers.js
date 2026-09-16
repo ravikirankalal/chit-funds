@@ -28,16 +28,28 @@ export function renderGroupMembers() {
     }
   }
 
+  // A won/not-won status pill on every row (not just the ones with
+  // something to show) so the list reads at a glance — same "clear status
+  // indicator" language as the month rows' payoutStatusPill — instead of
+  // an uneven mix of a two-line caption for winners and bare whitespace
+  // for everyone else.
+  function memberWinPill(win) {
+    if (win) {
+      return '<span style="display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:20px;background:var(--color-success-soft);color:var(--color-success);margin-top:4px;">' + iconTrophy('var(--color-success)', 11) + 'Received ' + fmt(win.amount) + ' · ' + monthLabel(group.startYear, group.startMonthIndex, win.month) + '</span>';
+    }
+    return '<span style="display:inline-flex;align-items:center;font-size:10.5px;font-weight:600;padding:3px 8px;border-radius:20px;background:var(--color-border);color:var(--color-text-muted);margin-top:4px;">Not won yet</span>';
+  }
+
   var rows = members.map(function (mm, idx) {
     var canRemove = !readOnly && !memberHasPaidInGroup(gid, group, mm.id);
     var win = winsByMember[mm.id];
     return '<div class="list-row" data-action="open-member-payments" data-gid="' + gid + '" data-mid="' + mm.id + '" style="cursor:pointer;">' +
-      '<div class="avatar sm" style="background:' + colorFor(idx) + ';">' + initialsOf(mm.name) + '</div>' +
+      '<div class="avatar" style="background:' + colorFor(idx) + ';">' + initialsOf(mm.name) + '</div>' +
       '<div style="flex:1 1 auto; min-width:0;">' +
-        '<div style="font-size:13px;font-weight:500;">' + escapeHtml(mm.name) + '</div>' +
-        (win ? '<div style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--color-success);margin-top:1px;">' + iconTrophy('var(--color-success)') + 'Received ' + fmt(win.amount) + ' · ' + monthLabel(group.startYear, group.startMonthIndex, win.month) + '</div>' : '') +
+        '<div style="font-size:13.5px;font-weight:600;">' + escapeHtml(mm.name) + '</div>' +
+        memberWinPill(win) +
       '</div>' +
-      (canRemove ? '<div data-action="remove-member-from-group" data-gid="' + gid + '" data-mid="' + mm.id + '" style="display:flex;align-items:center;gap:4px;cursor:pointer;color:var(--color-danger);font-size:12px;font-weight:600;">' + iconTrash('var(--color-danger)') + 'Remove</div>' : '') +
+      (canRemove ? '<div data-action="remove-member-from-group" data-gid="' + gid + '" data-mid="' + mm.id + '" style="display:flex;align-items:center;gap:4px;cursor:pointer;color:var(--color-danger);font-size:12px;font-weight:600;flex-shrink:0;">' + iconTrash('var(--color-danger)') + 'Remove</div>' : '') +
       iconChevronRight() +
     '</div>';
   }).join('') || '<div class="card" style="color:var(--color-text-muted);font-size:13px;text-align:center;">No members yet.</div>';
