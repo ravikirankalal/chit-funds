@@ -35,23 +35,22 @@ export function renderPaymentModalOverlay(gid, viewMonth, group, members) {
   // are visually distinct without inventing a new color for either.
   var modeColor = pm.mode === 'online' ? 'var(--color-primary)' : 'var(--color-secondary)';
   var modeSoft = pm.mode === 'online' ? 'var(--color-primary-soft)' : 'var(--color-secondary-soft)';
-  var modeIcon = pm.mode === 'online' ? iconCard(modeColor, 16) : iconCash(modeColor, 16);
+  var modeIcon = pm.mode === 'online' ? iconCard(modeColor, 14) : iconCash(modeColor, 14);
   var modeLabel = pm.mode === 'online' ? 'Online' : 'Cash';
-  var paidPill = (pm.isEditing && existingP)
-    ? '<div style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;color:var(--color-success);background:var(--color-success-soft);padding:4px 9px;border-radius:20px;">' + iconCheck('var(--color-success)') + 'Paid</div>'
+  // A single centered column — mode badge, then the amount, then the paid
+  // caption (if any) — so the card stays symmetric whether or not there's
+  // a paid line to show, instead of a two-sided top row that went
+  // lopsided the moment one side had nothing in it.
+  var paidCaption = (pm.isEditing && existingP && formatDateTime(existingP.paidAt))
+    ? '<div style="display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;color:var(--color-success);">' + iconCheck('var(--color-success)') + 'Paid on ' + formatDateTime(existingP.paidAt) + '</div>'
     : '';
-  var heroCard = '<div style="background:var(--color-bg);border:1px solid var(--color-border);border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:12px;">' +
-    '<div style="display:flex;align-items:center;justify-content:space-between;">' +
-      '<div style="display:flex;align-items:center;gap:8px;">' +
-        '<div style="width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:' + modeSoft + ';">' + modeIcon + '</div>' +
-        '<span style="font-size:12.5px;font-weight:600;color:' + modeColor + ';">' + modeLabel + '</span>' +
-      '</div>' +
-      paidPill +
+  var heroCard = '<div style="background:var(--color-bg);border:1px solid var(--color-border);border-radius:18px;padding:20px 16px;display:flex;flex-direction:column;align-items:center;gap:10px;">' +
+    '<div style="display:inline-flex;align-items:center;gap:7px;">' +
+      '<div style="width:28px;height:28px;border-radius:9px;display:flex;align-items:center;justify-content:center;background:' + modeSoft + ';">' + modeIcon + '</div>' +
+      '<span style="font-size:12px;font-weight:600;color:' + modeColor + ';">' + modeLabel + '</span>' +
     '</div>' +
-    '<div style="text-align:center;">' +
-      '<div class="mono" style="font-size:34px;font-weight:700;">' + fmt(group.monthlyDeposit) + '</div>' +
-      (pm.isEditing && existingP && formatDateTime(existingP.paidAt) ? '<div style="font-size:11px;color:var(--color-text-muted);margin-top:2px;">Paid on ' + formatDateTime(existingP.paidAt) + '</div>' : '') +
-    '</div>' +
+    '<div class="mono" style="font-size:34px;font-weight:700;">' + fmt(group.monthlyDeposit) + '</div>' +
+    paidCaption +
   '</div>';
 
   // Only shown when there's an actual decision to make (an editable,
