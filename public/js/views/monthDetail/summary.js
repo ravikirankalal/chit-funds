@@ -105,7 +105,14 @@ function renderWinnerTopCards(f, members, readOnly) {
 
 export function renderClosedSummary(f, members, readOnly, gid, viewMonth) {
   var unpaidCount = members.length - f.paidCount;
-  var closedProfit = f.totalCollected - f.payoutAmount;
+  // f.payoutAmount is the target — the sum of every winner's payoutAmount,
+  // whether or not it's actually been handed over yet. A winner added via
+  // "Add another winner" after the month closed (picker.js's addWinner)
+  // can sit fully or partially unpaid on an otherwise-closed month, so the
+  // target and what's actually gone out can genuinely differ here — use
+  // the real paid total for both the stat and the profit it feeds into.
+  var payoutSoFar = (f.payoutPaidA || 0) + (f.payoutPaidB || 0);
+  var closedProfit = f.totalCollected - payoutSoFar;
   var closedProfitColor = closedProfit < 0 ? 'var(--color-danger)' : 'var(--color-success)';
   var winnerCards = renderWinnerTopCards(f, members, readOnly) || '<div class="card" style="color:var(--color-text-muted);font-size:13px;text-align:center;">No winner recorded.</div>';
 
@@ -120,7 +127,7 @@ export function renderClosedSummary(f, members, readOnly, gid, viewMonth) {
     '<div class="card">' + renderMemberPaymentStrip(gid, viewMonth, members, readOnly) + '</div>' +
     '<div class="card" style="display:flex;">' +
       summaryStat(iconWallet() + 'Collections', '<span style="color:var(--color-primary);">' + fmt(f.totalCollected) + '</span>') +
-      summaryStat('Payouts', '<span style="color:var(--color-accent);">' + fmt(f.payoutAmount) + '</span>', true) +
+      summaryStat('Payouts', '<span style="color:var(--color-accent);">' + fmt(payoutSoFar) + '</span>', true) +
       summaryStat('Profit', '<span style="color:' + closedProfitColor + ';">' + signed(closedProfit) + '</span>', true) +
     '</div>' +
     '<div class="stat-row">' +
@@ -140,7 +147,10 @@ export function renderOpenSummary(f, members, group, readOnly, gid, viewMonth) {
   var expected = members.length * group.monthlyDeposit;
   var pct = expected > 0 ? Math.min(100, Math.round((f.totalCollected / expected) * 100)) : 0;
   var setupPayout = (group.payoutSchedule && group.payoutSchedule[viewMonth - 1]) || 0;
-  var openProfit = f.totalCollected - f.payoutAmount;
+  // Same fix as renderClosedSummary above — f.payoutAmount is the target,
+  // not what's actually gone out; use the real paid total here too.
+  var payoutSoFar = (f.payoutPaidA || 0) + (f.payoutPaidB || 0);
+  var openProfit = f.totalCollected - payoutSoFar;
   var openProfitColor = openProfit < 0 ? 'var(--color-danger)' : 'var(--color-success)';
   // Same per-winner card a closed month shows, and for the same reason: once
   // a winner is picked, their payout status and Remove link live here, not
@@ -151,7 +161,7 @@ export function renderOpenSummary(f, members, group, readOnly, gid, viewMonth) {
     '<div class="card" style="display:flex;flex-direction:column;gap:10px;">' +
       '<div style="display:flex;">' +
         summaryStat(iconWallet() + 'Collections', '<span style="color:var(--color-primary);">' + fmt(f.totalCollected) + '</span> <span style="font-size:12px;color:var(--color-text-muted);font-weight:400;">/ ' + fmt(expected) + '</span>') +
-        summaryStat(iconTrophy() + 'Payout', '<span style="color:var(--color-accent);">' + fmt(f.payoutAmount) + '</span> <span style="font-size:12px;color:var(--color-text-muted);font-weight:400;">/ ' + fmt(setupPayout) + '</span>', true) +
+        summaryStat(iconTrophy() + 'Payout', '<span style="color:var(--color-accent);">' + fmt(payoutSoFar) + '</span> <span style="font-size:12px;color:var(--color-text-muted);font-weight:400;">/ ' + fmt(setupPayout) + '</span>', true) +
         summaryStat('Profit', '<span style="color:' + openProfitColor + ';">' + signed(openProfit) + '</span>', true) +
       '</div>' +
       '<div>' +
