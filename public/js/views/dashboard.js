@@ -95,15 +95,7 @@ export function renderDashboard() {
     var pct = Math.round((g.currentMonth / g.durationMonths) * 100);
     var members = membersByGroup.get(g.id) || [];
     var memberCount = members.length;
-    var isCompleted = g.status === 'completed';
-    // "3/5 paid" for the current month replaces the old static "In
-    // progress" label — a completed group's last month is always fully
-    // closed, so there's nothing collection-wise left to flag for those.
     var f = monthFinances(g.id, g, g.currentMonth);
-    var allPaid = memberCount > 0 && f.paidCount === memberCount;
-    var statusBadge = isCompleted
-      ? '<span style="font-size:12px;color:var(--color-primary);font-weight:600;">Completed</span>'
-      : '<span style="display:flex;align-items:center;gap:4px;font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;background:' + (allPaid ? 'var(--color-success-soft)' : 'var(--color-warning-soft)') + ';color:' + (allPaid ? 'var(--color-success)' : 'var(--color-warning)') + ';">' + f.paidCount + '/' + memberCount + ' paid</span>';
     // Winner names resolved here rather than stored — a month doc only
     // ever holds memberIds (see getMonthWinners in finance/shared.js).
     var winnerNames = f.winners.map(function (w) {
@@ -151,10 +143,7 @@ export function renderDashboard() {
         '<div style="text-align:right;flex-shrink:0;">' + iconChevronRight() + '</div>' +
       '</div>' +
       '<div><div class="progress-track"><div class="progress-fill" style="width:' + pct + '%;"></div></div>' +
-      '<div style="display:flex;justify-content:space-between;margin-top:6px;">' +
-        '<div style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--color-text-muted);">' + iconCalendar() + 'Month ' + g.currentMonth + ' of ' + g.durationMonths + '</div>' +
-        statusBadge +
-      '</div>' +
+      '<div style="display:flex;align-items:center;gap:5px;margin-top:6px;font-size:12px;color:var(--color-text-muted);">' + iconCalendar() + 'Month ' + g.currentMonth + ' of ' + g.durationMonths + '</div>' +
       moneyRow +
       payoutLine +
       '</div>' +
