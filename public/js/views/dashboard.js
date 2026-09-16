@@ -119,16 +119,30 @@ export function renderDashboard() {
     // outstanding, muted for months not yet reached. Reuses f (already
     // computed above) for the current month instead of calling
     // monthFinances on it a second time.
+    // Collected/paid-out totals across every month so far — same real
+    // (not target) paid figures as the group-detail page's own stats card,
+    // accumulated here rather than looped again separately since the
+    // trend loop below already visits every month up to currentMonth.
+    var collectedSoFar = 0, payoutSoFarForGroup = 0;
     var trend = [];
     for (var tm = 1; tm <= g.durationMonths; tm++) {
       if (tm <= g.currentMonth) {
         var tf = tm === g.currentMonth ? f : monthFinances(g.id, g, tm);
         var tpct = memberCount > 0 ? Math.round((tf.paidCount / memberCount) * 100) : 0;
         trend.push({ m: tm, pct: tpct, color: tf.paidCount === memberCount ? 'var(--color-success)' : 'var(--color-danger)' });
+        collectedSoFar += tf.totalCollected;
+        payoutSoFarForGroup += tf.payoutPaidA + tf.payoutPaidB;
       } else {
         trend.push({ m: tm, pct: 0, color: 'var(--color-border)' });
       }
     }
+    var groupProfit = collectedSoFar - payoutSoFarForGroup;
+    var groupProfitColor = groupProfit < 0 ? 'var(--color-danger)' : 'var(--color-success)';
+    var moneyRow = '<div style="display:flex;gap:4px;">' +
+      '<div style="flex:1 1 0;min-width:0;"><div style="font-size:9.5px;color:var(--color-text-muted);">Collections</div><div class="mono" style="font-size:12.5px;font-weight:700;color:var(--color-primary);">' + fmt(collectedSoFar) + '</div></div>' +
+      '<div style="flex:1 1 0;min-width:0;"><div style="font-size:9.5px;color:var(--color-text-muted);">Payout</div><div class="mono" style="font-size:12.5px;font-weight:700;color:var(--color-accent);">' + fmt(payoutSoFarForGroup) + '</div></div>' +
+      '<div style="flex:1 1 0;min-width:0;"><div style="font-size:9.5px;color:var(--color-text-muted);">Profit</div><div class="mono" style="font-size:12.5px;font-weight:700;color:' + groupProfitColor + ';">' + (groupProfit < 0 ? '−' + fmt(Math.abs(groupProfit)) : fmt(groupProfit)) + '</div></div>' +
+    '</div>';
     var trendBars = trend.map(function (t) {
       var h = Math.max(2, Math.round((t.pct / 100) * 14));
       var ring = t.m === g.currentMonth ? 'box-shadow:0 0 0 1.5px var(--color-primary);' : '';
@@ -147,14 +161,14 @@ export function renderDashboard() {
           '<span style="display:flex;align-items:center;gap:4px;">' + iconPeopleSmall('var(--color-text-faint)') + memberCount + '</span>' +
           '<span style="display:flex;align-items:center;gap:4px;">' + iconWallet('var(--color-text-faint)') + fmt(g.monthlyDeposit) + ' / month</span>' +
         '</div></div>' +
-        '<div style="text-align:right;flex-shrink:0;">' + iconChevronRight() +
-        '<div class="mono" style="font-size:13px;font-weight:700;color:var(--color-accent);margin-top:2px;">' + fmt(f.payoutAmount) + '</div></div>' +
+        '<div style="text-align:right;flex-shrink:0;">' + iconChevronRight() + '</div>' +
       '</div>' +
       '<div><div class="progress-track"><div class="progress-fill" style="width:' + pct + '%;"></div></div>' +
       '<div style="display:flex;justify-content:space-between;margin-top:6px;">' +
         '<div style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--color-text-muted);">' + iconCalendar() + 'Month ' + g.currentMonth + ' of ' + g.durationMonths + '</div>' +
         statusBadge +
       '</div>' +
+      moneyRow +
       payoutLine +
       trendRow +
       '</div>' +
