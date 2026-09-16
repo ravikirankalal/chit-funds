@@ -58,6 +58,9 @@ export function iconTransfer(color, size) {
 export function iconWarningTriangle(color, size) {
   return '<svg width="' + (size || 14) + '" height="' + (size || 14) + '" viewBox="0 0 24 24" fill="none"><path d="M12 4L21.5 20H2.5L12 4Z" stroke="' + (color || 'currentColor') + '" stroke-width="1.8" stroke-linejoin="round"/><path d="M12 10V14.5" stroke="' + (color || 'currentColor') + '" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="17.3" r="1" fill="' + (color || 'currentColor') + '"/></svg>';
 }
+export function iconLogout(color, size) {
+  return '<svg width="' + (size || 14) + '" height="' + (size || 14) + '" viewBox="0 0 24 24" fill="none"><path d="M9 21H5.5A2 2 0 0 1 3.5 19V5A2 2 0 0 1 5.5 3H9" stroke="' + (color || 'currentColor') + '" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M16 16.5L21 12L16 7.5" stroke="' + (color || 'currentColor') + '" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M21 12H10" stroke="' + (color || 'currentColor') + '" stroke-width="1.8" stroke-linecap="round"/></svg>';
+}
 export function iconInfo(color, size) {
   return '<svg width="' + (size || 14) + '" height="' + (size || 14) + '" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="' + (color || 'currentColor') + '" stroke-width="1.8"/><path d="M12 11V16.5" stroke="' + (color || 'currentColor') + '" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="7.7" r="1" fill="' + (color || 'currentColor') + '"/></svg>';
 }

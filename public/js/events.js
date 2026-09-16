@@ -10,7 +10,7 @@ import { state } from './store.js';
 import { render } from './render.js';
 import { goTo } from './router.js';
 import { signInGoogle, doLogout } from './auth.js';
-import { flatPayoutSchedule } from './helpers.js';
+import { stepPayoutSchedule } from './helpers.js';
 import {
   startCreateGroup, createGroupStep2, addDraftMember, addExistingDraftMember, removeDraftMember, submitCreateGroup,
   openGroupDetail, openGroupMembers, openMemberPayments, removeMemberFromGroup, openMonth, openPaymentModal, closePaymentModal, setModalMode,
@@ -74,7 +74,13 @@ document.addEventListener('click', function (e) {
   var action = el.getAttribute('data-action');
   switch (action) {
     case 'signin': signInGoogle(); break;
-    case 'logout': doLogout(); break;
+    case 'logout': state.ui.profileMenuOpen = false; doLogout(); break;
+    // A plain toggle/dismiss, not routed through actions/ — same "quick
+    // UI-only state, no Firestore write" reasoning as the inline
+    // payoutModal.draftAmount mutations below, just for a dropdown instead
+    // of a form field.
+    case 'toggle-profile-menu': state.ui.profileMenuOpen = !state.ui.profileMenuOpen; render(); break;
+    case 'close-profile-menu': state.ui.profileMenuOpen = false; render(); break;
     case 'go-dashboard': goTo('dashboard'); break;
     case 'go-members': goTo('members'); break;
     case 'go-ledger': goTo('ledger'); break;
@@ -171,18 +177,20 @@ document.addEventListener('input', function (e) {
   if (field === 'name') g.name = e.target.value;
   else if (field === 'durationMonths') {
     g.durationMonths = Math.max(1, parseInt(e.target.value, 10) || 1);
-    g.payoutSchedule = flatPayoutSchedule(g.payoutStart, g.durationMonths);
+    g.payoutSchedule = stepPayoutSchedule(g.payoutStart, g.durationMonths);
   }
   else if (field === 'totalMembers') g.totalMembers = Math.max(1, parseInt(e.target.value, 10) || 1);
   else if (field === 'monthlyDeposit') g.monthlyDeposit = parseFloat(e.target.value) || 0;
   else if (field === 'payoutStart') {
     g.payoutStart = parseFloat(e.target.value) || 0;
-    g.payoutSchedule = flatPayoutSchedule(g.payoutStart, g.durationMonths);
+    g.payoutSchedule = stepPayoutSchedule(g.payoutStart, g.durationMonths);
   }
   else if (field === 'payoutMonth') {
     var idx = parseInt(e.target.getAttribute('data-idx'), 10);
     if (!isNaN(idx)) g.payoutSchedule[idx] = parseFloat(e.target.value) || 0;
   }
+  else if (field === 'startMonthIndex') g.startMonthIndex = parseInt(e.target.value, 10) || 0;
+  else if (field === 'startYear') g.startYear = parseInt(e.target.value, 10) || g.startYear;
   else if (field === 'draftMemberName') g.draftMemberName = e.target.value;
   render(); // render() itself preserves focus/caret on the field being typed in
 });

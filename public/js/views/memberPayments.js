@@ -23,7 +23,7 @@ export function renderMemberPayments() {
 
   var rows = [];
   var trend = []; // { m, paid } per month this member owed dues for — feeds the payment-trend strip below
-  var totalPaid = 0;
+  var totalPaid = 0, wonTotal = 0;
   for (var m = 1; m <= group.currentMonth; m++) {
     var p = (paymentsCache.get(monthKey(gid, m)) || {})[mid];
     var f = monthFinances(gid, group, m);
@@ -37,16 +37,32 @@ export function renderMemberPayments() {
       subtitle = '<span style="color:var(--color-danger);">Not paid</span>';
       statusBg = 'var(--color-danger-soft)'; statusColor = 'var(--color-danger)'; statusLabel = 'Unpaid';
     }
-    if (winEntry) subtitle += ' · <span style="display:inline-flex;align-items:center;gap:3px;font-weight:600;color:var(--color-accent);">' + iconTrophy('var(--color-accent)') + 'Won ' + fmt(winEntry.payoutAmount) + '</span>';
+    // Its own pill under the status pill, not folded into the subtitle
+    // sentence — a win is a distinct enough fact (and rare enough) that it
+    // deserves the same badge treatment status gets elsewhere, rather than
+    // being one more clause to parse in a line of running text.
+    var wonPill = '';
+    if (winEntry) {
+      wonTotal += winEntry.payoutAmount;
+      wonPill = '<div style="margin-top:4px;display:flex;align-items:center;justify-content:flex-end;gap:3px;font-size:10px;font-weight:700;color:var(--color-accent);">' + iconTrophy('var(--color-accent)', 11) + 'Won ' + fmt(winEntry.payoutAmount) + '</div>';
+    }
     trend.push({ m: m, state: (p && p.paid) ? 'paid' : 'unpaid' });
 
+    // The avatar carries the same paid/unpaid color the status pill does —
+    // a colored strip down the list is readable at a glance without
+    // reading every pill, same reasoning as the group month rows' avatar.
     rows.push('<div class="list-row" data-action="open-month" data-gid="' + gid + '" data-m="' + m + '">' +
-      '<div class="avatar sm" style="background:var(--color-bg); color:var(--color-text-muted);">' + m + '</div>' +
+      '<div class="avatar sm" style="background:' + (p && p.paid ? 'var(--color-success-soft)' : 'var(--color-danger-soft)') + '; color:' + (p && p.paid ? 'var(--color-success)' : 'var(--color-danger)') + ';">' + m + '</div>' +
       '<div style="flex:1 1 auto; min-width:0;"><div style="font-size:13px;font-weight:600;">' + monthLabel(group.startYear, group.startMonthIndex, m) + '</div>' +
       '<div style="font-size:11px;color:var(--color-text-muted);margin-top:1px;">' + subtitle + '</div></div>' +
-      '<div style="flex-shrink:0;display:flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;padding:5px 10px;border-radius:20px;background:' + statusBg + ';color:' + statusColor + ';">' + statusLabel + '</div>' +
+      '<div style="flex-shrink:0;text-align:right;">' +
+        '<div style="display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;padding:5px 10px;border-radius:20px;background:' + statusBg + ';color:' + statusColor + ';">' + statusLabel + '</div>' +
+        wonPill +
+      '</div>' +
     '</div>');
   }
+  var totalDueSoFar = group.currentMonth * group.monthlyDeposit;
+  var amountDue = totalDueSoFar - totalPaid;
   // The list above only covers months this member has actually owed dues
   // for (1..currentMonth) — the trend strip covers the group's FULL
   // duration, same as the group detail collection-trend sparkline, so a
@@ -82,7 +98,9 @@ export function renderMemberPayments() {
       '<div class="content">' +
         trendStrip +
         '<div class="stat-row">' +
-          '<div class="stat"><div class="label">' + iconWallet() + 'Paid so far</div><div class="value">' + fmt(totalPaid) + '</div></div>' +
+          '<div class="stat"><div class="label">' + iconWallet() + 'Paid so far</div><div class="value">' + fmt(totalPaid) + ' <span style="font-size:12px;color:var(--color-text-muted);font-weight:400;">/ ' + fmt(totalDueSoFar) + '</span></div></div>' +
+          '<div class="stat"><div class="label">Amount due</div><div class="value" style="color:' + (amountDue > 0 ? 'var(--color-danger)' : 'var(--color-text)') + ';">' + fmt(amountDue) + '</div></div>' +
+          (wonTotal > 0 ? '<div class="stat"><div class="label">' + iconTrophy() + 'Received</div><div class="value" style="color:var(--color-accent);">' + fmt(wonTotal) + '</div></div>' : '') +
         '</div>' +
         '<div><div class="section-label">' + iconCalendar() + 'Payments</div><div class="row-list">' + (rows.join('') || '<div class="card" style="color:var(--color-text-muted);font-size:13px;text-align:center;">No months yet.</div>') + '</div></div>' +
       '</div>' +

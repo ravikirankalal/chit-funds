@@ -61,7 +61,12 @@ export function renderGroupDetail() {
   for (var i = 1; i <= group.currentMonth; i++) {
     var mf = monthFinances(gid, group, i);
     collectedSoFar += mf.totalCollected;
-    if (mf.closed) payoutSoFar += mf.payoutAmount;
+    // mf.payoutAmount is the TARGET for the month, not what's actually
+    // gone out — a winner added after the month closed (or any partial
+    // contribution) can leave real payouts below the target even on a
+    // closed month, so this needs the real paid total, not the target
+    // (same fix as monthDetail/summary.js and the month-row cards below).
+    payoutSoFar += mf.payoutPaidA + mf.payoutPaidB;
     holdA += mf.finalA; holdB += mf.finalB;
   }
   var totalCollection = members.length * group.monthlyDeposit * group.durationMonths;

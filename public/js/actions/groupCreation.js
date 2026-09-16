@@ -1,19 +1,24 @@
 import { doc, collection, serverTimestamp, writeBatch } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
 import { db } from '../firebase.js';
 import { state, membersById } from '../store.js';
-import { isSuper, flatPayoutSchedule } from '../helpers.js';
+import { isSuper, stepPayoutSchedule } from '../helpers.js';
 import { goTo, pushNav } from '../router.js';
 import { render } from '../render.js';
 import { setBusy } from './shared.js';
 
 export function startCreateGroup() {
   if (isSuper()) return;
-  var durationMonths = 24, payoutStart = 75000;
+  var durationMonths = 20, payoutStart = 70000;
+  var now = new Date();
   state.ui.newGroup = {
     step: 1,
     name: '', durationMonths: durationMonths, totalMembers: durationMonths, monthlyDeposit: 5000,
+    // Defaults to the real current month — most groups start "now" — but
+    // stays editable on step 1 (renderStep1's "Beginning month" field) for
+    // a group whose first month has already happened or hasn't yet.
+    startYear: now.getFullYear(), startMonthIndex: now.getMonth(),
     payoutStart: payoutStart,
-    payoutSchedule: flatPayoutSchedule(payoutStart, durationMonths),
+    payoutSchedule: stepPayoutSchedule(payoutStart, durationMonths),
     members: [], draftMemberName: ''
   };
   goTo('createGroup');
@@ -66,7 +71,6 @@ export async function submitCreateGroup() {
       batch.set(newMemberRef, { name: m.name.trim(), createdAt: serverTimestamp() });
       return newMemberRef.id;
     });
-    var now = new Date();
     var groupRef = doc(collection(db, 'groups'));
     batch.set(groupRef, {
       name: g.name.trim(),
@@ -76,8 +80,8 @@ export async function submitCreateGroup() {
       memberIds: memberIds,
       currentMonth: 1,
       status: 'active',
-      startYear: now.getFullYear(),
-      startMonthIndex: now.getMonth(),
+      startYear: g.startYear,
+      startMonthIndex: g.startMonthIndex,
       createdBy: state.currentAdmin,
       createdAt: serverTimestamp()
     });

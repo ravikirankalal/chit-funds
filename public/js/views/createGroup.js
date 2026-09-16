@@ -1,5 +1,6 @@
 import { state, membersById } from '../store.js';
 import { fmt, escapeHtml, initialsOf, colorFor, monthLabel } from '../helpers.js';
+import { MONTH_NAMES } from '../constants.js';
 import { iconChevronLeft, iconTag, iconCalendar, iconPeopleSmall, iconWallet, iconTrophy, iconTrendingUp, iconTrash, iconPlusSmall, iconGroupStack } from '../icons.js';
 
 function totalPayout(g) { return g.payoutSchedule.reduce(function (a, b) { return a + b; }, 0); }
@@ -15,20 +16,28 @@ export function renderCreateGroup() {
 
 function renderStep1(g) {
   var dur = g.durationMonths, previewRows = '';
-  var now = new Date();
   for (var i = 0; i < dur; i++) {
     var amt = g.payoutSchedule[i] || 0;
     previewRows += '<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--color-border);">' +
       '<div class="avatar sm" style="background:var(--color-primary-soft);color:var(--color-primary);flex-shrink:0;">' + (i + 1) + '</div>' +
-      '<div style="flex:1 1 auto;font-size:12.5px;color:var(--color-text-muted);">' + monthLabel(now.getFullYear(), now.getMonth(), i + 1) + '</div>' +
+      '<div style="flex:1 1 auto;font-size:12.5px;color:var(--color-text-muted);">' + monthLabel(g.startYear, g.startMonthIndex, i + 1) + '</div>' +
       '<input data-field="payoutMonth" data-idx="' + i + '" type="text" inputmode="numeric" value="' + amt + '" style="width:110px;text-align:right;font-size:13px;font-weight:600;padding:6px 8px;border-radius:10px;border:1px solid var(--color-border);" />' +
     '</div>';
   }
+  var monthOptions = MONTH_NAMES.map(function (name, idx) {
+    return '<option value="' + idx + '"' + (idx === g.startMonthIndex ? ' selected' : '') + '>' + name + '</option>';
+  }).join('');
   return '' +
     '<div class="screen">' +
       '<div class="topbar"><div class="back" data-action="cancel-create-group">' + iconChevronLeft() + '</div><div class="title">' + iconGroupStack('var(--color-primary)', 18) + 'New Chit Group</div></div>' +
       '<div class="content">' +
         '<div class="field"><label>' + iconTag() + 'Group name</label><input data-field="name" value="' + escapeHtml(g.name) + '" placeholder="e.g. Friends Chit 2027" /></div>' +
+        '<div class="field"><label>' + iconCalendar() + 'Beginning month</label>' +
+          '<div style="display:flex;gap:8px;">' +
+            '<select data-field="startMonthIndex" style="flex:2 1 0;">' + monthOptions + '</select>' +
+            '<input data-field="startYear" type="text" inputmode="numeric" value="' + g.startYear + '" style="flex:1 1 0;text-align:center;" />' +
+          '</div>' +
+        '</div>' +
         '<div class="field-row">' +
           '<div class="field"><label>' + iconCalendar() + 'Duration (months)</label><input data-field="durationMonths" type="text" inputmode="numeric" value="' + g.durationMonths + '" /></div>' +
           '<div class="field"><label>' + iconPeopleSmall() + 'Total members</label><input data-field="totalMembers" type="text" inputmode="numeric" value="' + g.totalMembers + '" /></div>' +
@@ -48,7 +57,7 @@ function renderStep1(g) {
         '<div style="height:1px;background:var(--color-border);"></div>' +
         '<div>' +
           '<div style="display:flex;align-items:center;gap:5px;font-size:13px;font-weight:600;margin-bottom:2px;">' + iconTrophy() + 'Payout schedule</div>' +
-          '<div style="font-size:11.5px;color:var(--color-text-muted);margin-bottom:12px;">Set a starting payout to fill every month, then fine-tune any individual month below. This locks once the group is created.</div>' +
+          '<div style="font-size:11.5px;color:var(--color-text-muted);margin-bottom:12px;">Set a starting payout — it climbs by ₹2,000 a month through month 16, then ₹5,000 a month after — then fine-tune any individual month below. This locks once the group is created.</div>' +
           '<div class="field"><label>' + iconWallet() + 'Starting payout (₹)</label><input data-field="payoutStart" type="text" inputmode="numeric" value="' + g.payoutStart + '" /></div>' +
           '<div style="border:1px solid var(--color-border);border-radius:16px;background:var(--color-surface);margin-top:12px;box-shadow:var(--shadow-xs);overflow:hidden;">' + previewRows + '</div>' +
         '</div>' +
