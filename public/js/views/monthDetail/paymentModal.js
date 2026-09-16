@@ -161,8 +161,11 @@ export function renderPaymentModalOverlay(gid, viewMonth, group, members, f) {
       // Closing mid-save would race the write's own history.back() (see
       // savePaymentModal) — dropped entirely rather than just visually
       // dimmed, same "no data-action when the action shouldn't fire"
-      // convention as the winner card's openable/removable flags.
-      (locked ? '<div class="sheet-close" style="opacity:0.35;">' + iconClose() + '</div>' : '<div class="sheet-close" data-action="close-payment-modal">' + iconClose() + '</div>') +
+      // convention as the winner card's openable/removable flags. Stays
+      // clickable during `verifying` specifically (closePaymentModal's own
+      // guard allows it too) — the escape hatch for a hung biometric
+      // prompt, since no write has started yet at that point.
+      ((saving || justSaved) ? '<div class="sheet-close" style="opacity:0.35;">' + iconClose() + '</div>' : '<div class="sheet-close" data-action="close-payment-modal">' + iconClose() + '</div>') +
     '</div>' +
     '<div class="sheet-body">' +
       heroCard +
