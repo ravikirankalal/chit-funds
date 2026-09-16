@@ -164,6 +164,13 @@ export function renderDashboard() {
     '</div>';
   }).join('') || '<div class="card" style="color:var(--color-text-muted); font-size:13px; text-align:center;">No groups yet — tap + to create one.</div>';
 
+  // The hero and its per-admin split sit on a solid blue gradient, not the
+  // white surface --color-danger/--color-success were tuned for — a soft
+  // pink/mint tint of each keeps a negative or positive balance readable
+  // at a glance without a full-strength red/green disappearing into or
+  // clashing with the brand blue behind it.
+  function onBrandAmountColor(n) { return n < 0 ? '#ffd2ce' : (n > 0 ? '#c9f2d8' : 'var(--on-brand)'); }
+
   return '' +
     '<div class="screen">' +
       '<div style="padding:20px 20px 4px; display:flex; align-items:center; justify-content:space-between;">' +
@@ -180,15 +187,15 @@ export function renderDashboard() {
         // divider so it stays legible on the gradient without a hard edge.
         '<div style="background:linear-gradient(155deg, var(--color-primary) 0%, var(--color-primary-strong) 100%); border-radius:20px; padding:20px; color:var(--on-brand); box-shadow:var(--shadow-md);">' +
           '<div style="display:flex;align-items:center;gap:5px;font-size:12px;opacity:0.85;font-weight:500;">' + iconWallet('var(--on-brand)') + 'Total fund available</div>' +
-          '<div class="mono" style="font-size:30px;font-weight:700;margin-top:4px;">' + fmt(state.balances.total) + '</div>' +
+          '<div class="mono" style="font-size:30px;font-weight:700;margin-top:4px;color:' + onBrandAmountColor(state.balances.total) + ';">' + fmt(state.balances.total) + '</div>' +
           '<div style="display:flex;gap:12px;margin-top:16px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.2);">' +
             '<div data-action="go-ledger" style="flex:1 1 0;min-width:0;cursor:pointer;">' +
               '<div style="display:flex;align-items:center;gap:5px;font-size:11px;opacity:0.85;">' + adminDot('A') + ADMINS.A.name + '</div>' +
-              '<div class="mono" style="font-size:15px;font-weight:700;margin-top:3px;">' + fmt(state.balances.A) + '</div>' +
+              '<div class="mono" style="font-size:15px;font-weight:700;margin-top:3px;color:' + onBrandAmountColor(state.balances.A) + ';">' + fmt(state.balances.A) + '</div>' +
             '</div>' +
             '<div data-action="go-ledger" style="flex:1 1 0;min-width:0;cursor:pointer;padding-left:12px;border-left:1px solid rgba(255,255,255,0.2);">' +
               '<div style="display:flex;align-items:center;gap:5px;font-size:11px;opacity:0.85;">' + adminDot('B') + ADMINS.B.name + '</div>' +
-              '<div class="mono" style="font-size:15px;font-weight:700;margin-top:3px;">' + fmt(state.balances.B) + '</div>' +
+              '<div class="mono" style="font-size:15px;font-weight:700;margin-top:3px;color:' + onBrandAmountColor(state.balances.B) + ';">' + fmt(state.balances.B) + '</div>' +
             '</div>' +
           '</div>' +
         '</div>' +
