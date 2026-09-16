@@ -85,12 +85,29 @@ export function renderPaymentModalOverlay(gid, viewMonth, group, members, f) {
   var holdingsPreview = '';
   if (!pm.isEditing) {
     var beforeHold = state.currentAdmin === 'A' ? f.adjA : f.adjB;
-    var afterHold = beforeHold + group.monthlyDeposit;
-    holdingsPreview = '<div>' +
-      '<div class="section-label">Your holdings, if you save this</div>' +
-      '<div class="stat"><div class="label">' + adminDot(state.currentAdmin) + adminName(state.currentAdmin) + '</div>' +
-      '<div class="value"><span style="color:' + (beforeHold < 0 ? 'var(--color-danger)' : 'var(--color-text)') + ';">' + signed(beforeHold) + '</span> <span style="color:var(--color-text-faint);font-weight:400;">→</span> <span style="color:' + (afterHold < 0 ? 'var(--color-danger)' : 'var(--color-text)') + ';">' + signed(afterHold) + '</span></div></div>' +
-    '</div>';
+    // Once the write actually lands, the Firestore listener folds it into
+    // f out from under this still-open sheet (the success beat holds it
+    // open for SAVE_SUCCESS_DISPLAY_MS before closing itself) — at that
+    // point "before -> after" is no longer a preview of anything, it's
+    // just the same settled figure twice with an arrow between them. Show
+    // it plainly instead once saved; the two-sided preview is only useful
+    // while the write hasn't happened yet.
+    if (justSaved) {
+      holdingsPreview = '<div>' +
+        '<div class="section-label">Your holdings</div>' +
+        '<div class="stat"><div class="label">' + adminDot(state.currentAdmin) + adminName(state.currentAdmin) + '</div>' +
+        '<div class="value" style="color:' + (beforeHold < 0 ? 'var(--color-danger)' : 'var(--color-text)') + ';">' + signed(beforeHold) + '</div></div>' +
+      '</div>';
+    } else {
+      // Guards the same double-count if the listener's update happens to
+      // land while still in the 'saving' state, before justSaved flips.
+      var afterHold = (existingP && existingP.paid) ? beforeHold : beforeHold + group.monthlyDeposit;
+      holdingsPreview = '<div>' +
+        '<div class="section-label">Your holdings, if you save this</div>' +
+        '<div class="stat"><div class="label">' + adminDot(state.currentAdmin) + adminName(state.currentAdmin) + '</div>' +
+        '<div class="value"><span style="color:' + (beforeHold < 0 ? 'var(--color-danger)' : 'var(--color-text)') + ';">' + signed(beforeHold) + '</span> <span style="color:var(--color-text-faint);font-weight:400;">→</span> <span style="color:' + (afterHold < 0 ? 'var(--color-danger)' : 'var(--color-text)') + ';">' + signed(afterHold) + '</span></div></div>' +
+      '</div>';
+    }
   }
 
   var transferHistory = '';
