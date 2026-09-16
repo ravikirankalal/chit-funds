@@ -20,17 +20,24 @@ import { renderBootSkeleton } from './skeleton.js';
 // we're about to render a *different* visit to that screen (a fresh nav
 // in, or switching to a different group), so a later re-render of the
 // same visit (toggling a tab, recording a payment) never re-scrolls the
-// user away from wherever they've since scrolled to.
+// user away from wherever they've since scrolled to. Comparing only the
+// group id used to miss the case of leaving groupDetail and coming straight
+// back to the SAME group — activeGroupId never changed, so the flag stayed
+// "done" from the earlier visit even though the list had freshly remounted
+// scrolled to the top. previousScreen catches that: a fresh arrival from
+// any other screen always resets it, group id or not.
 var groupDetailScrollGid = null;
 var groupDetailScrollDone = false;
+var previousScreen = null;
 
 export function render() {
   var root = document.getElementById('app');
 
-  if (state.screen === 'groupDetail' && state.activeGroupId !== groupDetailScrollGid) {
+  if (state.screen === 'groupDetail' && (previousScreen !== 'groupDetail' || state.activeGroupId !== groupDetailScrollGid)) {
     groupDetailScrollGid = state.activeGroupId;
     groupDetailScrollDone = false;
   }
+  previousScreen = state.screen;
 
   // a background Firestore update can trigger a re-render while the user is
   // mid-typing; every input is state-controlled via data-field, so state
