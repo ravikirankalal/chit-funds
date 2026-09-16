@@ -81,8 +81,15 @@ export function render() {
     for (var si = 0; si < sheetEls.length; si++) sheetEls[si].classList.add('no-anim');
   }
 
+  // Deferred a frame: called synchronously right after the innerHTML swap
+  // above, scrollIntoView measures the new nested flex/scroll layout before
+  // the browser has actually committed it, so it silently no-ops even
+  // though the row is found — which still marks the scroll "done" and
+  // never retries. Waiting a frame lets layout settle first.
   if (state.screen === 'groupDetail' && !groupDetailScrollDone) {
-    groupDetailScrollDone = scrollToActiveMonth(root);
+    requestAnimationFrame(function () {
+      groupDetailScrollDone = scrollToActiveMonth(document.getElementById('app'));
+    });
   }
 
   if (activeSelector) {
