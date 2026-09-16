@@ -1,4 +1,4 @@
-import { state, groupsById, membersById, membersByGroup } from '../store.js';
+import { state, groupsById, membersById, membersByGroup, paymentsCache, monthKey } from '../store.js';
 import { fmt, escapeHtml, monthLabel, initialsOf, colorFor, isSuper } from '../helpers.js';
 import { monthFinances } from '../finance/monthFinances.js';
 import { memberHasPaidInGroup } from '../finance/membership.js';
@@ -28,6 +28,22 @@ export function renderGroupMembers() {
     }
   }
 
+  // How many of the months due so far this member has actually paid, and
+  // the most recent one — "out of" is group.currentMonth (months that
+  // have opened), not group.durationMonths, since a month that hasn't
+  // started yet was never something they could have paid.
+  var paymentStatsByMember = {};
+  for (var pmo = 1; pmo <= group.currentMonth; pmo++) {
+    var monthPayments = paymentsCache.get(monthKey(gid, pmo)) || {};
+    members.forEach(function (mm3) {
+      if (monthPayments[mm3.id] && monthPayments[mm3.id].paid) {
+        var st = paymentStatsByMember[mm3.id] || (paymentStatsByMember[mm3.id] = { count: 0, lastMonth: 0 });
+        st.count++;
+        st.lastMonth = pmo; // months are visited in order, so this ends up as the latest
+      }
+    });
+  }
+
   // A won/not-won status pill on every row (not just the ones with
   // something to show) so the list reads at a glance — same "clear status
   // indicator" language as the month rows' payoutStatusPill — instead of
@@ -43,11 +59,18 @@ export function renderGroupMembers() {
   var rows = members.map(function (mm, idx) {
     var canRemove = !readOnly && !memberHasPaidInGroup(gid, group, mm.id);
     var win = winsByMember[mm.id];
+    var pstat = paymentStatsByMember[mm.id];
+    // Blank once there's nothing to compare against yet (month 1 hasn't
+    // opened) rather than showing a "0 / 0" that reads as broken.
+    var paymentLine = group.currentMonth > 0
+      ? '<div style="font-size:10.5px;color:var(--color-text-muted);margin-top:3px;">' + (pstat ? pstat.count : 0) + ' / ' + group.currentMonth + ' payments' + (pstat ? ' · Last paid ' + monthLabel(group.startYear, group.startMonthIndex, pstat.lastMonth) : '') + '</div>'
+      : '';
     return '<div class="list-row" data-action="open-member-payments" data-gid="' + gid + '" data-mid="' + mm.id + '" style="cursor:pointer;">' +
       '<div class="avatar" style="background:' + colorFor(idx) + ';">' + initialsOf(mm.name) + '</div>' +
       '<div style="flex:1 1 auto; min-width:0;">' +
         '<div style="font-size:13.5px;font-weight:600;">' + escapeHtml(mm.name) + '</div>' +
         memberWinPill(win) +
+        paymentLine +
       '</div>' +
       (canRemove ? '<div data-action="remove-member-from-group" data-gid="' + gid + '" data-mid="' + mm.id + '" style="display:flex;align-items:center;gap:4px;cursor:pointer;color:var(--color-danger);font-size:12px;font-weight:600;flex-shrink:0;">' + iconTrash('var(--color-danger)') + 'Remove</div>' : '') +
       iconChevronRight() +
