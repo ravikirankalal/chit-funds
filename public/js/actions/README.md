@@ -19,13 +19,13 @@ of six.
 | File | Exports | Responsibility |
 |---|---|---|
 | `index.js` | re-exports everything below | Barrel — the only file anything outside `actions/` imports from. |
-| `shared.js` | `setBusy`, `isPendingHandoff` | Cross-cutting helpers used by more than one cluster. `setBusy` isn't re-exported by `index.js` — nothing outside `actions/` calls it directly. |
+| `shared.js` | `setBusy`, `isPendingHandoff`, `delay` | Cross-cutting helpers used by more than one cluster. None of these are re-exported by `index.js` — nothing outside `actions/` calls them directly. |
 | `navigation.js` | `openGroupDetail`, `openGroupMembers`, `openMemberPayments`, `openMonth`, `selectPaymentTab`, `setLedgerFilter` | Plain screen navigation and small synchronous UI toggles — nothing here touches Firestore. |
 | `groupCreation.js` | `startCreateGroup`, `createGroupStep2`, `addDraftMember`, `addExistingDraftMember`, `removeDraftMember`, `submitCreateGroup` | The multi-step create-group flow, ending in the batched write that creates the group + its first month doc. |
 | `members.js` | `openMemberForm`, `closeMemberForm`, `saveMemberForm`, `openAddMemberToGroup`, `closeAddMemberToGroup`, `addExistingMemberToGroup`, `createAndAddMemberToGroup`, `removeMemberFromGroup` | The shared member directory (add/edit a person) and adding/removing a member from one group. |
 | `payments.js` | `openPaymentModal`, `closePaymentModal`, `setModalMode`, `savePaymentModal`, `markUnpaidFromModal`, `togglePaymentSelection`, `cancelTransferSelection` | Recording/undoing one member's payment for a month, and selecting already-collected payments for a hand-off (the selection itself — the request/accept/decline flow is `handoffs.js`). |
 | `handoffs.js` | `confirmTransfer`, `acceptHandoffRequest`, `declineHandoffRequest`, `cancelHandoffRequest` | Hand-off requests for specific already-collected payments moving from one admin to the other. |
-| [`winners/`](winners/README.md) | `openWinnerPicker`, `closeWinnerPicker`, `addWinner`, `removeWinner`, `setWinnerAmount`, `openPayoutModal`, `closePayoutModal`, `setPayoutContribution` | Picking a month's winner(s) and recording each admin's own contribution toward a winner's payout — `setPayoutContribution` is also what closes a month out once every winner is fully covered. Split into its own folder — see its README. |
+| [`winners/`](winners/README.md) | `openWinnerPicker`, `closeWinnerPicker`, `addWinner`, `removeWinner`, `openPayoutModal`, `closePayoutModal`, `setPayoutContribution` | Picking a month's winner(s) and recording each admin's own contribution toward a winner's payout — `setPayoutContribution` is also what closes a month out once every winner is fully covered. Split into its own folder — see its README. |
 | `adminTransfers.js` | `requestTransferToB`, `requestTransferToA`, `acceptTransferRequest`, `declineTransferRequest`, `cancelTransferRequest` | Whole-month admin-to-admin holdings transfers — a running imbalance between the two admins' totals, distinct from a hand-off of one specific payment (`handoffs.js`). |
 
 ## Dependency direction

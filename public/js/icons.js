@@ -86,3 +86,8 @@ export function iconPlusSmall(color, size) {
 export function iconGroupStack(color, size) {
   return '<svg width="' + (size || 14) + '" height="' + (size || 14) + '" viewBox="0 0 24 24" fill="none"><rect x="4" y="4" width="16" height="6.5" rx="1.8" stroke="' + (color || 'currentColor') + '" stroke-width="1.8"/><rect x="4" y="13.5" width="16" height="6.5" rx="1.8" stroke="' + (color || 'currentColor') + '" stroke-width="1.8"/></svg>';
 }
+// An arrow rising to meet a ceiling line — "fill up to the max/target",
+// used on the payout modal's "fill the rest in" button instead of text.
+export function iconFillToMax(color, size) {
+  return '<svg width="' + (size || 16) + '" height="' + (size || 16) + '" viewBox="0 0 24 24" fill="none"><path d="M4 5H20" stroke="' + (color || 'currentColor') + '" stroke-width="1.8" stroke-linecap="round"/><path d="M12 19V7M12 7L7.5 11.5M12 7L16.5 11.5" stroke="' + (color || 'currentColor') + '" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+}

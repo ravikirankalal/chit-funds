@@ -11,17 +11,20 @@ same reason the rest of `actions/` was split — see
 | File | Exports | Responsibility |
 |---|---|---|
 | `index.js` | re-exports everything below | Barrel, same reasoning as [`../index.js`](../index.js). |
-| `picker.js` | `openWinnerPicker`, `closeWinnerPicker`, `addWinner`, `removeWinner`, `setWinnerAmount` | Choosing who won a month (a list, not a single winner — see `getMonthWinners` in `finance.js`) and editing a not-yet-started payout's amount. |
+| `picker.js` | `openWinnerPicker`, `closeWinnerPicker`, `addWinner`, `removeWinner` | Choosing who won a month (a list, not a single winner — see `getMonthWinners` in `finance.js`) and undoing a not-yet-started addition. |
 | `payout.js` | `openPayoutModal`, `closePayoutModal`, `setPayoutContribution` | Recording an admin's own contribution toward one winner's payout — `setPayoutContribution` is also what closes the month once every winner is fully covered. |
 
 ## Dependency direction
 
 `index.js` re-exports from `picker.js` and `payout.js`; neither imports the
-other. Both import `setBusy` from [`../shared.js`](../shared.js).
+other. `picker.js` imports `setBusy` from [`../shared.js`](../shared.js);
+`payout.js` imports `delay` from the same file instead — `setPayoutContribution`
+drives its own sheet through saving/success/error states (same pattern as
+`payments.js`'s `savePaymentModal`) rather than the app-wide busy overlay.
 
 ## Where do I make my change?
 
-- **Who won, or a payout amount before any money has moved toward it** →
+- **Who won, or undoing a winner before any money has moved toward them** →
   `picker.js`.
 - **An admin's own payout contribution, or the close-month logic** →
   `payout.js`.

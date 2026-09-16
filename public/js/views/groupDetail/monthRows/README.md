@@ -18,7 +18,7 @@ getting long enough to be its own concern. See
 | `closedRow.js` | `renderClosedMonthRow` | A month that's been closed out — winner(s), who paid the payout, any still-unpaid members. |
 | `openRow.js` | `renderOpenMonthRow` | The current month — live collection progress, and once a winner's picked, the payout-in-progress state. |
 | `upcomingRow.js` | `renderUpcomingMonthRow` | A month that hasn't started yet — dashed, faded, just the scheduled payout figure. |
-| `shared.js` | `adminAmountSpan`, `rightMoneyColumn` | Small pieces reused by both `closedRow.js` and `openRow.js` (an admin's colored dot+label, the row's right-hand profit/collected/payout column). |
+| `shared.js` | `adminAmountSpan`, `rightMoneyColumn`, `lifecycleBadge`, `payoutStatusPill`, `unpaidPill` | Small pieces reused by both `closedRow.js` and `openRow.js` (an admin's colored dot+label, the right-hand profit/collected/payout column) plus the status badges — `payoutStatusPill` is the same not-started/partway/done color language as the winner card's own pill (`monthDetail/summary.js`), kept in one place so a month row and a winner card never disagree about what "payout pending" looks like. |
 
 ## Dependency direction
 

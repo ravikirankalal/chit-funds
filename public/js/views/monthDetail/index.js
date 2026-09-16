@@ -8,8 +8,10 @@
 //   handoffRequests.js — pending transfer hand-off cards
 //   summary.js         — the closed/open/upcoming summary card
 //   paymentList.js      — the tabbed member payment list
-//   winner.js           — the winner card + winner-picker overlay
-//   payout.js            — the payout card + payout modal
+//   winner.js           — the winner-picker overlay (the winner(s) render
+//                         on summary.js's per-winner card, not here)
+//   payout.js            — the payout modal (opened from summary.js's
+//                         per-winner card, not from a card of its own)
 //   paymentModal.js      — the per-member payment detail/edit modal
 //   transferBar.js       — the floating "N payments selected" bar
 // This file stays the orchestrator: screen-level state (open/closed/
@@ -22,8 +24,8 @@ import { bar, skeletonListRow } from '../../skeleton.js';
 import { renderHandoffRequests } from './handoffRequests.js';
 import { renderClosedSummary, renderUpcomingNotice, renderOpenSummary } from './summary.js';
 import { renderPaymentList } from './paymentList.js';
-import { renderWinnerCard, renderWinnerPickerOverlay } from './winner.js';
-import { renderPayoutCard, renderPayoutModalOverlay } from './payout.js';
+import { renderWinnerPickerOverlay } from './winner.js';
+import { renderPayoutModalOverlay } from './payout.js';
 import { renderPaymentModalOverlay } from './paymentModal.js';
 import { renderTransferBar } from './transferBar.js';
 
@@ -61,19 +63,26 @@ export function renderMonthDetail() {
   var isUpcoming = viewMonth > group.currentMonth;
   // True once either admin has recorded a real contribution toward a
   // winner's payout but the total isn't fully covered yet — see
-  // setPayoutContribution in actions/winners/payout.js, which closes the month itself the
-  // instant every winner's paidByA + paidByB reaches its payoutAmount, so
-  // this can never be true at the same time as isClosed. Winner/amount
-  // editing locks while this is true (see renderWinnerCard below).
+  // setPayoutContribution in actions/winners/payout.js, which closes the
+  // month itself the instant every winner's paidByA + paidByB reaches its
+  // payoutAmount. A winner's Remove link disappears while this is true for
+  // THEM specifically (see renderWinnerTopCards in summary.js).
   var payoutStarted = f.winners.length > 0 && (f.payoutPaidA > 0 || f.payoutPaidB > 0);
+  // A winner added via "Add another winner" (actions/winners/picker.js)
+  // AFTER the month already closed starts genuinely unpaid, and
+  // setPayoutContribution's close-and-advance transaction only ever fires
+  // for the month's ORIGINAL close — so isClosed and an outstanding payout
+  // can now genuinely coexist. A flat "Closed" pill would misreport that
+  // as fully done; show it as still needing attention instead.
+  var payoutPending = isClosed && !f.allPayoutCovered;
 
   // Gold matches the payout color used on the dashboard, the winner card,
   // and group detail's month rows — a payout in progress gets that same
   // accent everywhere it shows up.
-  var statusLabel = isClosed ? 'Closed' : (payoutStarted ? 'Payout in progress' : (isOpen ? 'Open' : 'Upcoming'));
-  var statusBg = isClosed ? 'var(--color-success-soft)' : (payoutStarted ? 'var(--color-gold-soft)' : (isOpen ? 'var(--color-secondary)' : 'var(--color-border)'));
-  var statusColor = isClosed ? 'var(--color-success)' : (payoutStarted ? 'var(--color-gold)' : (isOpen ? 'var(--on-brand)' : 'var(--color-text-faint)'));
-  var statusIcon = isClosed ? iconCheck(statusColor) : (payoutStarted ? iconClock(statusColor) : (isUpcoming ? iconClock(statusColor) : ''));
+  var statusLabel = payoutPending ? 'Payout pending' : (isClosed ? 'Closed' : (payoutStarted ? 'Payout in progress' : (isOpen ? 'Open' : 'Upcoming')));
+  var statusBg = payoutPending ? 'var(--color-gold-soft)' : (isClosed ? 'var(--color-success-soft)' : (payoutStarted ? 'var(--color-gold-soft)' : (isOpen ? 'var(--color-secondary)' : 'var(--color-border)')));
+  var statusColor = payoutPending ? 'var(--color-gold)' : (isClosed ? 'var(--color-success)' : (payoutStarted ? 'var(--color-gold)' : (isOpen ? 'var(--on-brand)' : 'var(--color-text-faint)')));
+  var statusIcon = payoutPending ? iconClock(statusColor) : (isClosed ? iconCheck(statusColor) : (payoutStarted ? iconClock(statusColor) : (isUpcoming ? iconClock(statusColor) : '')));
 
   var html = '<div class="screen">' +
     '<div class="topbar">' +
@@ -97,28 +106,32 @@ export function renderMonthDetail() {
     html += renderPaymentList(gid, viewMonth, members, f, readOnly, group, isOpen || isClosed);
   }
 
-  // Closed-month "Add another winner" lives at the very end of the page,
-  // not up with the winner card(s) — it's a rare correction (an admin
-  // catching a winner they missed after closing), not part of the normal
-  // reading flow, so it shouldn't compete for attention with the summary
-  // or payment list above it.
-  if (isClosed && !readOnly) {
-    html += '<button class="btn btn-primary" style="width:100%;" data-action="open-winner-picker">Add another winner</button>';
+  // A readOnly viewer gets a plain notice where the winner card would be —
+  // there's no button for them to press, so an open month with no winner
+  // yet would otherwise show nothing about it at all.
+  if (isOpen && readOnly && !f.winners.length) {
+    html += '<div class="card" style="color:var(--color-text-muted);font-size:12.5px;text-align:center;">No winner selected yet.</div>';
   }
 
-  // Hidden while a transfer selection is in progress (see the floating
-  // transfer bar below) — its Remove/amount-edit controls have nothing to
-  // do with handing off payments, and would just be a second set of
-  // interactive rows competing with the transfer bar for attention.
-  if (isOpen && !state.ui.transferSelection) {
-    html += renderWinnerCard(f, members, readOnly);
-    if (!readOnly) html += renderPayoutCard(f, members);
+  // "Add another winner"/"Select Winner" lives at the very end of the page
+  // for both open and closed months — consistent placement, and it's a
+  // rare action (most months only ever need the one winner), not part of
+  // the normal reading flow up with the summary/payment list. The winner(s)
+  // themselves are shown on their own card at the top of the summary
+  // instead (summary.js's renderWinnerTopCards, which also opens the
+  // payout modal directly — there's no separate "Record payout" card any
+  // more). Hidden while an existing winner's payout is still outstanding —
+  // picking a second winner mid-payout would just be one more thing to
+  // track before the first is even settled; it reappears the moment every
+  // current winner is fully covered.
+  if (!readOnly && !state.ui.transferSelection && (isOpen || isClosed) && (!f.winners.length || f.allPayoutCovered)) {
+    html += '<button class="btn btn-primary" style="width:100%;" data-action="open-winner-picker">' + (f.winners.length ? 'Add another winner' : 'Select Winner') + '</button>';
   }
 
   html += '</div>';
 
   if (state.ui.showWinnerPicker) html += renderWinnerPickerOverlay(gid, group, f, members);
-  if (state.ui.paymentModal) html += renderPaymentModalOverlay(gid, viewMonth, group, members);
+  if (state.ui.paymentModal) html += renderPaymentModalOverlay(gid, viewMonth, group, members, f);
   if (state.ui.payoutModal) html += renderPayoutModalOverlay(f, members);
   if (state.ui.transferSelection) html += renderTransferBar(gid, viewMonth, group);
 
