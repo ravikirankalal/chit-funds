@@ -28,6 +28,57 @@ export function renderPaymentModalOverlay(gid, viewMonth, group, members) {
   var justSaved = pm.saveState === 'success';
   var saveError = pm.saveState === 'error' ? pm.saveError : null;
   var locked = saving || justSaved;
+
+  // The mode badge in the hero card carries the same info the old plain
+  // "Cash"/"Online" pill duplicated below it — cash reads as the app's
+  // neutral/informational slate, online as the brand cobalt, so the two
+  // are visually distinct without inventing a new color for either.
+  var modeColor = pm.mode === 'online' ? 'var(--color-primary)' : 'var(--color-secondary)';
+  var modeSoft = pm.mode === 'online' ? 'var(--color-primary-soft)' : 'var(--color-secondary-soft)';
+  var modeIcon = pm.mode === 'online' ? iconCard(modeColor, 16) : iconCash(modeColor, 16);
+  var modeLabel = pm.mode === 'online' ? 'Online' : 'Cash';
+  var paidPill = (pm.isEditing && existingP)
+    ? '<div style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;color:var(--color-success);background:var(--color-success-soft);padding:4px 9px;border-radius:20px;">' + iconCheck('var(--color-success)') + 'Paid</div>'
+    : '';
+  var heroCard = '<div style="background:var(--color-bg);border:1px solid var(--color-border);border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:12px;">' +
+    '<div style="display:flex;align-items:center;justify-content:space-between;">' +
+      '<div style="display:flex;align-items:center;gap:8px;">' +
+        '<div style="width:32px;height:32px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:' + modeSoft + ';">' + modeIcon + '</div>' +
+        '<span style="font-size:12.5px;font-weight:600;color:' + modeColor + ';">' + modeLabel + '</span>' +
+      '</div>' +
+      paidPill +
+    '</div>' +
+    '<div style="text-align:center;">' +
+      '<div class="mono" style="font-size:34px;font-weight:700;">' + fmt(group.monthlyDeposit) + '</div>' +
+      (pm.isEditing && existingP && formatDateTime(existingP.paidAt) ? '<div style="font-size:11px;color:var(--color-text-muted);margin-top:2px;">Paid on ' + formatDateTime(existingP.paidAt) + '</div>' : '') +
+    '</div>' +
+  '</div>';
+
+  // Only shown when there's an actual decision to make (an editable,
+  // unlocked mode) or a reason the admin should know it's out of their
+  // hands — the hero card above already displays the current mode, so a
+  // read-only echo of the same pill here would just be noise.
+  var modeSection = '';
+  if (canEditMode && !locked) {
+    // A compact segmented toggle, not a pair of full-width pills — the
+    // hero card above is already the primary display of the mode, so this
+    // is just a small secondary control for changing it, and sizing it
+    // like a primary action overstated its importance.
+    var modeToggleBtn = function (mode, icon, label) {
+      var active = pm.mode === mode;
+      return '<button data-action="set-modal-mode" data-mode="' + mode + '" style="display:flex;align-items:center;gap:5px;padding:6px 12px;border-radius:8px;font-size:12.5px;font-weight:600;background:' + (active ? 'var(--color-primary)' : 'transparent') + ';color:' + (active ? 'var(--on-brand)' : 'var(--color-text-muted)') + ';">' + icon + label + '</button>';
+    };
+    modeSection = '<div style="display:flex;align-items:center;justify-content:space-between;">' +
+      '<span style="font-size:12px;font-weight:600;color:var(--color-text-muted);display:flex;align-items:center;gap:6px;">' + iconWallet() + 'Payment mode</span>' +
+      '<div style="display:inline-flex;background:var(--color-bg);border:1px solid var(--color-border);border-radius:10px;padding:3px;gap:2px;">' +
+        modeToggleBtn('cash', iconCash(pm.mode === 'cash' ? 'var(--on-brand)' : 'currentColor', 13), 'Cash') +
+        modeToggleBtn('online', iconCard(pm.mode === 'online' ? 'var(--on-brand)' : 'currentColor', 13), 'Online') +
+      '</div>' +
+    '</div>';
+  } else if (!canEditMode) {
+    modeSection = '<div style="font-size:11px;color:var(--color-text-muted);">' + (existingP && existingP.transferred ? 'Locked — this amount has been transferred and can no longer be edited.' : pendingHandoffId ? 'Locked — a transfer request is pending on this amount.' : 'Only ' + adminName(holder) + ' can change this.') + '</div>';
+  }
+
   var transferHistory = '';
   if (pm.isEditing && existingP) {
     // collectedBy/transferredAt only ever reflect the CURRENT holder — the
@@ -57,14 +108,24 @@ export function renderPaymentModalOverlay(gid, viewMonth, group, members) {
       rows += timelineRow('var(--color-secondary)', adminName(pendingHandoff.from) + ' → ' + adminName(pendingHandoff.to),
         'Pending acceptance', 'color:var(--color-secondary);', fmt(group.monthlyDeposit));
     }
-    transferHistory = '<div><div style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--color-text-muted);margin-bottom:8px;">' + iconTransfer() + 'Transfer history</div><div style="display:flex;flex-direction:column;gap:10px;">' + rows + '</div></div>';
+    transferHistory = '<div><div class="section-label">' + iconTransfer() + 'Transfer history</div>' +
+      '<div class="card" style="display:flex;flex-direction:column;gap:10px;padding:14px;">' + rows + '</div></div>';
   }
+
+  var actionHtml = buildActionArea(pm, canMarkUnpaid, canEditMode, saving, justSaved, saveError);
+  // A divider ahead of the actions reads as an intentional "content ends,
+  // decisions begin" break — but only when there's something actionable:
+  // a view-only sheet (someone looking at a payment they don't own, with
+  // nothing to mark unpaid) would otherwise show a stray empty divider.
+  var actionBlock = actionHtml
+    ? '<div style="display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--color-border);padding-top:16px;">' + actionHtml + '</div>'
+    : '';
 
   return '<div class="overlay"><div class="sheet">' +
     '<div class="sheet-header">' +
-      '<div class="avatar sm" style="background:' + colorFor(pidx) + ';">' + initialsOf(pmem.name) + '</div>' +
+      '<div class="avatar" style="background:' + colorFor(pidx) + ';">' + initialsOf(pmem.name) + '</div>' +
       '<div style="flex:1 1 auto;min-width:0;"><div style="font-size:14px;font-weight:700;">' + escapeHtml(pmem.name) + '</div>' +
-      '<div style="font-size:11.5px;color:var(--color-text-muted);">' + monthLabel(group.startYear, group.startMonthIndex, viewMonth) + ' · ' + fmt(group.monthlyDeposit) + ' · collected by ' + adminName(holder) + '</div></div>' +
+      '<div style="font-size:11.5px;color:var(--color-text-muted);">' + monthLabel(group.startYear, group.startMonthIndex, viewMonth) + ' · collected by ' + adminName(holder) + '</div></div>' +
       // Closing mid-save would race the write's own history.back() (see
       // savePaymentModal) — dropped entirely rather than just visually
       // dimmed, same "no data-action when the action shouldn't fire"
@@ -72,22 +133,10 @@ export function renderPaymentModalOverlay(gid, viewMonth, group, members) {
       (locked ? '<div class="sheet-close" style="opacity:0.35;">' + iconClose() + '</div>' : '<div class="sheet-close" data-action="close-payment-modal">' + iconClose() + '</div>') +
     '</div>' +
     '<div class="sheet-body">' +
-      '<div style="text-align:center;padding:8px 0 4px;">' +
-        '<div style="font-size:11px;color:var(--color-text-muted);margin-bottom:2px;">Amount</div>' +
-        '<div class="mono" style="font-size:32px;font-weight:700;">' + fmt(group.monthlyDeposit) + '</div>' +
-        (pm.isEditing && existingP && formatDateTime(existingP.paidAt) ? '<div style="font-size:11px;color:var(--color-text-muted);margin-top:2px;">Paid on ' + formatDateTime(existingP.paidAt) + '</div>' : '') +
-      '</div>' +
-      '<div><div style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--color-text-muted);margin-bottom:8px;">' + iconWallet() + 'Payment mode</div>' +
-      (canEditMode && !locked
-        ? '<div class="pill-row">' +
-            '<button class="pill ' + (pm.mode === 'cash' ? 'active' : '') + '" style="display:flex;align-items:center;justify-content:center;gap:6px;" data-action="set-modal-mode" data-mode="cash">' + iconCash() + 'Cash</button>' +
-            '<button class="pill ' + (pm.mode === 'online' ? 'active' : '') + '" style="display:flex;align-items:center;justify-content:center;gap:6px;" data-action="set-modal-mode" data-mode="online">' + iconCard() + 'Online</button>' +
-          '</div>'
-        : '<div class="pill-row"><div class="pill active" style="pointer-events:none;display:flex;align-items:center;justify-content:center;gap:6px;">' + (pm.mode === 'online' ? iconCard() + 'Online' : iconCash() + 'Cash') + '</div></div>' +
-          (locked ? '' : '<div style="font-size:11px;color:var(--color-text-muted);margin-top:6px;">' + (existingP && existingP.transferred ? 'Locked — this amount has been transferred and can no longer be edited.' : pendingHandoffId ? 'Locked — a transfer request is pending on this amount.' : 'Only ' + adminName(holder) + ' can change this.') + '</div>')
-      ) + '</div>' +
+      heroCard +
+      modeSection +
       transferHistory +
-      buildActionArea(pm, canMarkUnpaid, canEditMode, saving, justSaved, saveError) +
+      actionBlock +
     '</div>' +
   '</div></div>';
 }
