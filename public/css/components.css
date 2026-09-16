@@ -8,6 +8,11 @@
   background: var(--color-surface); border: 1px solid var(--color-border);
   border-radius: 16px; padding: 14px; box-shadow: var(--shadow-sm);
 }
+/* A .card that's also a tap target (carries its own data-action, e.g. the
+   dashboard's group cards) gets the same press feedback as .list-row/.fab
+   instead of sitting there inert like the purely-informational cards. */
+.card[data-action] { cursor: pointer; transition: transform 0.12s ease, box-shadow 0.12s ease; }
+.card[data-action]:active { transform: scale(0.98); box-shadow: var(--shadow-xs); }
 
 .stat-row { display: flex; gap: 10px; }
 .stat {

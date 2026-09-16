@@ -1,6 +1,6 @@
 import { ADMINS } from '../../firebase-config.js';
 import { state, groupsById, membersByGroup } from '../store.js';
-import { fmt, escapeHtml, adminName, adminAvatarColor, adminDot, initialsOf, isSuper, monthLabel } from '../helpers.js';
+import { fmt, escapeHtml, adminName, adminAvatarColor, adminDot, initialsOf, colorFor, isSuper, monthLabel } from '../helpers.js';
 import { monthFinances } from '../finance/monthFinances.js';
 import { iconChevronRight, iconPlus, iconWallet, iconGroupStack, iconPeopleSmall, iconCalendar, iconTrophy, iconTransfer, iconClock } from '../icons.js';
 import { renderBottomNav } from './bottomNav.js';
@@ -133,11 +133,23 @@ export function renderDashboard() {
       moneyCell('Payout', fmt(payoutSoFarForGroup), 'var(--color-accent)', true) +
       moneyCell('Profit', groupProfit < 0 ? '−' + fmt(Math.abs(groupProfit)) : fmt(groupProfit), groupProfitColor, true) +
     '</div>';
+    // A stack of overlapping member avatars reads as "who's in this" far
+    // faster than a bare people-icon + count, and reuses the same
+    // color/initials convention as the members list itself instead of
+    // introducing a new visual language just for this card.
+    var avatarStack = members.length
+      ? '<div style="display:flex;align-items:center;">' +
+          members.slice(0, 4).map(function (mm, idx) {
+            return '<div class="avatar sm" style="background:' + colorFor(idx) + ';border:2px solid var(--color-surface);' + (idx > 0 ? 'margin-left:-8px;' : '') + '">' + initialsOf(mm.name) + '</div>';
+          }).join('') +
+          (memberCount > 4 ? '<div class="avatar sm" style="background:var(--color-border);color:var(--color-text-muted);margin-left:-8px;">+' + (memberCount - 4) + '</div>' : '') +
+        '</div>'
+      : '<span style="display:flex;align-items:center;gap:4px;">' + iconPeopleSmall('var(--color-text-faint)') + '0</span>';
     return '<div class="card" data-action="open-group" data-gid="' + g.id + '" style="display:flex;flex-direction:column;gap:10px;">' +
-      '<div style="display:flex;justify-content:space-between;align-items:flex-start;">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;">' +
         '<div><div style="font-size:15px;font-weight:600;">' + escapeHtml(g.name) + '</div>' +
-        '<div style="display:flex;align-items:center;gap:10px;margin-top:3px;font-size:12px;color:var(--color-text-muted);">' +
-          '<span style="display:flex;align-items:center;gap:4px;">' + iconPeopleSmall('var(--color-text-faint)') + memberCount + '</span>' +
+        '<div style="display:flex;align-items:center;gap:8px;margin-top:5px;font-size:12px;color:var(--color-text-muted);">' +
+          avatarStack +
           '<span style="display:flex;align-items:center;gap:4px;">' + iconWallet('var(--color-text-faint)') + fmt(g.monthlyDeposit) + ' / month</span>' +
         '</div></div>' +
         '<div style="text-align:right;flex-shrink:0;">' + iconChevronRight() + '</div>' +
