@@ -82,8 +82,8 @@ export function renderDashboard() {
   if (!state.groupsLoaded) {
     return '<div class="screen">' +
       '<div style="padding:20px 20px 4px; display:flex; align-items:center; justify-content:space-between;">' +
-        '<div><div style="font-size:12px;color:var(--color-text-muted);font-weight:500;">Welcome back, ' + adminName(state.currentAdmin) + '</div>' +
-        '<div class="mono" style="display:flex;align-items:center;gap:8px;font-size:22px;font-weight:700;">' + iconWallet('var(--color-primary)', 22) + 'Chit Funds</div></div>' +
+        '<div><div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--color-text-faint);font-weight:700;letter-spacing:0.04em;text-transform:uppercase;">' + iconWallet('var(--color-text-faint)', 13) + 'Chit Funds</div>' +
+        '<div style="font-size:19px;font-weight:700;margin-top:3px;">Welcome back, ' + adminName(state.currentAdmin) + '</div></div>' +
         '<div data-action="logout" class="avatar" style="cursor:pointer; background:' + adminAvatarColor(state.currentAdmin) + ';">' + initialsOf(adminName(state.currentAdmin)) + '</div>' +
       '</div>' +
       '<div class="content">' + renderLoadingSkeleton() + '</div>' +
@@ -155,20 +155,30 @@ export function renderDashboard() {
   return '' +
     '<div class="screen">' +
       '<div style="padding:20px 20px 4px; display:flex; align-items:center; justify-content:space-between;">' +
-        '<div><div style="font-size:12px;color:var(--color-text-muted);font-weight:500;">Welcome back, ' + adminName(state.currentAdmin) + '</div>' +
-        '<div class="mono" style="display:flex;align-items:center;gap:8px;font-size:22px;font-weight:700;">' + iconWallet('var(--color-primary)', 22) + 'Chit Funds</div></div>' +
+        '<div><div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--color-text-faint);font-weight:700;letter-spacing:0.04em;text-transform:uppercase;">' + iconWallet('var(--color-text-faint)', 13) + 'Chit Funds</div>' +
+        '<div style="font-size:19px;font-weight:700;margin-top:3px;">Welcome back, ' + adminName(state.currentAdmin) + '</div></div>' +
         '<div data-action="logout" class="avatar" style="cursor:pointer; background:' + adminAvatarColor(state.currentAdmin) + ';">' + initialsOf(adminName(state.currentAdmin)) + '</div>' +
       '</div>' +
       '<div class="content">' +
         (approvals.length ? '<div><div class="section-label">' + iconClock() + 'Signature</div><div class="row-list">' + approvals.map(renderApprovalBanner).join('') + '</div></div>' : '') +
+        // The per-admin split used to live in two separate white stat cards
+        // right below the hero — a second, differently-styled block for
+        // what's really one fact ("who holds what of the total"). Folded
+        // into the hero itself as a footer strip instead, on a translucent
+        // divider so it stays legible on the gradient without a hard edge.
         '<div style="background:linear-gradient(155deg, var(--color-primary) 0%, var(--color-primary-strong) 100%); border-radius:20px; padding:20px; color:var(--on-brand); box-shadow:var(--shadow-md);">' +
           '<div style="display:flex;align-items:center;gap:5px;font-size:12px;opacity:0.85;font-weight:500;">' + iconWallet('var(--on-brand)') + 'Total fund available</div>' +
           '<div class="mono" style="font-size:30px;font-weight:700;margin-top:4px;">' + fmt(state.balances.total) + '</div>' +
-          '<div style="font-size:12px;opacity:0.8;margin-top:2px;">Held across both admins, all groups</div>' +
-        '</div>' +
-        '<div style="display:flex; gap:12px;">' +
-          '<div class="stat" data-action="go-ledger" style="cursor:pointer;"><div class="label">' + adminDot('A') + ADMINS.A.name + '</div><div class="value">' + fmt(state.balances.A) + '</div></div>' +
-          '<div class="stat" data-action="go-ledger" style="cursor:pointer;"><div class="label">' + adminDot('B') + ADMINS.B.name + '</div><div class="value">' + fmt(state.balances.B) + '</div></div>' +
+          '<div style="display:flex;gap:12px;margin-top:16px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.2);">' +
+            '<div data-action="go-ledger" style="flex:1 1 0;min-width:0;cursor:pointer;">' +
+              '<div style="display:flex;align-items:center;gap:5px;font-size:11px;opacity:0.85;">' + adminDot('A') + ADMINS.A.name + '</div>' +
+              '<div class="mono" style="font-size:15px;font-weight:700;margin-top:3px;">' + fmt(state.balances.A) + '</div>' +
+            '</div>' +
+            '<div data-action="go-ledger" style="flex:1 1 0;min-width:0;cursor:pointer;padding-left:12px;border-left:1px solid rgba(255,255,255,0.2);">' +
+              '<div style="display:flex;align-items:center;gap:5px;font-size:11px;opacity:0.85;">' + adminDot('B') + ADMINS.B.name + '</div>' +
+              '<div class="mono" style="font-size:15px;font-weight:700;margin-top:3px;">' + fmt(state.balances.B) + '</div>' +
+            '</div>' +
+          '</div>' +
         '</div>' +
         '<div><div class="section-label">' + iconGroupStack() + 'Groups</div><div class="row-list">' + groupCards + '</div></div>' +
       '</div>' +
