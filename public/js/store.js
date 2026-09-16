@@ -25,7 +25,8 @@ export var state = {
     addMemberToGroup: null, // { gid, draftName } — "add member to this group" overlay on groupDetail
     paymentTab: null, // 'unpaid' | 'A' | 'B' — which Member payments tab is active; falls back to monthDetail/paymentList.js's default when unset or the tab has no rows for the current month
     ledgerFilter: 'all', // 'all' | 'collection' | 'payout' | 'transfer' — Admin & Ledger screen's type filter
-    transferSelection: null // { mids: [] } — paid entries selected (long-press to start, tap more to add) in the logged-in admin's own section, offering to hand them all to the other admin
+    transferSelection: null, // { mids: [] } — paid entries selected (long-press to start, tap more to add) in the logged-in admin's own section, offering to hand them all to the other admin
+    profileMenuOpen: false // dashboard header's avatar dropdown (Sign out) — a plain toggle, not pushNav()'d like the app's other overlays, since it holds no draft data worth restoring on Back/Forward
   }
 };
 

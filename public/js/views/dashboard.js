@@ -2,9 +2,29 @@ import { ADMINS } from '../../firebase-config.js';
 import { state, groupsById, membersByGroup } from '../store.js';
 import { fmt, escapeHtml, adminName, adminAvatarColor, adminDot, initialsOf, colorFor, isSuper, monthLabel } from '../helpers.js';
 import { monthFinances } from '../finance/monthFinances.js';
-import { iconChevronRight, iconPlus, iconWallet, iconGroupStack, iconPeopleSmall, iconCalendar, iconTrophy, iconTransfer, iconClock } from '../icons.js';
+import { iconChevronRight, iconPlus, iconWallet, iconGroupStack, iconPeopleSmall, iconCalendar, iconTrophy, iconTransfer, iconClock, iconLogout } from '../icons.js';
 import { renderBottomNav } from './bottomNav.js';
 import { bar } from '../skeleton.js';
+
+// The header avatar's own dropdown — a backdrop (click anywhere outside to
+// dismiss) plus a small anchored card, not a full pushNav()'d overlay like
+// the app's other sheets, since there's no draft here worth restoring on
+// Back/Forward (see profileMenuOpen's own comment in store.js).
+function renderProfileMenu() {
+  if (!state.ui.profileMenuOpen) return '';
+  return '<div data-action="close-profile-menu" style="position:fixed;inset:0;z-index:39;"></div>' +
+    '<div style="position:absolute;top:calc(100% + 8px);right:0;min-width:172px;background:var(--color-surface);border:1px solid var(--color-border);border-radius:14px;box-shadow:var(--shadow-md);padding:6px;z-index:40;">' +
+      '<div style="padding:8px 10px;font-size:11px;color:var(--color-text-muted);border-bottom:1px solid var(--color-border);margin-bottom:4px;">Signed in as <strong style="color:var(--color-text);">' + escapeHtml(adminName(state.currentAdmin)) + '</strong></div>' +
+      '<div data-action="logout" style="display:flex;align-items:center;gap:8px;padding:9px 10px;border-radius:10px;cursor:pointer;color:var(--color-danger);font-weight:600;font-size:13px;">' + iconLogout('var(--color-danger)', 15) + 'Sign out</div>' +
+    '</div>';
+}
+
+function avatarWithMenu() {
+  return '<div style="position:relative;flex-shrink:0;">' +
+    '<div data-action="toggle-profile-menu" class="avatar" style="cursor:pointer; background:' + adminAvatarColor(state.currentAdmin) + ';">' + initialsOf(adminName(state.currentAdmin)) + '</div>' +
+    renderProfileMenu() +
+  '</div>';
+}
 
 // Mimics the real layout (hero balance card, stat row, group cards) with
 // shimmering placeholder blocks instead of a single centered message —
@@ -84,7 +104,7 @@ export function renderDashboard() {
       '<div style="padding:20px 20px 4px; display:flex; align-items:center; justify-content:space-between;">' +
         '<div><div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--color-text-faint);font-weight:700;letter-spacing:0.04em;text-transform:uppercase;">' + iconWallet('var(--color-text-faint)', 13) + 'Chit Funds</div>' +
         '<div style="font-size:19px;font-weight:700;margin-top:3px;">Welcome back, ' + adminName(state.currentAdmin) + '</div></div>' +
-        '<div data-action="logout" class="avatar" style="cursor:pointer; background:' + adminAvatarColor(state.currentAdmin) + ';">' + initialsOf(adminName(state.currentAdmin)) + '</div>' +
+        avatarWithMenu() +
       '</div>' +
       '<div class="content">' + renderLoadingSkeleton() + '</div>' +
       renderBottomNav('dashboard') +
@@ -176,7 +196,7 @@ export function renderDashboard() {
       '<div style="padding:20px 20px 4px; display:flex; align-items:center; justify-content:space-between;">' +
         '<div><div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--color-text-faint);font-weight:700;letter-spacing:0.04em;text-transform:uppercase;">' + iconWallet('var(--color-text-faint)', 13) + 'Chit Funds</div>' +
         '<div style="font-size:19px;font-weight:700;margin-top:3px;">Welcome back, ' + adminName(state.currentAdmin) + '</div></div>' +
-        '<div data-action="logout" class="avatar" style="cursor:pointer; background:' + adminAvatarColor(state.currentAdmin) + ';">' + initialsOf(adminName(state.currentAdmin)) + '</div>' +
+        avatarWithMenu() +
       '</div>' +
       '<div class="content">' +
         (approvals.length ? '<div><div class="section-label">' + iconClock() + 'Signature</div><div class="row-list">' + approvals.map(renderApprovalBanner).join('') + '</div></div>' : '') +

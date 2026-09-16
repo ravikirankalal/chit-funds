@@ -74,7 +74,13 @@ document.addEventListener('click', function (e) {
   var action = el.getAttribute('data-action');
   switch (action) {
     case 'signin': signInGoogle(); break;
-    case 'logout': doLogout(); break;
+    case 'logout': state.ui.profileMenuOpen = false; doLogout(); break;
+    // A plain toggle/dismiss, not routed through actions/ — same "quick
+    // UI-only state, no Firestore write" reasoning as the inline
+    // payoutModal.draftAmount mutations below, just for a dropdown instead
+    // of a form field.
+    case 'toggle-profile-menu': state.ui.profileMenuOpen = !state.ui.profileMenuOpen; render(); break;
+    case 'close-profile-menu': state.ui.profileMenuOpen = false; render(); break;
     case 'go-dashboard': goTo('dashboard'); break;
     case 'go-members': goTo('members'); break;
     case 'go-ledger': goTo('ledger'); break;
