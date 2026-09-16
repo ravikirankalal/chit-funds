@@ -57,13 +57,18 @@ export function monthLabel(startYear, startMonthIndex, monthNum) {
   return MONTH_NAMES[idx] + ' ' + year;
 }
 
-// Seeds (or resets) the per-month payout schedule to one flat amount for
-// every month, while a group is still being configured — see
-// createGroup.js. Once a group is created this schedule is stored as-is
-// and there's no UI path to regenerate it.
-export function flatPayoutSchedule(amount, durationMonths) {
+// Seeds (or resets) the per-month payout schedule while a group is still
+// being configured — see createGroup.js. Starts at `amount` for month 1
+// and climbs by a fixed ₹2,000 each month after that, the common
+// chit-fund pattern where earlier payouts are discounted and later ones
+// approach the full pot — rather than one flat amount for every month.
+// Once a group is created this schedule is stored as-is and there's no
+// UI path to regenerate it (individual months can still be hand-edited
+// on this same screen before submitting).
+export function stepPayoutSchedule(amount, durationMonths) {
+  var STEP = 2000;
   var schedule = [];
-  for (var i = 0; i < durationMonths; i++) schedule.push(amount);
+  for (var i = 0; i < durationMonths; i++) schedule.push(amount + i * STEP);
   return schedule;
 }
 

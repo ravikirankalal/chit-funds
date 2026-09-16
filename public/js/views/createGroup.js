@@ -48,7 +48,7 @@ function renderStep1(g) {
         '<div style="height:1px;background:var(--color-border);"></div>' +
         '<div>' +
           '<div style="display:flex;align-items:center;gap:5px;font-size:13px;font-weight:600;margin-bottom:2px;">' + iconTrophy() + 'Payout schedule</div>' +
-          '<div style="font-size:11.5px;color:var(--color-text-muted);margin-bottom:12px;">Set a starting payout to fill every month, then fine-tune any individual month below. This locks once the group is created.</div>' +
+          '<div style="font-size:11.5px;color:var(--color-text-muted);margin-bottom:12px;">Set a starting payout — each month after climbs by ₹2,000 — then fine-tune any individual month below. This locks once the group is created.</div>' +
           '<div class="field"><label>' + iconWallet() + 'Starting payout (₹)</label><input data-field="payoutStart" type="text" inputmode="numeric" value="' + g.payoutStart + '" /></div>' +
           '<div style="border:1px solid var(--color-border);border-radius:16px;background:var(--color-surface);margin-top:12px;box-shadow:var(--shadow-xs);overflow:hidden;">' + previewRows + '</div>' +
         '</div>' +

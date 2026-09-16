@@ -1,7 +1,7 @@
 import { doc, collection, serverTimestamp, writeBatch } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
 import { db } from '../firebase.js';
 import { state, membersById } from '../store.js';
-import { isSuper, flatPayoutSchedule } from '../helpers.js';
+import { isSuper, stepPayoutSchedule } from '../helpers.js';
 import { goTo, pushNav } from '../router.js';
 import { render } from '../render.js';
 import { setBusy } from './shared.js';
@@ -13,7 +13,7 @@ export function startCreateGroup() {
     step: 1,
     name: '', durationMonths: durationMonths, totalMembers: durationMonths, monthlyDeposit: 5000,
     payoutStart: payoutStart,
-    payoutSchedule: flatPayoutSchedule(payoutStart, durationMonths),
+    payoutSchedule: stepPayoutSchedule(payoutStart, durationMonths),
     members: [], draftMemberName: ''
   };
   goTo('createGroup');

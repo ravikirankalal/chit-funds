@@ -10,7 +10,7 @@ import { state } from './store.js';
 import { render } from './render.js';
 import { goTo } from './router.js';
 import { signInGoogle, doLogout } from './auth.js';
-import { flatPayoutSchedule } from './helpers.js';
+import { stepPayoutSchedule } from './helpers.js';
 import {
   startCreateGroup, createGroupStep2, addDraftMember, addExistingDraftMember, removeDraftMember, submitCreateGroup,
   openGroupDetail, openGroupMembers, openMemberPayments, removeMemberFromGroup, openMonth, openPaymentModal, closePaymentModal, setModalMode,
@@ -177,13 +177,13 @@ document.addEventListener('input', function (e) {
   if (field === 'name') g.name = e.target.value;
   else if (field === 'durationMonths') {
     g.durationMonths = Math.max(1, parseInt(e.target.value, 10) || 1);
-    g.payoutSchedule = flatPayoutSchedule(g.payoutStart, g.durationMonths);
+    g.payoutSchedule = stepPayoutSchedule(g.payoutStart, g.durationMonths);
   }
   else if (field === 'totalMembers') g.totalMembers = Math.max(1, parseInt(e.target.value, 10) || 1);
   else if (field === 'monthlyDeposit') g.monthlyDeposit = parseFloat(e.target.value) || 0;
   else if (field === 'payoutStart') {
     g.payoutStart = parseFloat(e.target.value) || 0;
-    g.payoutSchedule = flatPayoutSchedule(g.payoutStart, g.durationMonths);
+    g.payoutSchedule = stepPayoutSchedule(g.payoutStart, g.durationMonths);
   }
   else if (field === 'payoutMonth') {
     var idx = parseInt(e.target.getAttribute('data-idx'), 10);
