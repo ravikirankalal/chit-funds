@@ -4,22 +4,34 @@ import { fmt, escapeHtml, initialsOf, colorFor, adminDot, adminName, monthLabel 
 import { iconTrophy, iconWallet, iconWarningTriangle, iconClock, iconCheck } from '../../icons.js';
 import { signed, summaryStat, renderMemberPaymentStrip } from './shared.js';
 
+// One glance, one fact: not started / partway / done, each its own color
+// so status reads without parsing a sentence — same pill shape as the
+// paid/unpaid tag in paymentList.js, for the same reason (a color + a
+// short label beats a longer, differently-styled string per state).
+function winnerStatusPill(w) {
+  if (w.remaining <= 0) {
+    return '<span style="display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:20px;background:var(--color-success-soft);color:var(--color-success);">' + iconCheck('var(--color-success)') + 'Paid in full</span>';
+  }
+  if ((w.paidByA || 0) > 0 || (w.paidByB || 0) > 0) {
+    return '<span style="display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:20px;background:var(--color-gold-soft);color:var(--color-gold-strong);">' + iconClock('var(--color-gold-strong)') + fmt(w.remaining) + ' due</span>';
+  }
+  return '<span style="display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:20px;background:var(--color-border);color:var(--color-text-muted);">' + iconClock('var(--color-text-muted)') + 'Not paid yet</span>';
+}
+
 // Per-winner, not the month-level payoutByLabel (finance/shared.js) — a
 // winner added via "Add another winner" AFTER the month closed starts out
 // completely unpaid, and paidByA/paidByB can sit below payoutAmount for a
 // while even on a closed month (openPayoutModal/setPayoutContribution in
 // actions/winners/payout.js let a contribution be recorded for them same as
-// any other winner). Surfacing that per-card, not just the month's
-// aggregate, is what makes a partial/unpaid winner visible.
-function winnerPaidLine(w) {
+// any other winner). The status pill above already covers "how much is
+// left"; this is only the "who paid what" breakdown, so it's skipped
+// entirely once there's nothing paid yet — the pill alone says that.
+function winnerContribLine(w) {
   var parts = [];
   if (w.paidByA > 0) parts.push(adminName('A') + ' ' + fmt(w.paidByA));
   if (w.paidByB > 0) parts.push(adminName('B') + ' ' + fmt(w.paidByB));
-  var paidLabel = parts.join(' + ');
-  var paidHtml = paidLabel ? 'Paid out by <span style="font-weight:700;color:var(--color-text);">' + escapeHtml(paidLabel) + '</span>' : '';
-  if (w.remaining <= 0) return paidHtml;
-  var remainingHtml = '<span style="font-weight:700;color:var(--color-gold);">' + fmt(w.remaining) + ' remaining</span>';
-  return paidHtml ? paidHtml + ' · ' + remainingHtml : 'Not yet paid out · ' + remainingHtml;
+  if (!parts.length) return '';
+  return 'By <span style="font-weight:700;color:var(--color-text);">' + escapeHtml(parts.join(' + ')) + '</span>';
 }
 
 // The one place a winner is shown, open month or closed — each gets their
@@ -43,18 +55,31 @@ function renderWinnerTopCards(f, members, readOnly) {
   return f.winners.map(function (w) {
     var winner = members.find(function (mm) { return mm.id === w.memberId; });
     var winnerIdx = winner ? members.indexOf(winner) : -1;
-    var paidLine = winnerPaidLine(w);
+    var contribLine = winnerContribLine(w);
     var interactive = !readOnly && !state.ui.transferSelection;
     var removable = interactive && !((w.paidByA || 0) > 0 || (w.paidByB || 0) > 0);
     var openable = interactive && !(f.closed && w.remaining <= 0);
     var openAttr = openable ? ' data-action="open-payout-modal" data-mid="' + w.memberId + '"' : '';
+    // The trophy used to be a tiny 14px glyph next to a text label ("This
+    // month's winner"/"Winner") above the name — easy to miss, and the
+    // label repeated what the card's whole position already says. A
+    // bigger trophy badge overlapping the avatar's corner (medal-on-a-
+    // photo, the same idea as a verified badge) reads as "winner" at a
+    // glance without spending a text line on it — freeing that line for
+    // the status pill below, which is the fact that actually changes.
+    var avatarHtml = winner ? (
+      '<div style="position:relative;flex-shrink:0;">' +
+        '<div class="avatar" style="background:' + colorFor(winnerIdx) + ';box-shadow:0 0 0 2px var(--color-surface);">' + initialsOf(winner.name) + '</div>' +
+        '<div style="position:absolute;right:-4px;bottom:-4px;width:22px;height:22px;border-radius:50%;background:var(--color-gold);display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 2px var(--color-surface);">' + iconTrophy('var(--on-brand)', 13) + '</div>' +
+      '</div>'
+    ) : '';
     return '<div class="card"' + openAttr + ' style="display:flex;align-items:center;gap:12px;position:relative;overflow:hidden;">' +
       '<div style="position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--color-gold);"></div>' +
-      (winner ? '<div class="avatar" style="background:' + colorFor(winnerIdx) + ';box-shadow:0 0 0 2px var(--color-surface),0 0 0 3.5px var(--color-gold);">' + initialsOf(winner.name) + '</div>' : '') +
+      avatarHtml +
       '<div style="flex:1 1 auto; min-width:0;">' +
-        '<div style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--color-gold);font-weight:600;">' + iconTrophy('var(--color-gold)') + (f.winners.length > 1 ? 'Winner' : 'This month\'s winner') + '</div>' +
         '<div style="font-size:16px;font-weight:700;">' + (winner ? escapeHtml(winner.name) : '—') + '</div>' +
-        (paidLine ? '<div style="font-size:11px;color:var(--color-text-muted);margin-top:2px;">' + paidLine + '</div>' : '') +
+        '<div style="margin-top:4px;">' + winnerStatusPill(w) + '</div>' +
+        (contribLine ? '<div style="font-size:10.5px;color:var(--color-text-muted);margin-top:4px;">' + contribLine + '</div>' : '') +
       '</div>' +
       '<div style="text-align:right; flex-shrink:0;">' +
         '<div style="font-size:11px;color:var(--color-text-muted);">Payout</div>' +
