@@ -1,4 +1,5 @@
 import { ADMINS } from '../../../firebase-config.js';
+import { state } from '../../store.js';
 import { fmt, escapeHtml, initialsOf, colorFor, adminDot, adminName, monthLabel } from '../../helpers.js';
 import { iconTrophy, iconWallet, iconWarningTriangle, iconClock, iconCheck } from '../../icons.js';
 import { signed, summaryStat, renderMemberPaymentStrip } from './shared.js';
@@ -28,13 +29,26 @@ function winnerPaidLine(w) {
 // would still allow it: no contribution recorded toward them yet. A month
 // being closed doesn't change any of this — an admin can still add a
 // winner they missed, same as late payments are still editable post-close.
+//
+// The card itself opens the payout modal (replacing the separate "Record
+// payout" card that used to repeat the same name/amount just to be
+// tappable) whenever there's still something a contribution could do here
+// — which is exactly the same guard openPayoutModal itself enforces
+// (actions/winners/payout.js): once the month is closed AND this specific
+// winner is fully covered, there's nothing left to record. Hidden during a
+// transfer selection too, same as Remove — neither has anything to do with
+// handing off payments, and would just compete with the floating transfer
+// bar for attention.
 function renderWinnerTopCards(f, members, readOnly) {
   return f.winners.map(function (w) {
     var winner = members.find(function (mm) { return mm.id === w.memberId; });
     var winnerIdx = winner ? members.indexOf(winner) : -1;
     var paidLine = winnerPaidLine(w);
-    var removable = !readOnly && !((w.paidByA || 0) > 0 || (w.paidByB || 0) > 0);
-    return '<div class="card" style="display:flex;align-items:center;gap:12px;position:relative;overflow:hidden;">' +
+    var interactive = !readOnly && !state.ui.transferSelection;
+    var removable = interactive && !((w.paidByA || 0) > 0 || (w.paidByB || 0) > 0);
+    var openable = interactive && !(f.closed && w.remaining <= 0);
+    var openAttr = openable ? ' data-action="open-payout-modal" data-mid="' + w.memberId + '"' : '';
+    return '<div class="card"' + openAttr + ' style="display:flex;align-items:center;gap:12px;position:relative;overflow:hidden;">' +
       '<div style="position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--color-gold);"></div>' +
       (winner ? '<div class="avatar" style="background:' + colorFor(winnerIdx) + ';box-shadow:0 0 0 2px var(--color-surface),0 0 0 3.5px var(--color-gold);">' + initialsOf(winner.name) + '</div>' : '') +
       '<div style="flex:1 1 auto; min-width:0;">' +

@@ -1,39 +1,15 @@
 import { state } from '../../store.js';
 import { fmt, escapeHtml, colorFor, initialsOf, adminName, adminDot, adminAvatarColor, otherAdmin } from '../../helpers.js';
-import { iconWallet, iconCheck, iconClose, iconFillToMax } from '../../icons.js';
+import { iconClose, iconFillToMax } from '../../icons.js';
 import { signed } from './shared.js';
 
 // Each admin records their own contribution toward a winner's payout —
-// there's no approval step (see setPayoutContribution in actions/winners/payout.js): the
-// month closes itself automatically the moment every winner's paidByA +
-// paidByB reaches its payoutAmount. Tapping a winner row opens
-// renderPayoutModalOverlay to enter/adjust the signed-in admin's own share.
-export function renderPayoutCard(f, members) {
-  if (!f.winners.length) return '';
-  var rows = f.winners.map(function (w) {
-    var winner = members.find(function (mm) { return mm.id === w.memberId; });
-    var widx = winner ? members.indexOf(winner) : -1;
-    var covered = w.remaining <= 0;
-    // Both states get their own deliberate left-border accent — covered
-    // (done) in success green, still-owed (in progress) in the same gold
-    // used for "Payout pending"/"Payout in progress" everywhere else —
-    // rather than only the covered row standing out and the other looking
-    // like a plain, unstyled row.
-    return '<div class="list-row" data-action="open-payout-modal" data-mid="' + w.memberId + '" style="cursor:pointer;border-left:3px solid ' + (covered ? 'var(--color-success)' : 'var(--color-gold)') + ';">' +
-      '<div class="avatar sm" style="background:' + colorFor(widx) + ';">' + (winner ? initialsOf(winner.name) : '?') + '</div>' +
-      '<div style="flex:1 1 auto;min-width:0;"><div style="font-size:13px;font-weight:600;">' + (winner ? escapeHtml(winner.name) : '—') + '</div>' +
-      '<div style="font-size:11px;color:var(--color-text-muted);margin-top:1px;">' + adminName('A') + ': ' + fmt(w.paidByA) + ' · ' + adminName('B') + ': ' + fmt(w.paidByB) + '</div></div>' +
-      (covered
-        ? '<div style="flex-shrink:0;display:flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;padding:5px 10px;border-radius:20px;background:var(--color-success-soft);color:var(--color-success);">' + iconCheck('var(--color-success)') + 'Paid</div>'
-        : '<div style="text-align:right;flex-shrink:0;"><div style="font-size:10.5px;color:var(--color-text-muted);">Remaining</div><div class="mono" style="font-size:13px;font-weight:700;color:var(--color-gold);">' + fmt(w.remaining) + '</div></div>') +
-    '</div>';
-  }).join('');
-  return '<div class="card" style="display:flex;flex-direction:column;gap:10px;">' +
-    '<div style="display:flex;align-items:center;gap:5px;font-size:13px;font-weight:600;">' + iconWallet() + 'Record payout</div>' +
-    rows +
-  '</div>';
-}
-
+// there's no approval step: the month closes itself automatically the
+// instant every winner's paidByA + paidByB reaches its payoutAmount (see
+// setPayoutContribution in actions/winners/payout.js). Tapping a winner's
+// card in the summary (summary.js's renderWinnerTopCards) opens this modal
+// to enter/adjust the signed-in admin's own share — there's no separate
+// "Record payout" card of its own any more.
 export function renderPayoutModalOverlay(f, members) {
   var pm = state.ui.payoutModal;
   var w = f.winners.find(function (x) { return x.memberId === pm.memberId; });
