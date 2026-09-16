@@ -1,5 +1,5 @@
 import { fmt, adminDot, adminAvatarColor } from '../../../helpers.js';
-import { iconCheck, iconClock } from '../../../icons.js';
+import { iconCheck, iconClock, iconWarningTriangle } from '../../../icons.js';
 import { signed } from '../shared.js';
 
 // An admin's own dot + label, colored in that admin's avatar color — reused
@@ -61,7 +61,11 @@ export function payoutStatusPill(f) {
 // A closed month can still have unpaid dues (a late/missed payment) —
 // always amber regardless of the payout pill's own color, since "money
 // still owed IN" and "payout status" are unrelated facts that happen to
-// both show up on the same row.
+// both show up on the same row. Worded as "due unpaid" (not bare
+// "unpaid") and given its own warning-triangle icon — sitting right next
+// to a "Closed"/"Paid in full" pair, a plain "unpaid" reads as
+// contradicting them; this is about a member's monthly deposit, not the
+// month's own lifecycle or the winner's payout.
 export function unpaidPill(count) {
-  return '<span style="display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:20px;background:var(--color-warning-soft);color:var(--color-warning);">' + count + ' unpaid</span>';
+  return '<span style="display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:20px;background:var(--color-warning-soft);color:var(--color-warning);">' + iconWarningTriangle('var(--color-warning)', 11) + count + ' due unpaid</span>';
 }
