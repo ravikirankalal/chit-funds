@@ -69,12 +69,12 @@
 .field { display: flex; flex-direction: column; gap: 6px; }
 .field label { font-size: 12px; font-weight: 500; color: var(--color-text-muted); display: flex; align-items: center; gap: 5px; }
 .field label svg { flex-shrink: 0; opacity: 0.8; }
-.field input {
+.field input, .field select {
   width: 100%; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--color-border);
   background: var(--color-surface); font-size: 14px; color: var(--color-text);
   transition: box-shadow 0.12s ease, border-color 0.12s ease;
 }
-.field input:focus { box-shadow: 0 0 0 3px var(--color-primary-soft); }
+.field input:focus, .field select:focus { box-shadow: 0 0 0 3px var(--color-primary-soft); }
 .field-row { display: flex; gap: 12px; }
 .field-row .field { flex: 1 1 0; }
 

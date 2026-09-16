@@ -189,6 +189,8 @@ document.addEventListener('input', function (e) {
     var idx = parseInt(e.target.getAttribute('data-idx'), 10);
     if (!isNaN(idx)) g.payoutSchedule[idx] = parseFloat(e.target.value) || 0;
   }
+  else if (field === 'startMonthIndex') g.startMonthIndex = parseInt(e.target.value, 10) || 0;
+  else if (field === 'startYear') g.startYear = parseInt(e.target.value, 10) || g.startYear;
   else if (field === 'draftMemberName') g.draftMemberName = e.target.value;
   render(); // render() itself preserves focus/caret on the field being typed in
 });
