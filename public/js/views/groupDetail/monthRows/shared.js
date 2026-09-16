@@ -69,3 +69,14 @@ export function payoutStatusPill(f) {
 export function unpaidPill(count) {
   return '<span style="display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:20px;background:var(--color-warning-soft);color:var(--color-warning);">' + iconWarningTriangle('var(--color-warning)', 11) + count + ' due unpaid</span>';
 }
+
+// The collection side's own always-shown pill, mirroring payoutStatusPill's
+// "Paid in full" — dues were previously only called out when something was
+// STILL owed (unpaidPill above), so a fully-collected closed month showed
+// nothing here at all, leaving "Closed"/"Paid in full" looking like the
+// whole story when there was a third fact (dues) that just happened to be
+// good news. Same success color/icon "Paid in full" already uses.
+export function collectedStatusPill(hasUnpaid, unpaidCount) {
+  if (hasUnpaid) return unpaidPill(unpaidCount);
+  return '<span style="display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:20px;background:var(--color-success-soft);color:var(--color-success);">' + iconCheck('var(--color-success)') + 'Collected in full</span>';
+}

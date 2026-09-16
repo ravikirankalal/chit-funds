@@ -1,6 +1,6 @@
 import { fmt, escapeHtml, monthLabel, adminName } from '../../../helpers.js';
 import { iconTrophy } from '../../../icons.js';
-import { adminAmountSpan, rightMoneyColumn, lifecycleBadge, payoutStatusPill, unpaidPill } from './shared.js';
+import { adminAmountSpan, rightMoneyColumn, lifecycleBadge, payoutStatusPill, collectedStatusPill } from './shared.js';
 
 // A closed month's row and its trend-sparkline entry. `f` is that month's
 // monthFinances() result and `monthPct` its raw (unclamped) paid percentage.
@@ -39,9 +39,10 @@ export function renderClosedMonthRow(gid, group, m, f, members, monthPct) {
   var payoutByLine = paidByParts.length ? '<div>Paid by ' + paidByParts.join(' + ') + '</div>' : '';
   // One badge row, one color language: lifecycle (Open/Closed), payout
   // status (not started/partway/done, the same pill the winner card
-  // uses), and the unpaid-dues warning — three independent facts, each
+  // uses), and collection status (collectedStatusPill: "Collected in
+  // full" or the unpaid-dues warning) — three independent facts, each
   // reading clearly on its own instead of fighting for one row-wide tint.
-  var badgesLine = '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;">' + lifecycleBadge('closed') + payoutStatusPill(f) + (hasUnpaid ? unpaidPill(unpaidCount) : '') + '</div>';
+  var badgesLine = '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;">' + lifecycleBadge('closed') + payoutStatusPill(f) + collectedStatusPill(hasUnpaid, unpaidCount) + '</div>';
   // The trend sparkline uses one rule everywhere it appears (here,
   // the dashboard, and the per-member charts): green once every due
   // is in, red if anything's outstanding — regardless of the row's
