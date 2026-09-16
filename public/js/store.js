@@ -16,6 +16,14 @@ export var state = {
   ledgerEntries: [],
   pendingApprovals: [],   // [{kind:'transfer'|'handoff', groupId, groupName, month, requestedBy, amount, ...}] — see recompute() in finance/ledger.js
   busy: false,
+  // Remote feature flags — kept live by listeners.js's config/app listener
+  // instead of anything in firebase-config.js, since these are meant to be
+  // flipped from the Firebase console without a redeploy. Defaults to off
+  // here so a missing/not-yet-created config doc is the same as "disabled",
+  // never accidentally "enabled".
+  config: {
+    biometricAuthEnabled: false
+  },
   ui: {
     showWinnerPicker: false,
     paymentModal: null,   // { memberId, mode, isEditing }

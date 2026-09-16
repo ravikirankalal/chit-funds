@@ -24,10 +24,11 @@ export function renderPaymentModalOverlay(gid, viewMonth, group, members, f) {
   // this one sheet doing something. `locked` covers both saving and the
   // brief success beat right before the sheet closes itself: nothing here
   // should be editable once a write is in flight or has just landed.
+  var verifying = pm.saveState === 'verifying';
   var saving = pm.saveState === 'saving';
   var justSaved = pm.saveState === 'success';
   var saveError = pm.saveState === 'error' ? pm.saveError : null;
-  var locked = saving || justSaved;
+  var locked = verifying || saving || justSaved;
 
   // The mode badge in the hero card carries the same info the old plain
   // "Cash"/"Online" pill duplicated below it — cash reads as the app's
@@ -143,7 +144,7 @@ export function renderPaymentModalOverlay(gid, viewMonth, group, members, f) {
       '<div class="card" style="display:flex;flex-direction:column;gap:10px;padding:14px;">' + rows + '</div></div>';
   }
 
-  var actionHtml = buildActionArea(pm, canMarkUnpaid, canEditMode, saving, justSaved, saveError);
+  var actionHtml = buildActionArea(pm, canMarkUnpaid, canEditMode, verifying, saving, justSaved, saveError);
   // A divider ahead of the actions reads as an intentional "content ends,
   // decisions begin" break — but only when there's something actionable:
   // a view-only sheet (someone looking at a payment they don't own, with
@@ -179,8 +180,8 @@ export function renderPaymentModalOverlay(gid, viewMonth, group, members, f) {
 // says which one actually owns the current saving/success/error state, so
 // the OTHER button disappears entirely while a write is in flight rather
 // than both trying to show a loading state at once.
-function buildActionArea(pm, canMarkUnpaid, canEditMode, saving, justSaved, saveError) {
-  var locked = saving || justSaved;
+function buildActionArea(pm, canMarkUnpaid, canEditMode, verifying, saving, justSaved, saveError) {
+  var locked = verifying || saving || justSaved;
   var showMarkUnpaid = canMarkUnpaid && (!locked || pm.pendingAction === 'mark-unpaid');
   var showSavePayment = canEditMode && (!pm.isEditing || pm.mode !== pm.originalMode) && (!locked || pm.pendingAction === 'save-payment');
   var spinner = function (color) { return '<div class="spinner" style="width:16px;height:16px;border-color:rgba(255,255,255,0.35);border-top-color:' + color + ';"></div>'; };
@@ -190,6 +191,8 @@ function buildActionArea(pm, canMarkUnpaid, canEditMode, saving, justSaved, save
   if (showMarkUnpaid) {
     if (justSaved && pm.pendingAction === 'mark-unpaid') {
       html += successPill('Marked as unpaid');
+    } else if (verifying && pm.pendingAction === 'mark-unpaid') {
+      html += '<div class="btn btn-danger-soft disabled" style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px;">' + spinner('var(--color-danger)') + 'Confirming with biometrics…</div>';
     } else {
       var markSaving = saving && pm.pendingAction === 'mark-unpaid';
       html += '<button class="btn btn-danger-soft' + (markSaving ? ' disabled' : '') + '" style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px;"' + (markSaving ? '' : ' data-action="mark-unpaid"') + '>' +
@@ -202,6 +205,12 @@ function buildActionArea(pm, canMarkUnpaid, canEditMode, saving, justSaved, save
   if (showSavePayment) {
     if (justSaved && pm.pendingAction === 'save-payment') {
       html += successPill('Payment saved');
+    } else if (verifying && pm.pendingAction === 'save-payment') {
+      // The actual OS biometric prompt is what's on screen right now (a
+      // native dialog, not anything this sheet draws) — this is just the
+      // button reflecting that a tap already landed and something is
+      // pending, same disabled-with-spinner treatment as the write itself.
+      html += '<div class="btn btn-primary disabled" style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px;">' + spinner('#fff') + 'Confirming with biometrics…</div>';
     } else {
       var paySaving = saving && pm.pendingAction === 'save-payment';
       html += '<button class="btn btn-primary' + (paySaving ? ' disabled' : '') + '" style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px;"' + (paySaving ? '' : ' data-action="save-payment"') + '>' +

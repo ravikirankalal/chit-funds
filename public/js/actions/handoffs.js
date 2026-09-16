@@ -3,8 +3,9 @@ import {
 } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
 import { db } from '../firebase.js';
 import { state, groupsById, paymentsCache, handoffReqCache, monthKey } from '../store.js';
-import { isSuper, otherAdmin } from '../helpers.js';
+import { isSuper, otherAdmin, adminName } from '../helpers.js';
 import { render } from '../render.js';
+import { confirmWithBiometrics } from '../webauthn.js';
 import { setBusy, isPendingHandoff } from './shared.js';
 
 // Proposes handing the selected already-collected payments off to the
@@ -41,6 +42,15 @@ export async function acceptHandoffRequest(reqId) {
   if (isSuper()) return;
   var gid = state.activeGroupId, m = state.viewMonth;
   setBusy(true);
+  // Same biometric gate as acceptTransferRequest (adminTransfers.js) and
+  // savePaymentModal — accepting a hand-off moves already-collected money
+  // from one admin's holdings to the other's, same as those.
+  var confirmation = await confirmWithBiometrics(state.currentAdmin, adminName(state.currentAdmin));
+  if (!confirmation.ok) {
+    setBusy(false);
+    alert('Could not accept transfer: ' + confirmation.message);
+    return;
+  }
   try {
     await runTransaction(db, async function (tx) {
       var reqRef = doc(db, 'groups', gid, 'months', String(m), 'handoffRequests', reqId);

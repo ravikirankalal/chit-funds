@@ -1,8 +1,9 @@
 import { doc, setDoc, deleteDoc, runTransaction, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
 import { db } from '../firebase.js';
 import { state, groupsById, transferReqCache, monthKey } from '../store.js';
-import { isSuper } from '../helpers.js';
+import { isSuper, adminName } from '../helpers.js';
 import { monthFinances } from '../finance/monthFinances.js';
+import { confirmWithBiometrics } from '../webauthn.js';
 import { setBusy } from './shared.js';
 
 // A whole-month, admin-to-admin holdings transfer — distinct from a
@@ -31,6 +32,17 @@ export async function acceptTransferRequest() {
   if (isSuper()) return;
   var gid = state.activeGroupId, m = state.viewMonth;
   setBusy(true);
+  // Moves money between the two admins' holdings just like a payment save
+  // does — same biometric gate, see webauthn.js. No dedicated "verifying"
+  // UI state here (this action's own global busy spinner covers it); a
+  // failed/cancelled check just surfaces as the same alert() the rest of
+  // this function already uses for errors.
+  var confirmation = await confirmWithBiometrics(state.currentAdmin, adminName(state.currentAdmin));
+  if (!confirmation.ok) {
+    setBusy(false);
+    alert('Could not accept transfer: ' + confirmation.message);
+    return;
+  }
   try {
     await runTransaction(db, async function (tx) {
       var reqRef = doc(db, 'groups', gid, 'transferRequests', String(m));

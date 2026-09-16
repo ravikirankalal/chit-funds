@@ -3,7 +3,7 @@
 // debounce that turns a burst of snapshot events into a single
 // recompute() + render() pass.
 
-import { onSnapshot, collection, collectionGroup } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
+import { onSnapshot, collection, collectionGroup, doc } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
 import { db } from './firebase.js';
 import { state, groupsById, membersById, membersByGroup, monthsCache, paymentsCache, transferReqCache, handoffReqCache, monthKey, clearCaches } from './store.js';
 import { pathParts } from './helpers.js';
@@ -50,6 +50,16 @@ var unsubs = [];
 
 export function startListeners() {
   if (unsubs.length) return;
+
+  // Remote feature flags, editable straight from the Firebase console
+  // without a redeploy — see store.js's state.config and webauthn.js. A
+  // doc that doesn't exist yet (snap.exists() false) leaves every flag at
+  // its safe-default value already in state.config, rather than throwing.
+  unsubs.push(onSnapshot(doc(db, 'config', 'app'), function (snap) {
+    var data = snap.exists() ? snap.data() : {};
+    state.config.biometricAuthEnabled = !!data.biometricAuthEnabled;
+    render();
+  }));
 
   unsubs.push(onSnapshot(collection(db, 'groups'), function (snap) {
     snap.docChanges().forEach(function (change) {

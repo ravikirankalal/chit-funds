@@ -1,9 +1,10 @@
 import { doc, setDoc, deleteDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
 import { db } from '../firebase.js';
 import { state, groupsById, paymentsCache, monthKey } from '../store.js';
-import { isSuper } from '../helpers.js';
+import { isSuper, adminName } from '../helpers.js';
 import { pushNav } from '../router.js';
 import { render } from '../render.js';
+import { confirmWithBiometrics } from '../webauthn.js';
 import { isPendingHandoff, delay, SAVE_SUCCESS_DISPLAY_MS } from './shared.js';
 
 export function openPaymentModal(memberId) {
@@ -23,7 +24,7 @@ export function closePaymentModal() {
   // (paymentModal.js) so a click can't normally reach here — this guard
   // is just so nothing else that might call closePaymentModal directly
   // can pop the nav entry savePaymentModal itself is about to pop.
-  if (pm && (pm.saveState === 'saving' || pm.saveState === 'success')) return;
+  if (pm && (pm.saveState === 'verifying' || pm.saveState === 'saving' || pm.saveState === 'success')) return;
   history.back();
 }
 export function setModalMode(mode) { if (!state.ui.paymentModal) return; state.ui.paymentModal.mode = mode; render(); }
@@ -47,8 +48,20 @@ export async function savePaymentModal() {
   // markUnpaidFromModal's) is the one actually in flight, since both
   // write through the same pm.saveState.
   pm.pendingAction = 'save-payment';
-  pm.saveState = 'saving';
+  // A no-op { ok: true } when the feature is off (webauthn.js's own
+  // config check) — otherwise this is the actual device fingerprint/Face
+  // ID/PIN prompt, and the write below never runs unless it succeeds.
+  pm.saveState = 'verifying';
   pm.saveError = null;
+  render();
+  var confirmation = await confirmWithBiometrics(state.currentAdmin, adminName(state.currentAdmin));
+  if (!confirmation.ok) {
+    pm.saveState = 'error';
+    pm.saveError = confirmation.message;
+    render();
+    return;
+  }
+  pm.saveState = 'saving';
   render();
   try {
     var ref = doc(db, 'groups', gid, 'months', String(m), 'payments', pm.memberId);
@@ -100,8 +113,17 @@ export async function markUnpaidFromModal() {
   // it's THIS button's loading/success/error copy to show, not Save
   // Payment's.
   pm.pendingAction = 'mark-unpaid';
-  pm.saveState = 'saving';
+  pm.saveState = 'verifying';
   pm.saveError = null;
+  render();
+  var unpaidConfirmation = await confirmWithBiometrics(state.currentAdmin, adminName(state.currentAdmin));
+  if (!unpaidConfirmation.ok) {
+    pm.saveState = 'error';
+    pm.saveError = unpaidConfirmation.message;
+    render();
+    return;
+  }
+  pm.saveState = 'saving';
   render();
   try {
     await deleteDoc(doc(db, 'groups', gid, 'months', String(m), 'payments', pm.memberId));
