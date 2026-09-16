@@ -40,22 +40,51 @@ function clearStoredCredentialId(adminId) {
 }
 
 var BIOMETRIC_TIMEOUT_MS = 30000;
+var FOREGROUND_GRACE_MS = 1500;
 
-// A hard backstop against a hung WebAuthn call. Browsers vary in how
-// reliably they honor the `signal`/`timeout` options below on their own —
-// a call that never settles at all would leave the caller's "verifying" UI
-// stuck forever, with no way to retry or even close the sheet (this is
-// exactly what was reported: worked once, then stuck on "Confirming with
-// biometrics..." from the second attempt on). Racing the real call against
-// a plain timer guarantees SOME rejection by BIOMETRIC_TIMEOUT_MS regardless
-// of whether the browser's own abort handling kicks in.
+// A hard backstop against a hung WebAuthn call. Two independent triggers
+// call controller.abort(), because neither alone is reliable:
+//
+// 1. A plain BIOMETRIC_TIMEOUT_MS timer — fine while the tab stays in the
+//    foreground, but this is exactly the timer mobile browsers throttle
+//    (sometimes to the point of never firing at all) once a native
+//    biometric sheet takes focus and backgrounds the tab. If THIS is the
+//    only trigger, a hang while backgrounded means abort() may simply
+//    never run — which also explains why a page reload sometimes doesn't
+//    clear a stuck ceremony: if we never actually told the browser to
+//    cancel anything, there was nothing for the reload to have released.
+// 2. A `visibilitychange` listener — fires as soon as the browser brings
+//    the tab back to the foreground (a real event dispatched by the
+//    browser itself, not a queued JS timer, so background throttling
+//    can't delay it). If the tab is visible again but our call still
+//    hasn't settled, that means the native sheet closed one way or
+//    another with no result ever delivered to us — so we wait a short
+//    FOREGROUND_GRACE_MS (foreground timers run at full speed) for a
+//    just-arriving result, then abort. This is the trigger that actually
+//    fires in the reported failure mode, where the fixed timer above
+//    got starved the whole time the tab was backgrounded.
+//
+// Aborting an already-settled request is a harmless no-op, so both can
+// safely race against the real outcome.
 function withTimeout(run) {
   var controller = new AbortController();
-  var abortTimer = setTimeout(function () { controller.abort(); }, BIOMETRIC_TIMEOUT_MS);
+  function abortNow() { try { controller.abort(); } catch (e) {} }
+  var abortTimer = setTimeout(abortNow, BIOMETRIC_TIMEOUT_MS);
+  var foregroundTimer = null;
+  function onVisibilityChange() {
+    if (document.visibilityState !== 'visible') return;
+    clearTimeout(foregroundTimer);
+    foregroundTimer = setTimeout(abortNow, FOREGROUND_GRACE_MS);
+  }
+  document.addEventListener('visibilitychange', onVisibilityChange);
   var backstop = new Promise(function (resolve, reject) {
     setTimeout(function () { reject(new Error('Biometric confirmation timed out — try again.')); }, BIOMETRIC_TIMEOUT_MS + 1000);
   });
-  return Promise.race([run(controller.signal), backstop]).finally(function () { clearTimeout(abortTimer); });
+  return Promise.race([run(controller.signal), backstop]).finally(function () {
+    clearTimeout(abortTimer);
+    clearTimeout(foregroundTimer);
+    document.removeEventListener('visibilitychange', onVisibilityChange);
+  });
 }
 
 function randomBytes(len) {
