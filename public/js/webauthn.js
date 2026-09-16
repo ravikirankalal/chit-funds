@@ -35,6 +35,28 @@ function getStoredCredentialId(adminId) {
 function setStoredCredentialId(adminId, id) {
   try { localStorage.setItem(storageKey(adminId), id); } catch (e) {}
 }
+function clearStoredCredentialId(adminId) {
+  try { localStorage.removeItem(storageKey(adminId)); } catch (e) {}
+}
+
+var BIOMETRIC_TIMEOUT_MS = 30000;
+
+// A hard backstop against a hung WebAuthn call. Browsers vary in how
+// reliably they honor the `signal`/`timeout` options below on their own —
+// a call that never settles at all would leave the caller's "verifying" UI
+// stuck forever, with no way to retry or even close the sheet (this is
+// exactly what was reported: worked once, then stuck on "Confirming with
+// biometrics..." from the second attempt on). Racing the real call against
+// a plain timer guarantees SOME rejection by BIOMETRIC_TIMEOUT_MS regardless
+// of whether the browser's own abort handling kicks in.
+function withTimeout(run) {
+  var controller = new AbortController();
+  var abortTimer = setTimeout(function () { controller.abort(); }, BIOMETRIC_TIMEOUT_MS);
+  var backstop = new Promise(function (resolve, reject) {
+    setTimeout(function () { reject(new Error('Biometric confirmation timed out — try again.')); }, BIOMETRIC_TIMEOUT_MS + 1000);
+  });
+  return Promise.race([run(controller.signal), backstop]).finally(function () { clearTimeout(abortTimer); });
+}
 
 function randomBytes(len) {
   var bytes = new Uint8Array(len);
@@ -76,32 +98,38 @@ export function isBiometricGateEnabled() {
 // check as a later get() — so the very first confirmWithBiometrics() call
 // on a new device only ever prompts once, not "register" then "verify" back
 // to back.
-async function registerCredential(adminId, adminLabel) {
-  var credential = await navigator.credentials.create({
-    publicKey: {
-      challenge: randomBytes(32),
-      rp: { name: 'Chit Funds' },
-      user: { id: randomBytes(16), name: adminLabel || adminId, displayName: adminLabel || adminId },
-      pubKeyCredParams: [{ type: 'public-key', alg: -7 }, { type: 'public-key', alg: -257 }],
-      authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required' },
-      attestation: 'none',
-      timeout: 60000
-    }
+function registerCredential(adminId, adminLabel) {
+  return withTimeout(async function (signal) {
+    var credential = await navigator.credentials.create({
+      publicKey: {
+        challenge: randomBytes(32),
+        rp: { name: 'Chit Funds' },
+        user: { id: randomBytes(16), name: adminLabel || adminId, displayName: adminLabel || adminId },
+        pubKeyCredParams: [{ type: 'public-key', alg: -7 }, { type: 'public-key', alg: -257 }],
+        authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required' },
+        attestation: 'none',
+        timeout: BIOMETRIC_TIMEOUT_MS
+      },
+      signal: signal
+    });
+    if (!credential) throw new Error('Setup was cancelled.');
+    setStoredCredentialId(adminId, credential.id);
   });
-  if (!credential) throw new Error('Setup was cancelled.');
-  setStoredCredentialId(adminId, credential.id);
 }
 
-async function assertCredential(credentialId) {
-  var assertion = await navigator.credentials.get({
-    publicKey: {
-      challenge: randomBytes(32),
-      allowCredentials: [{ id: base64UrlToBytes(credentialId), type: 'public-key' }],
-      userVerification: 'required',
-      timeout: 60000
-    }
+function assertCredential(credentialId) {
+  return withTimeout(async function (signal) {
+    var assertion = await navigator.credentials.get({
+      publicKey: {
+        challenge: randomBytes(32),
+        allowCredentials: [{ id: base64UrlToBytes(credentialId), type: 'public-key' }],
+        userVerification: 'required',
+        timeout: BIOMETRIC_TIMEOUT_MS
+      },
+      signal: signal
+    });
+    if (!assertion) throw new Error('Confirmation was cancelled.');
   });
-  if (!assertion) throw new Error('Confirmation was cancelled.');
 }
 
 // The one function callers actually need. Resolves { ok: true } immediately
@@ -115,12 +143,26 @@ export async function confirmWithBiometrics(adminId, adminLabel) {
   if (!isBiometricGateEnabled()) return { ok: true };
   var available = await isPlatformAuthenticatorAvailable();
   if (!available) return { ok: false, reason: 'unsupported', message: 'This device does not support biometric confirmation.' };
+  var storedId = getStoredCredentialId(adminId);
   try {
-    var storedId = getStoredCredentialId(adminId);
     if (storedId) await assertCredential(storedId);
     else await registerCredential(adminId, adminLabel);
     return { ok: true };
   } catch (err) {
-    return { ok: false, reason: 'denied', message: (err && err.message) || 'Biometric confirmation failed.' };
+    if (!storedId) return { ok: false, reason: 'denied', message: (err && err.message) || 'Biometric confirmation failed.' };
+    // The remembered credential no longer works on THIS device — cleared
+    // passkeys, a stale id, whatever — and unlike a desktop, an admin on
+    // their phone has no way to fix that themselves (no devtools to clear
+    // localStorage). Rather than leaving every future save stuck the same
+    // way, drop the bad id and register fresh: one extra prompt, but no
+    // dead end. A genuine cancel just gets asked again immediately, same
+    // as most apps' own "didn't quite catch that, try again" pattern.
+    clearStoredCredentialId(adminId);
+    try {
+      await registerCredential(adminId, adminLabel);
+      return { ok: true };
+    } catch (err2) {
+      return { ok: false, reason: 'denied', message: (err2 && err2.message) || 'Biometric confirmation failed.' };
+    }
   }
 }
