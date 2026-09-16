@@ -87,16 +87,45 @@ export function renderPaymentModalOverlay(gid, viewMonth, group, members) {
           (locked ? '' : '<div style="font-size:11px;color:var(--color-text-muted);margin-top:6px;">' + (existingP && existingP.transferred ? 'Locked — this amount has been transferred and can no longer be edited.' : pendingHandoffId ? 'Locked — a transfer request is pending on this amount.' : 'Only ' + adminName(holder) + ' can change this.') + '</div>')
       ) + '</div>' +
       transferHistory +
-      (canMarkUnpaid && !locked ? '<button class="btn btn-danger-soft" style="width:100%;" data-action="mark-unpaid">Mark as unpaid</button>' : '') +
-      (saveError ? '<div class="error-text" style="display:flex;align-items:center;gap:6px;font-weight:600;">' + iconWarningTriangle('var(--color-danger)') + 'Could not save: ' + escapeHtml(saveError) + '</div>' : '') +
-      (justSaved
-        ? '<div class="btn" style="width:100%;background:var(--color-success-soft);color:var(--color-success);display:flex;align-items:center;justify-content:center;gap:8px;pointer-events:none;">' + iconCheck('var(--color-success)') + 'Payment saved</div>'
-        : (canEditMode && (!pm.isEditing || pm.mode !== pm.originalMode)
-          ? '<button class="btn btn-primary' + (saving ? ' disabled' : '') + '" style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px;"' + (saving ? '' : ' data-action="save-payment"') + '>' +
-              (saving ? '<div class="spinner" style="width:16px;height:16px;border-color:rgba(255,255,255,0.35);border-top-color:#fff;"></div>Saving…' : 'Save Payment') +
-            '</button>'
-          : '')
-      ) +
+      buildActionArea(pm, canMarkUnpaid, canEditMode, saving, justSaved, saveError) +
     '</div>' +
   '</div></div>';
+}
+
+// Mark as unpaid and Save Payment write through the same pm.saveState
+// (savePaymentModal/markUnpaidFromModal in actions/payments.js) since
+// only one of the two is ever meaningful to fire at once — pm.pendingAction
+// says which one actually owns the current saving/success/error state, so
+// the OTHER button disappears entirely while a write is in flight rather
+// than both trying to show a loading state at once.
+function buildActionArea(pm, canMarkUnpaid, canEditMode, saving, justSaved, saveError) {
+  var locked = saving || justSaved;
+  var showMarkUnpaid = canMarkUnpaid && (!locked || pm.pendingAction === 'mark-unpaid');
+  var showSavePayment = canEditMode && (!pm.isEditing || pm.mode !== pm.originalMode) && (!locked || pm.pendingAction === 'save-payment');
+  var spinner = function (color) { return '<div class="spinner" style="width:16px;height:16px;border-color:rgba(255,255,255,0.35);border-top-color:' + color + ';"></div>'; };
+  var successPill = function (label) { return '<div class="btn" style="width:100%;background:var(--color-success-soft);color:var(--color-success);display:flex;align-items:center;justify-content:center;gap:8px;pointer-events:none;">' + iconCheck('var(--color-success)') + label + '</div>'; };
+
+  var html = '';
+  if (showMarkUnpaid) {
+    if (justSaved && pm.pendingAction === 'mark-unpaid') {
+      html += successPill('Marked as unpaid');
+    } else {
+      var markSaving = saving && pm.pendingAction === 'mark-unpaid';
+      html += '<button class="btn btn-danger-soft' + (markSaving ? ' disabled' : '') + '" style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px;"' + (markSaving ? '' : ' data-action="mark-unpaid"') + '>' +
+        (markSaving ? spinner('var(--color-danger)') + 'Marking as unpaid…' : 'Mark as unpaid') + '</button>';
+    }
+  }
+  if (saveError) {
+    html += '<div class="error-text" style="display:flex;align-items:center;gap:6px;font-weight:600;">' + iconWarningTriangle('var(--color-danger)') + (pm.pendingAction === 'mark-unpaid' ? 'Could not mark as unpaid: ' : 'Could not save: ') + escapeHtml(saveError) + '</div>';
+  }
+  if (showSavePayment) {
+    if (justSaved && pm.pendingAction === 'save-payment') {
+      html += successPill('Payment saved');
+    } else {
+      var paySaving = saving && pm.pendingAction === 'save-payment';
+      html += '<button class="btn btn-primary' + (paySaving ? ' disabled' : '') + '" style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px;"' + (paySaving ? '' : ' data-action="save-payment"') + '>' +
+        (paySaving ? spinner('#fff') + 'Saving…' : 'Save Payment') + '</button>';
+    }
+  }
+  return html;
 }

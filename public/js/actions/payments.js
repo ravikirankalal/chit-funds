@@ -4,7 +4,7 @@ import { state, groupsById, paymentsCache, monthKey } from '../store.js';
 import { isSuper } from '../helpers.js';
 import { pushNav } from '../router.js';
 import { render } from '../render.js';
-import { setBusy, isPendingHandoff } from './shared.js';
+import { isPendingHandoff, delay, SAVE_SUCCESS_DISPLAY_MS } from './shared.js';
 
 export function openPaymentModal(memberId) {
   if (isSuper()) return;
@@ -43,6 +43,10 @@ export async function savePaymentModal() {
   // instead of the app-wide busy overlay — that overlay blanked the whole
   // screen behind a dark scrim for the length of the write, reading as
   // the page reloading rather than this one sheet doing something.
+  // pendingAction tells the sheet which of its two buttons (this one, or
+  // markUnpaidFromModal's) is the one actually in flight, since both
+  // write through the same pm.saveState.
+  pm.pendingAction = 'save-payment';
   pm.saveState = 'saving';
   pm.saveError = null;
   render();
@@ -58,7 +62,7 @@ export async function savePaymentModal() {
     // A brief beat on the success state so it's actually seen before the
     // sheet closes itself — same amount of "did that work?" reassurance a
     // native app's checkmark-then-dismiss pattern gives.
-    await new Promise(function (resolve) { setTimeout(resolve, 700); });
+    await delay(SAVE_SUCCESS_DISPLAY_MS);
     // openPaymentModal() pushed a nav entry for this member; pop it via
     // history.back(), same as closePaymentModal() — see router.js's
     // popstate handler for why the render this triggers is usually
@@ -82,7 +86,7 @@ export async function savePaymentModal() {
 export async function markUnpaidFromModal() {
   if (isSuper()) return;
   var pm = state.ui.paymentModal;
-  if (!pm) return;
+  if (!pm || pm.saveState === 'saving') return;
   var gid = state.activeGroupId, m = state.viewMonth;
   var existing = (paymentsCache.get(monthKey(gid, m)) || {})[pm.memberId];
   // Only whoever currently holds the amount can undo the payment, and only
@@ -91,14 +95,27 @@ export async function markUnpaidFromModal() {
   // unpaid, same lock as editing its mode in savePaymentModal above.
   if (existing && (existing.collectedBy !== state.currentAdmin || existing.transferred)) return;
   if (existing && isPendingHandoff(gid, m, pm.memberId)) return;
-  setBusy(true);
+  // Same sheet-scoped saving/success/error flow as savePaymentModal, and
+  // the same pm.saveState field — pendingAction is what tells the sheet
+  // it's THIS button's loading/success/error copy to show, not Save
+  // Payment's.
+  pm.pendingAction = 'mark-unpaid';
+  pm.saveState = 'saving';
+  pm.saveError = null;
+  render();
   try {
     await deleteDoc(doc(db, 'groups', gid, 'months', String(m), 'payments', pm.memberId));
-    state.ui.paymentModal = null;
-    history.back(); // see savePaymentModal() above
+    pm.saveState = 'success';
+    render();
+    await delay(SAVE_SUCCESS_DISPLAY_MS);
+    state.ui.paymentModal = null; // see savePaymentModal() above
+    render();
+    history.back();
   } catch (err) {
-    alert('Could not update payment: ' + err.message);
-  } finally { setBusy(false); }
+    pm.saveState = 'error';
+    pm.saveError = err.message;
+    render();
+  }
 }
 
 // Long-pressing a paid entry in the logged-in admin's own "collected by"

@@ -17,7 +17,10 @@ same reason the rest of `actions/` was split — see
 ## Dependency direction
 
 `index.js` re-exports from `picker.js` and `payout.js`; neither imports the
-other. Both import `setBusy` from [`../shared.js`](../shared.js).
+other. `picker.js` imports `setBusy` from [`../shared.js`](../shared.js);
+`payout.js` imports `delay` from the same file instead — `setPayoutContribution`
+drives its own sheet through saving/success/error states (same pattern as
+`payments.js`'s `savePaymentModal`) rather than the app-wide busy overlay.
 
 ## Where do I make my change?
 

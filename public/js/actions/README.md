@@ -19,7 +19,7 @@ of six.
 | File | Exports | Responsibility |
 |---|---|---|
 | `index.js` | re-exports everything below | Barrel — the only file anything outside `actions/` imports from. |
-| `shared.js` | `setBusy`, `isPendingHandoff` | Cross-cutting helpers used by more than one cluster. `setBusy` isn't re-exported by `index.js` — nothing outside `actions/` calls it directly. |
+| `shared.js` | `setBusy`, `isPendingHandoff`, `delay` | Cross-cutting helpers used by more than one cluster. None of these are re-exported by `index.js` — nothing outside `actions/` calls them directly. |
 | `navigation.js` | `openGroupDetail`, `openGroupMembers`, `openMemberPayments`, `openMonth`, `selectPaymentTab`, `setLedgerFilter` | Plain screen navigation and small synchronous UI toggles — nothing here touches Firestore. |
 | `groupCreation.js` | `startCreateGroup`, `createGroupStep2`, `addDraftMember`, `addExistingDraftMember`, `removeDraftMember`, `submitCreateGroup` | The multi-step create-group flow, ending in the batched write that creates the group + its first month doc. |
 | `members.js` | `openMemberForm`, `closeMemberForm`, `saveMemberForm`, `openAddMemberToGroup`, `closeAddMemberToGroup`, `addExistingMemberToGroup`, `createAndAddMemberToGroup`, `removeMemberFromGroup` | The shared member directory (add/edit a person) and adding/removing a member from one group. |

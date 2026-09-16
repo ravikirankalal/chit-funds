@@ -1,6 +1,6 @@
 import { state } from '../../store.js';
 import { fmt, escapeHtml, colorFor, initialsOf, adminName, adminDot, adminAvatarColor, otherAdmin } from '../../helpers.js';
-import { iconClose, iconFillToMax } from '../../icons.js';
+import { iconClose, iconFillToMax, iconCheck, iconWarningTriangle } from '../../icons.js';
 import { signed } from './shared.js';
 
 // Each admin records their own contribution toward a winner's payout —
@@ -50,13 +50,25 @@ export function renderPayoutModalOverlay(f, members) {
   // settled fact about them, not a live status; and the payout target
   // itself in blue wherever it's named, matching Collections elsewhere.
   var otherColor = adminAvatarColor(otherAdmin(state.currentAdmin));
+  // setPayoutContribution (actions/winners/payout.js) drives this sheet
+  // through its own saving/success/error states instead of the app-wide
+  // busy overlay — see payments.js's savePaymentModal for the same fix.
+  // `locked` covers both saving and the brief success beat right before
+  // the sheet closes itself.
+  var saving = pm.saveState === 'saving';
+  var justSaved = pm.saveState === 'success';
+  var saveError = pm.saveState === 'error' ? pm.saveError : null;
+  var locked = saving || justSaved;
 
   return '<div class="overlay"><div class="sheet">' +
     '<div class="sheet-header">' +
       '<div class="avatar sm" style="background:' + colorFor(widx) + ';">' + (winner ? initialsOf(winner.name) : '?') + '</div>' +
       '<div style="flex:1 1 auto;min-width:0;"><div style="font-size:14px;font-weight:700;">' + (winner ? escapeHtml(winner.name) : '—') + '</div>' +
       '<div style="font-size:11.5px;color:var(--color-text);">Payout target <span style="color:var(--color-primary);font-weight:700;">' + fmt(w.payoutAmount) + '</span></div></div>' +
-      '<div class="sheet-close" data-action="close-payout-modal">' + iconClose() + '</div>' +
+      // Closing mid-save would race the write's own history.back() (see
+      // setPayoutContribution) — dropped entirely rather than just
+      // visually dimmed, same convention as payments.js's payment sheet.
+      (locked ? '<div class="sheet-close" style="opacity:0.35;">' + iconClose() + '</div>' : '<div class="sheet-close" data-action="close-payout-modal">' + iconClose() + '</div>') +
     '</div>' +
     '<div class="sheet-body">' +
       '<div style="text-align:center;padding:8px 0 4px;">' +
@@ -72,8 +84,8 @@ export function renderPayoutModalOverlay(f, members) {
       '</div>' +
       '<div>' +
         '<div style="display:flex;gap:8px;">' +
-          '<input data-field="payoutDraftAmount" type="text" inputmode="numeric" value="' + rawDraft + '" style="flex:1 1 auto;min-width:0;font-size:16px;font-weight:700;padding:10px 12px;border-radius:10px;border:1px solid ' + (exceeds ? 'var(--color-danger)' : 'var(--color-border)') + ';" />' +
-          '<button class="btn btn-outline" style="flex-shrink:0;display:flex;align-items:center;justify-content:center;" data-action="fill-remaining-payout" data-mid="' + w.memberId + '" data-amount="' + maxForMe + '" title="Fill remaining">' + iconFillToMax() + '</button>' +
+          '<input data-field="payoutDraftAmount" type="text" inputmode="numeric" value="' + rawDraft + '"' + (locked ? ' disabled' : '') + ' style="flex:1 1 auto;min-width:0;font-size:16px;font-weight:700;padding:10px 12px;border-radius:10px;border:1px solid ' + (exceeds ? 'var(--color-danger)' : 'var(--color-border)') + ';' + (locked ? 'opacity:0.6;' : '') + '" />' +
+          (locked ? '' : '<button class="btn btn-outline" style="flex-shrink:0;display:flex;align-items:center;justify-content:center;" data-action="fill-remaining-payout" data-mid="' + w.memberId + '" data-amount="' + maxForMe + '" title="Fill remaining">' + iconFillToMax() + '</button>') +
         '</div>' +
         (exceeds
           ? '<div style="font-size:11px;color:var(--color-danger);margin-top:6px;">Exceeds the payout total by ' + fmt(rawDraft - maxForMe) + ' — reduce to save.</div>'
@@ -87,7 +99,13 @@ export function renderPayoutModalOverlay(f, members) {
         // as two distinct facts, not get flattened into one color.
         '<div class="stat"><div class="label">' + adminDot(state.currentAdmin) + adminName(state.currentAdmin) + '</div><div class="value"><span style="color:' + (myBefore < 0 ? 'var(--color-danger)' : 'var(--color-text)') + ';">' + signed(myBefore) + '</span> <span style="color:var(--color-text-faint);font-weight:400;">→</span> <span style="color:' + (myAfter < 0 ? 'var(--color-danger)' : 'var(--color-text)') + ';">' + signed(myAfter) + '</span></div></div>' +
       '</div>' +
-      '<button class="btn btn-primary ' + (exceeds ? 'disabled' : '') + '" style="width:100%;" data-action="save-payout" data-mid="' + w.memberId + '">Save</button>' +
+      (saveError ? '<div class="error-text" style="display:flex;align-items:center;gap:6px;font-weight:600;">' + iconWarningTriangle('var(--color-danger)') + 'Could not save: ' + escapeHtml(saveError) + '</div>' : '') +
+      (justSaved
+        ? '<div class="btn" style="width:100%;background:var(--color-success-soft);color:var(--color-success);display:flex;align-items:center;justify-content:center;gap:8px;pointer-events:none;">' + iconCheck('var(--color-success)') + 'Saved</div>'
+        : '<button class="btn btn-primary' + ((exceeds || saving) ? ' disabled' : '') + '" style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px;" data-mid="' + w.memberId + '"' + (saving ? '' : ' data-action="save-payout"') + '>' +
+            (saving ? '<div class="spinner" style="width:16px;height:16px;border-color:rgba(255,255,255,0.35);border-top-color:#fff;"></div>Saving…' : 'Save') +
+          '</button>'
+      ) +
     '</div>' +
   '</div></div>';
 }
