@@ -132,37 +132,73 @@ function assertCredential(credentialId) {
   });
 }
 
+// A browser only ever allows ONE WebAuthn ceremony in flight per tab —
+// this is enforced by the browser/OS itself, not something our own
+// AbortController reliably overrides (aborting the JS-side wait doesn't
+// always dismiss a native biometric sheet still on screen, especially
+// after the tab was backgrounded while it was showing, which throttles
+// our own timeout right when it matters most). If an earlier attempt is
+// still wedged there when we start a new one, the browser rejects
+// immediately with a "request is already pending" style error — reusable
+// detection since it means retrying with EITHER assertCredential or
+// registerCredential right now is doomed the same way.
+function isAlreadyPendingError(err) {
+  return !!err && /already\s+pending/i.test(err.message || '');
+}
+
+var inFlight = false;
+
 // The one function callers actually need. Resolves { ok: true } immediately
 // if the feature is off; otherwise runs (or sets up) this device's platform
 // biometric check and resolves { ok: false, reason, message } on anything
 // short of success — unsupported hardware/browser, the OS prompt being
-// cancelled or timing out, or a stale/removed credential. Callers should
-// treat any non-ok result as "do not proceed," matching this app's
-// fail-closed choice for devices that can't do the check at all.
+// cancelled or timing out, a stale/removed credential, or an earlier
+// attempt still wedged at the browser level. Callers should treat any
+// non-ok result as "do not proceed," matching this app's fail-closed
+// choice for devices that can't do the check at all.
 export async function confirmWithBiometrics(adminId, adminLabel) {
   if (!isBiometricGateEnabled()) return { ok: true };
+  // Covers the common "tapped Save again while still waiting" case without
+  // even attempting a second browser-level call we already know is
+  // pointless — the message-sniffing below is the fallback for when the
+  // FIRST call already gave up (our own timeout fired) but the browser's
+  // ceremony is still wedged from an even earlier, already-abandoned
+  // attempt.
+  if (inFlight) return { ok: false, reason: 'busy', message: 'Still waiting on an earlier biometric check — reload the page if this does not clear in a few seconds.' };
   var available = await isPlatformAuthenticatorAvailable();
   if (!available) return { ok: false, reason: 'unsupported', message: 'This device does not support biometric confirmation.' };
   var storedId = getStoredCredentialId(adminId);
+  inFlight = true;
   try {
-    if (storedId) await assertCredential(storedId);
-    else await registerCredential(adminId, adminLabel);
-    return { ok: true };
-  } catch (err) {
-    if (!storedId) return { ok: false, reason: 'denied', message: (err && err.message) || 'Biometric confirmation failed.' };
-    // The remembered credential no longer works on THIS device — cleared
-    // passkeys, a stale id, whatever — and unlike a desktop, an admin on
-    // their phone has no way to fix that themselves (no devtools to clear
-    // localStorage). Rather than leaving every future save stuck the same
-    // way, drop the bad id and register fresh: one extra prompt, but no
-    // dead end. A genuine cancel just gets asked again immediately, same
-    // as most apps' own "didn't quite catch that, try again" pattern.
-    clearStoredCredentialId(adminId);
     try {
-      await registerCredential(adminId, adminLabel);
+      if (storedId) await assertCredential(storedId);
+      else await registerCredential(adminId, adminLabel);
       return { ok: true };
-    } catch (err2) {
-      return { ok: false, reason: 'denied', message: (err2 && err2.message) || 'Biometric confirmation failed.' };
+    } catch (err) {
+      if (isAlreadyPendingError(err)) {
+        return { ok: false, reason: 'busy', message: 'A biometric prompt from an earlier attempt is still stuck — reload the page and try again.' };
+      }
+      if (!storedId) return { ok: false, reason: 'denied', message: (err && err.message) || 'Biometric confirmation failed.' };
+      // The remembered credential no longer works on THIS device — cleared
+      // passkeys, a stale id, whatever — and unlike a desktop, an admin on
+      // their phone has no way to fix that themselves (no devtools to
+      // clear localStorage). Rather than leaving every future save stuck
+      // the same way, drop the bad id and register fresh: one extra
+      // prompt, but no dead end. A genuine cancel just gets asked again
+      // immediately, same as most apps' own "didn't quite catch that, try
+      // again" pattern.
+      clearStoredCredentialId(adminId);
+      try {
+        await registerCredential(adminId, adminLabel);
+        return { ok: true };
+      } catch (err2) {
+        if (isAlreadyPendingError(err2)) {
+          return { ok: false, reason: 'busy', message: 'A biometric prompt from an earlier attempt is still stuck — reload the page and try again.' };
+        }
+        return { ok: false, reason: 'denied', message: (err2 && err2.message) || 'Biometric confirmation failed.' };
+      }
     }
+  } finally {
+    inFlight = false;
   }
 }

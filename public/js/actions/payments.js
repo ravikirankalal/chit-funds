@@ -24,7 +24,19 @@ export function closePaymentModal() {
   // (paymentModal.js) so a click can't normally reach here — this guard
   // is just so nothing else that might call closePaymentModal directly
   // can pop the nav entry savePaymentModal itself is about to pop.
-  if (pm && (pm.saveState === 'verifying' || pm.saveState === 'saving' || pm.saveState === 'success')) return;
+  //
+  // Deliberately does NOT block 'verifying' (the biometric prompt), even
+  // though 'saving'/'success' still do — no Firestore write has started
+  // yet at that point, so there's nothing to race by leaving. This is the
+  // escape hatch for a hung WebAuthn call: mobile browsers throttle JS
+  // timers while a native biometric sheet has focus, so webauthn.js's own
+  // timeout can't be relied on to fire and unstick the UI by itself —
+  // without this, a hang here left the admin with no way out at all
+  // short of a page reload (reported in production). If the old
+  // confirmWithBiometrics() call this abandons resolves later in the
+  // background, savePaymentModal's own pm reference just writes into an
+  // orphaned object nothing reads anymore, harmless either way.
+  if (pm && (pm.saveState === 'saving' || pm.saveState === 'success')) return;
   history.back();
 }
 export function setModalMode(mode) { if (!state.ui.paymentModal) return; state.ui.paymentModal.mode = mode; render(); }
