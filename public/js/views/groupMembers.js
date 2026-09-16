@@ -60,10 +60,16 @@ export function renderGroupMembers() {
     var canRemove = !readOnly && !memberHasPaidInGroup(gid, group, mm.id);
     var win = winsByMember[mm.id];
     var pstat = paymentStatsByMember[mm.id];
+    var paidCount = pstat ? pstat.count : 0;
+    // Behind the moment they're short even one due payment — the same
+    // danger red the member's own payment-history row uses for an
+    // "Unpaid" month, so this list flags exactly who that red would
+    // apply to without having to open each member individually.
+    var lagging = paidCount < group.currentMonth;
     // Blank once there's nothing to compare against yet (month 1 hasn't
     // opened) rather than showing a "0 / 0" that reads as broken.
     var paymentLine = group.currentMonth > 0
-      ? '<div style="font-size:10.5px;color:var(--color-text-muted);margin-top:3px;">' + (pstat ? pstat.count : 0) + ' / ' + group.currentMonth + ' payments' + (pstat ? ' · Last paid ' + monthLabel(group.startYear, group.startMonthIndex, pstat.lastMonth) : '') + '</div>'
+      ? '<div style="font-size:10.5px;font-weight:' + (lagging ? '700' : '400') + ';color:' + (lagging ? 'var(--color-danger)' : 'var(--color-text-muted)') + ';margin-top:3px;">' + paidCount + ' / ' + group.currentMonth + ' payments' + (pstat ? ' · Last paid ' + monthLabel(group.startYear, group.startMonthIndex, pstat.lastMonth) : '') + '</div>'
       : '';
     return '<div class="list-row" data-action="open-member-payments" data-gid="' + gid + '" data-mid="' + mm.id + '" style="cursor:pointer;">' +
       '<div class="avatar" style="background:' + colorFor(idx) + ';">' + initialsOf(mm.name) + '</div>' +
