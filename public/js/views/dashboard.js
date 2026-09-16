@@ -142,8 +142,10 @@ export function renderDashboard() {
         '</div></div>' +
         '<div style="text-align:right;flex-shrink:0;">' + iconChevronRight() + '</div>' +
       '</div>' +
-      '<div><div class="progress-track"><div class="progress-fill" style="width:' + pct + '%;"></div></div>' +
-      '<div style="display:flex;align-items:center;gap:5px;margin-top:6px;font-size:12px;color:var(--color-text-muted);">' + iconCalendar() + 'Month ' + g.currentMonth + ' of ' + g.durationMonths + '</div>' +
+      '<div>' +
+        '<div style="display:flex;align-items:center;gap:5px;margin-bottom:6px;font-size:12px;color:var(--color-text-muted);">' + iconCalendar() + 'Month ' + g.currentMonth + ' of ' + g.durationMonths + '</div>' +
+        '<div class="progress-track"><div class="progress-fill" style="width:' + pct + '%;"></div></div>' +
+      '</div>' +
       moneyRow +
       payoutLine +
       '</div>' +
