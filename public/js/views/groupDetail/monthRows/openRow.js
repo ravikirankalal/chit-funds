@@ -54,7 +54,7 @@ export function renderOpenMonthRow(gid, group, m, f, members) {
       '<div class="avatar sm" style="background:var(--color-secondary-soft); color:var(--color-secondary);">' + m + '</div>' +
       '<div style="flex:1 1 auto; min-width:0;"><div style="font-size:13px;font-weight:600;">' + monthLabel(group.startYear, group.startMonthIndex, m) + '</div>' +
       '<div style="font-size:11.5px;color:var(--color-text-muted);margin-top:1px;">' + rowSubtitle + '</div></div>' +
-      rightMoneyColumn(f.totalCollected, f.payoutAmount) +
+      rightMoneyColumn(f.totalCollected, payoutPaidTotal) +
     '</div>' +
     '<div class="progress-track"><div class="progress-fill" style="width:' + pct + '%; background:var(--color-secondary);"></div></div>' +
     badgesLine +

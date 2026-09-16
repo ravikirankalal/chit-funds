@@ -27,6 +27,12 @@ export function renderClosedMonthRow(gid, group, m, f, members, monthPct) {
     ? winnerNames.map(function (n) { return '<span style="color:var(--color-gold);font-weight:600;">' + escapeHtml(n) + '</span>'; }).join(', ')
     : '—';
   var winnerLine = winnerNames.length ? '<div style="display:flex;align-items:center;gap:4px;">' + iconTrophy('var(--color-gold)') + (winnerNames.length > 1 ? 'Winners: ' : 'Winner: ') + winnerNamesHtml + '</div>' : '';
+  // f.payoutAmount is the TARGET (sum of every winner's payoutAmount),
+  // not what's actually gone out — a winner added after close, or any
+  // partial contribution, can leave the target well above the real
+  // paid total (see monthDetail/summary.js's same fix). The right-hand
+  // column's "Payout" figure needs the real total, not the target.
+  var payoutPaidTotal = f.payoutPaidA + f.payoutPaidB;
   var paidByParts = [];
   if (f.payoutPaidA > 0) paidByParts.push(adminAmountSpan('A', adminName('A') + (f.payoutPaidB > 0 ? ' (' + fmt(f.payoutPaidA) + ')' : '')));
   if (f.payoutPaidB > 0) paidByParts.push(adminAmountSpan('B', adminName('B') + (f.payoutPaidA > 0 ? ' (' + fmt(f.payoutPaidB) + ')' : '')));
@@ -47,7 +53,7 @@ export function renderClosedMonthRow(gid, group, m, f, members, monthPct) {
     '<div style="display:flex;flex-direction:column;gap:2px;font-size:11.5px;color:var(--color-text-muted);margin-top:2px;">' + winnerLine + payoutByLine + '</div>' +
     badgesLine +
     '</div>' +
-    rightMoneyColumn(f.totalCollected, f.payoutAmount) +
+    rightMoneyColumn(f.totalCollected, payoutPaidTotal) +
   '</div>';
   return { html: html, trend: trend };
 }
