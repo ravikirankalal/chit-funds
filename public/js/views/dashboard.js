@@ -138,10 +138,21 @@ export function renderDashboard() {
     }
     var groupProfit = collectedSoFar - payoutSoFarForGroup;
     var groupProfitColor = groupProfit < 0 ? 'var(--color-danger)' : 'var(--color-success)';
-    var moneyRow = '<div style="display:flex;gap:4px;">' +
-      '<div style="flex:1 1 0;min-width:0;"><div style="font-size:9.5px;color:var(--color-text-muted);">Collections</div><div class="mono" style="font-size:12.5px;font-weight:700;color:var(--color-primary);">' + fmt(collectedSoFar) + '</div></div>' +
-      '<div style="flex:1 1 0;min-width:0;"><div style="font-size:9.5px;color:var(--color-text-muted);">Payout</div><div class="mono" style="font-size:12.5px;font-weight:700;color:var(--color-accent);">' + fmt(payoutSoFarForGroup) + '</div></div>' +
-      '<div style="flex:1 1 0;min-width:0;"><div style="font-size:9.5px;color:var(--color-text-muted);">Profit</div><div class="mono" style="font-size:12.5px;font-weight:700;color:' + groupProfitColor + ';">' + (groupProfit < 0 ? '−' + fmt(Math.abs(groupProfit)) : fmt(groupProfit)) + '</div></div>' +
+    // A recessed panel (the app's --color-bg, not --color-surface, so it
+    // reads as inset against the white card) with hairline dividers between
+    // cells — gives this its own "money summary" module instead of three
+    // bare text columns floating between the progress row and the trend
+    // strip with nothing to set them apart.
+    var moneyCell = function (label, value, color, divider) {
+      return '<div style="flex:1 1 0;min-width:0;text-align:center;' + (divider ? 'border-left:1px solid var(--color-border);' : '') + '">' +
+        '<div style="font-size:9.5px;color:var(--color-text-muted);font-weight:600;letter-spacing:0.02em;text-transform:uppercase;">' + label + '</div>' +
+        '<div class="mono" style="font-size:13.5px;font-weight:700;color:' + color + ';margin-top:2px;">' + value + '</div>' +
+      '</div>';
+    };
+    var moneyRow = '<div style="display:flex;background:var(--color-bg);border-radius:12px;padding:8px 2px;">' +
+      moneyCell('Collections', fmt(collectedSoFar), 'var(--color-primary)', false) +
+      moneyCell('Payout', fmt(payoutSoFarForGroup), 'var(--color-accent)', true) +
+      moneyCell('Profit', groupProfit < 0 ? '−' + fmt(Math.abs(groupProfit)) : fmt(groupProfit), groupProfitColor, true) +
     '</div>';
     var trendBars = trend.map(function (t) {
       var h = Math.max(2, Math.round((t.pct / 100) * 14));
