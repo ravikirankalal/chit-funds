@@ -31,13 +31,13 @@ function pctTag(pct) { return '<span style="font-size:10.5px;color:var(--color-t
 // are still comparable at a glance; a min-height floor keeps 0% months
 // (not started, or genuinely uncollected) visible as a sliver instead of
 // disappearing. The current month gets a primary-color ring so it's
-// findable among 20+ bars; every bar reuses the existing open-month
-// action so the sparkline doubles as another way to jump to a month.
-function trendRow(gid, group, trend) {
+// findable among 20+ bars. Purely a glance-able readout, not a control —
+// a title tooltip carries the exact %, but nothing here navigates.
+function trendRow(group, trend) {
   var trendBars = trend.map(function (t) {
     var h = Math.max(3, Math.round((t.pct / 100) * 28));
     var ring = t.m === group.currentMonth ? 'box-shadow:0 0 0 1.5px var(--color-primary);' : '';
-    return '<div data-action="open-month" data-gid="' + gid + '" data-m="' + t.m + '" title="' + monthLabel(group.startYear, group.startMonthIndex, t.m) + ': ' + t.pct + '%" style="flex:1 1 0;min-width:2px;height:28px;display:flex;align-items:flex-end;cursor:pointer;">' +
+    return '<div title="' + monthLabel(group.startYear, group.startMonthIndex, t.m) + ': ' + t.pct + '%" style="flex:1 1 0;min-width:2px;height:28px;display:flex;align-items:flex-end;">' +
       '<div style="width:100%;height:' + h + 'px;background:' + t.color + ';border-radius:2px;' + ring + '"></div>' +
     '</div>';
   }).join('');
@@ -71,6 +71,6 @@ export function renderStatsCard(gid, group, members, figures, trend) {
       statCell(adminDot('B') + escapeHtml(adminName('B')) + ' holds', '<span style="' + (holdB < 0 ? 'color:var(--color-danger);' : '') + '">' + signed(holdB) + '</span>', { border: true }),
       true
     ) +
-    trendRow(gid, group, trend) +
+    trendRow(group, trend) +
   '</div>';
 }

@@ -123,7 +123,7 @@ export function renderClosedSummary(f, members, readOnly, gid, viewMonth) {
       ? '<div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--color-text-muted);padding:0 2px;">' + iconWarningTriangle('var(--color-warning)') + unpaidCount + ' member' + (unpaidCount === 1 ? '' : 's') + ' still unpaid — tap below to record.</div>'
       : '') +
     winnerCards +
-    '<div class="card">' + renderMemberPaymentStrip(gid, viewMonth, members, readOnly) + '</div>' +
+    '<div class="card">' + renderMemberPaymentStrip(gid, viewMonth, members) + '</div>' +
     '<div class="card" style="display:flex;">' +
       summaryStat(iconWallet() + 'Collections', '<span style="color:var(--color-primary);">' + fmt(f.totalCollected) + '</span>') +
       summaryStat('Payouts', '<span style="color:var(--color-accent);">' + fmt(payoutSoFar) + '</span>', true) +
@@ -167,7 +167,7 @@ export function renderOpenSummary(f, members, group, readOnly, gid, viewMonth) {
         '<div style="display:flex;justify-content:space-between;margin-bottom:4px;"><div style="font-size:11px;color:var(--color-text-muted);">' + f.paidCount + ' / ' + members.length + ' paid</div><div style="font-size:11px;color:var(--color-text-muted);font-weight:600;">' + pct + '%</div></div>' +
         '<div class="progress-track"><div class="progress-fill" style="width:' + pct + '%;"></div></div>' +
       '</div>' +
-      renderMemberPaymentStrip(gid, viewMonth, members, readOnly) +
+      renderMemberPaymentStrip(gid, viewMonth, members) +
       '<div class="stat-row">' +
         '<div class="stat"><div class="label">' + adminDot('A') + escapeHtml(adminName('A')) + ' holds</div><div class="value" style="' + (f.adjA < 0 ? 'color:var(--color-danger);' : '') + '">' + signed(f.adjA) + '</div><div style="font-size:10.5px;color:var(--color-text-muted);margin-top:1px;">' + f.paidCountA + ' member' + (f.paidCountA === 1 ? '' : 's') + ' collected</div></div>' +
         '<div class="stat"><div class="label">' + adminDot('B') + escapeHtml(adminName('B')) + ' holds</div><div class="value" style="' + (f.adjB < 0 ? 'color:var(--color-danger);' : '') + '">' + signed(f.adjB) + '</div><div style="font-size:10.5px;color:var(--color-text-muted);margin-top:1px;">' + f.paidCountB + ' member' + (f.paidCountB === 1 ? '' : 's') + ' collected</div></div>' +

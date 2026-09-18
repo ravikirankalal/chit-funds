@@ -22,7 +22,6 @@ export function renderMemberPayments() {
   if (!group || !member) return state.groupsLoaded ? '<div class="content"><div class="card">Member not found.</div></div>' : renderMemberPaymentsSkeleton();
 
   var rows = [];
-  var trend = []; // { m, paid } per month this member owed dues for — feeds the payment-trend strip below
   var totalPaid = 0, wonTotal = 0;
   for (var m = 1; m <= group.currentMonth; m++) {
     var p = (paymentsCache.get(monthKey(gid, m)) || {})[mid];
@@ -46,12 +45,12 @@ export function renderMemberPayments() {
       wonTotal += winEntry.payoutAmount;
       wonPill = '<div style="margin-top:4px;display:flex;align-items:center;justify-content:flex-end;gap:3px;font-size:10px;font-weight:700;color:var(--color-accent);">' + iconTrophy('var(--color-accent)', 11) + 'Won ' + fmt(winEntry.payoutAmount) + '</div>';
     }
-    trend.push({ m: m, state: (p && p.paid) ? 'paid' : 'unpaid' });
-
     // The avatar carries the same paid/unpaid color the status pill does —
     // a colored strip down the list is readable at a glance without
     // reading every pill, same reasoning as the group month rows' avatar.
-    rows.push('<div class="list-row" data-action="open-month" data-gid="' + gid + '" data-m="' + m + '">' +
+    // Purely a record to read, not a control — no data-action, cursor:default
+    // overrides .list-row's default pointer cursor.
+    rows.push('<div class="list-row" style="cursor:default;">' +
       '<div class="avatar sm" style="background:' + (p && p.paid ? 'var(--color-success-soft)' : 'var(--color-danger-soft)') + '; color:' + (p && p.paid ? 'var(--color-success)' : 'var(--color-danger)') + ';">' + m + '</div>' +
       '<div style="flex:1 1 auto; min-width:0;"><div style="font-size:13px;font-weight:600;">' + monthLabel(group.startYear, group.startMonthIndex, m) + '</div>' +
       '<div style="font-size:11px;color:var(--color-text-muted);margin-top:1px;">' + subtitle + '</div></div>' +
@@ -63,31 +62,6 @@ export function renderMemberPayments() {
   }
   var totalDueSoFar = group.currentMonth * group.monthlyDeposit;
   var amountDue = totalDueSoFar - totalPaid;
-  // The list above only covers months this member has actually owed dues
-  // for (1..currentMonth) — the trend strip covers the group's FULL
-  // duration, same as the group detail collection-trend sparkline, so a
-  // member 3 months into a 24-month fund doesn't read as "almost done".
-  for (var fm = group.currentMonth + 1; fm <= group.durationMonths; fm++) {
-    trend.push({ m: fm, state: 'future' });
-  }
-
-  // Same paid=full/green, unpaid=short/red bar strip as the month detail
-  // page's "Who's paid" (public/js/views/monthDetail/shared.js), but one bar per
-  // MONTH for this one member instead of one bar per member for one month
-  // — a quick visual read of this member's overall reliability. Each bar
-  // reuses the row list's own 'open-month' action, so it's another way to
-  // jump to a given month.
-  var trendColors = { paid: 'var(--color-success)', unpaid: 'var(--color-danger)', future: 'var(--color-border)' };
-  var trendHeights = { paid: 20, unpaid: 6, future: 3 };
-  var trendLabels = { paid: 'Paid', unpaid: 'Unpaid', future: 'Not started' };
-  var trendStrip = trend.length ? '<div class="card" style="margin-bottom:12px;">' +
-    '<div style="font-size:11px;color:var(--color-text-muted);margin-bottom:4px;">Payment trend</div>' +
-    '<div style="display:flex;align-items:flex-end;gap:2px;">' + trend.map(function (t) {
-      return '<div data-action="open-month" data-gid="' + gid + '" data-m="' + t.m + '" title="' + monthLabel(group.startYear, group.startMonthIndex, t.m) + ': ' + trendLabels[t.state] + '" style="flex:1 1 0;min-width:2px;height:20px;display:flex;align-items:flex-end;cursor:pointer;">' +
-        '<div style="width:100%;height:' + trendHeights[t.state] + 'px;background:' + trendColors[t.state] + ';border-radius:2px;"></div>' +
-      '</div>';
-    }).join('') + '</div>' +
-  '</div>' : '';
 
   return '' +
     '<div class="screen">' +
@@ -96,7 +70,6 @@ export function renderMemberPayments() {
         '<div><div class="title">' + iconPeopleSmall('var(--color-primary)', 18) + escapeHtml(member.name) + '</div><div class="subtitle">' + escapeHtml(group.name) + ' · Payment history</div></div>' +
       '</div>' +
       '<div class="content">' +
-        trendStrip +
         '<div class="stat-row">' +
           '<div class="stat"><div class="label">' + iconWallet() + 'Paid so far</div><div class="value">' + fmt(totalPaid) + ' <span style="font-size:12px;color:var(--color-text-muted);font-weight:400;">/ ' + fmt(totalDueSoFar) + '</span></div></div>' +
           '<div class="stat"><div class="label">Amount due</div><div class="value" style="color:' + (amountDue > 0 ? 'var(--color-danger)' : 'var(--color-text)') + ';">' + fmt(amountDue) + '</div></div>' +
