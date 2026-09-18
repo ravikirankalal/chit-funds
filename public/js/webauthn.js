@@ -165,8 +165,14 @@ function registerCredential(adminId, adminLabel) {
     // (['internal'] for a platform authenticator, always the case here).
     // Recording it now is what lets assertCredential() below pass it back
     // on every future check — see that function's comment for why that
-    // hint is not optional on Android.
-    var transports = (credential.response && typeof credential.response.getTransports === 'function')
+    // hint is not optional on Android. navigator.credentials.create() is
+    // typed to return the generic Credential, and PublicKeyCredential's
+    // own .response is typed as the base AuthenticatorResponse (no
+    // getTransports) — two narrowing steps down to the concrete
+    // AuthenticatorAttestationResponse .create() actually returns are what
+    // the type checker needs, even though both are always true at runtime
+    // for this call (passing `publicKey` guarantees both).
+    var transports = (credential instanceof PublicKeyCredential && credential.response instanceof AuthenticatorAttestationResponse)
       ? credential.response.getTransports() : ['internal'];
     setStoredCredential(adminId, credential.id, transports);
   });
