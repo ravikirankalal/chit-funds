@@ -1,5 +1,5 @@
 import { state, handoffReqCache, monthKey } from '../../store.js';
-import { fmt, escapeHtml, adminName, otherAdmin, colorFor, initialsOf, formatDateTime } from '../../helpers.js';
+import { fmt, escapeHtml, adminName, colorFor, initialsOf, formatDateTime } from '../../helpers.js';
 import { iconTransfer, iconWarningTriangle, iconArrowUpRight, iconArrowDownLeft, iconCheck } from '../../icons.js';
 import { signed } from './shared.js';
 
@@ -56,7 +56,7 @@ function renderOutgoingSuccessCard(outgoing, f, isClosed) {
   return '<div class="banner card" style="position:relative;overflow:hidden;">' +
     '<div class="countdown-bar" style="background:var(--color-success);"></div>' +
     '<div class="banner-title" style="color:var(--color-success);">' + iconCheck('var(--color-success)') + 'Transfer accepted</div>' +
-    '<div style="font-size:12.5px;color:var(--color-text-muted);">' + escapeHtml(adminName(otherAdmin(state.currentAdmin))) + ' accepted <span class="mono" style="font-weight:700;color:var(--color-success);">' + fmt(outgoing.amount) + '</span></div>' +
+    '<div style="font-size:12.5px;color:var(--color-text-muted);">You transferred <span class="mono" style="font-weight:700;color:var(--color-danger);">' + signed(-outgoing.amount) + '</span></div>' +
     '<div class="stat">' +
       '<div class="label">' + escapeHtml(adminName(state.currentAdmin)) + ' now holds</div>' +
       '<div class="value" style="' + (after < 0 ? 'color:var(--color-danger);' : '') + '">' + signed(before) + ' <span style="color:var(--color-text-faint);font-weight:400;">→</span> ' + signed(after) + '</div>' +
