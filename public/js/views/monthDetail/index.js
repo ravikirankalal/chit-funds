@@ -19,7 +19,7 @@
 import { state, groupsById, membersByGroup } from '../../store.js';
 import { isSuper, escapeHtml, monthLabel } from '../../helpers.js';
 import { monthFinances } from '../../finance/monthFinances.js';
-import { iconChevronLeft, iconCheck, iconClock, iconCalendar, iconGroupStack } from '../../icons.js';
+import { iconChevronLeft, iconCheck, iconClock, iconCalendar, iconGroupStack, iconTrophy, iconPlusSmall } from '../../icons.js';
 import { bar, skeletonListRow } from '../../skeleton.js';
 import { renderHandoffRequests } from './handoffRequests.js';
 import { renderClosedSummary, renderUpcomingNotice, renderOpenSummary } from './summary.js';
@@ -133,7 +133,18 @@ export function renderMonthDetail() {
   // track before the first is even settled; it reappears the moment every
   // current winner is fully covered.
   if (!readOnly && !state.ui.transferSelection && (isOpen || isClosed) && (!f.winners.length || f.allPayoutCovered)) {
-    html += '<button class="btn btn-primary" style="width:100%;" data-action="open-winner-picker">' + (f.winners.length ? 'Add another winner' : 'Select Winner') + '</button>';
+    // Picking the first winner is the thing this button exists for on
+    // almost every month, so it stays the strong .btn-primary CTA with
+    // just the trophy — no "add" connotation yet, there's nothing to add
+    // to. Once a winner already exists, doing it again is the rare,
+    // optional case (per the comment above: most months only ever need
+    // the one) — .btn-soft says "this is here if you need it" instead of
+    // competing for attention with everything else on the page, and the
+    // extra plus icon in front of the trophy spells out "add" rather than
+    // relying on the label text alone.
+    html += f.winners.length
+      ? '<button class="btn btn-soft" style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px;" data-action="open-winner-picker">' + iconPlusSmall('var(--color-primary)', 14) + iconTrophy('var(--color-primary)', 16) + 'Add another winner</button>'
+      : '<button class="btn btn-primary" style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px;" data-action="open-winner-picker">' + iconTrophy('var(--on-brand)', 16) + 'Select Winner</button>';
   }
 
   html += '</div>';
