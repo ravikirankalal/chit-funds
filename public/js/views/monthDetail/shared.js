@@ -35,17 +35,14 @@ export function timelineRow(dotColor, title, status, statusStyle, amount) {
 // here is binary (paid/unpaid) rather than a percentage. Each bar reuses
 // the existing 'open-payment-modal' action so tapping one jumps straight
 // to that member, same as tapping their row in the payment list.
-export function renderMemberPaymentStrip(gid, viewMonth, members, readOnly) {
+export function renderMemberPaymentStrip(gid, viewMonth, members) {
   if (!members.length) return '';
   var payments = paymentsCache.get(monthKey(gid, viewMonth)) || {};
   var bars = members.map(function (mm) {
     var p = payments[mm.id];
     var paid = !!(p && p.paid);
     var color = paid ? 'var(--color-success)' : 'var(--color-danger)';
-    var clickable = !readOnly;
-    return '<div' + (clickable ? ' data-action="open-payment-modal" data-mid="' + mm.id + '"' : '') +
-      ' title="' + escapeHtml(mm.name) + ': ' + (paid ? 'Paid' : 'Unpaid') + '"' +
-      ' style="flex:1 1 0;min-width:2px;height:20px;display:flex;align-items:flex-end;' + (clickable ? 'cursor:pointer;' : '') + '">' +
+    return '<div title="' + escapeHtml(mm.name) + ': ' + (paid ? 'Paid' : 'Unpaid') + '" style="flex:1 1 0;min-width:2px;height:20px;display:flex;align-items:flex-end;">' +
       '<div style="width:100%;height:' + (paid ? 20 : 6) + 'px;background:' + color + ';border-radius:2px;"></div>' +
     '</div>';
   }).join('');

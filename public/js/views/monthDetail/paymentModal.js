@@ -1,6 +1,6 @@
 import { state, paymentsCache, monthsCache, transferReqCache, handoffReqCache, monthKey } from '../../store.js';
 import { fmt, escapeHtml, colorFor, initialsOf, adminName, adminDot, formatDateTime, monthLabel } from '../../helpers.js';
-import { iconClose, iconCash, iconCard, iconTransfer, iconWallet, iconCheck, iconWarningTriangle } from '../../icons.js';
+import { iconClose, iconCash, iconCard, iconTransfer, iconWallet, iconCheck, iconWarningTriangle, iconUndo } from '../../icons.js';
 import { timelineRow, signed } from './shared.js';
 
 export function renderPaymentModalOverlay(gid, viewMonth, group, members, f) {
@@ -21,8 +21,9 @@ export function renderPaymentModalOverlay(gid, viewMonth, group, members, f) {
   // that overlay used to blank the WHOLE screen behind a dark scrim for
   // the length of the write, which read as the page reloading rather than
   // this one sheet doing something. `locked` covers both saving and the
-  // brief success beat right before the sheet closes itself: nothing here
-  // should be editable once a write is in flight or has just landed.
+  // success state the sheet now sits in until the admin closes it
+  // themselves: nothing here should be editable once a write is in
+  // flight or has landed.
   var verifying = pm.saveState === 'verifying';
   var saving = pm.saveState === 'saving';
   var justSaved = pm.saveState === 'success';
@@ -74,7 +75,13 @@ export function renderPaymentModalOverlay(gid, viewMonth, group, members, f) {
         modeToggleBtn('online', iconCard(pm.mode === 'online' ? 'var(--on-brand)' : 'currentColor', 13), 'Online') +
       '</div>' +
     '</div>';
-  } else if (!canEditMode) {
+  } else if (!canEditMode && !justSaved) {
+    // Skipped once justSaved: a successful mark-as-unpaid deletes the
+    // payment doc, so existingP disappears and canEditMode/holder above —
+    // computed from it — would otherwise misread OUR OWN just-completed
+    // action as someone else now holding a lock. The success pill in
+    // buildActionArea already says what happened; this stale "locked by
+    // X" line would only confuse that.
     modeSection = '<div style="font-size:11px;color:var(--color-text-muted);">' + (existingP && existingP.transferred ? 'Locked — this amount has been transferred and can no longer be edited.' : pendingHandoffId ? 'Locked — a transfer request is pending on this amount.' : 'Only ' + escapeHtml(adminName(holder)) + ' can change this.') + '</div>';
   }
 
@@ -86,11 +93,11 @@ export function renderPaymentModalOverlay(gid, viewMonth, group, members, f) {
   if (!pm.isEditing) {
     var beforeHold = state.currentAdmin === 'A' ? f.adjA : f.adjB;
     // Once the write actually lands, the Firestore listener folds it into
-    // f out from under this still-open sheet (the success beat holds it
-    // open for SAVE_SUCCESS_DISPLAY_MS before closing itself) — at that
-    // point "before -> after" is no longer a preview of anything, it's
-    // just the same settled figure twice with an arrow between them. Show
-    // it plainly instead once saved; the two-sided preview is only useful
+    // f out from under this still-open sheet (the sheet now stays open on
+    // success until the admin closes it themselves) — at that point
+    // "before -> after" is no longer a preview of anything, it's just the
+    // same settled figure twice with an arrow between them. Show it
+    // plainly instead once saved; the two-sided preview is only useful
     // while the write hasn't happened yet.
     if (justSaved) {
       holdingsPreview = '<div>' +
@@ -157,14 +164,16 @@ export function renderPaymentModalOverlay(gid, viewMonth, group, members, f) {
       '<div class="avatar" style="background:' + colorFor(pidx) + ';">' + initialsOf(pmem.name) + '</div>' +
       '<div style="flex:1 1 auto;min-width:0;"><div style="font-size:14px;font-weight:700;">' + escapeHtml(pmem.name) + '</div>' +
       '<div style="font-size:11.5px;color:var(--color-text-muted);">' + monthLabel(group.startYear, group.startMonthIndex, viewMonth) + ' · collected by ' + escapeHtml(adminName(holder)) + '</div></div>' +
-      // Closing mid-save would race the write's own history.back() (see
-      // savePaymentModal) — dropped entirely rather than just visually
-      // dimmed, same "no data-action when the action shouldn't fire"
-      // convention as the winner card's openable/removable flags. Stays
-      // clickable during `verifying` specifically (closePaymentModal's own
-      // guard allows it too) — the escape hatch for a hung biometric
-      // prompt, since no write has started yet at that point.
-      ((saving || justSaved) ? '<div class="sheet-close" style="opacity:0.35;">' + iconClose() + '</div>' : '<div class="sheet-close" data-action="close-payment-modal">' + iconClose() + '</div>') +
+      // Dropped entirely (not just visually dimmed) while the write is
+      // actually in flight — same "no data-action when the action
+      // shouldn't fire" convention as the winner card's openable/removable
+      // flags — since closePaymentModal's own guard would no-op on a click
+      // here anyway. Stays clickable during `verifying` (no write has
+      // started yet, the escape hatch for a hung biometric prompt) and
+      // during `justSaved`: the sheet no longer closes itself once a
+      // save/mark-unpaid lands, so this is how the admin dismisses it
+      // after seeing the result.
+      (saving ? '<div class="sheet-close" style="opacity:0.35;">' + iconClose() + '</div>' : '<div class="sheet-close" data-action="close-payment-modal">' + iconClose() + '</div>') +
     '</div>' +
     '<div class="sheet-body">' +
       heroCard +
@@ -184,15 +193,26 @@ export function renderPaymentModalOverlay(gid, viewMonth, group, members, f) {
 // than both trying to show a loading state at once.
 function buildActionArea(pm, canMarkUnpaid, canEditMode, verifying, saving, justSaved, saveError) {
   var locked = verifying || saving || justSaved;
-  var showMarkUnpaid = canMarkUnpaid && (!locked || pm.pendingAction === 'mark-unpaid');
+  var justUnpaid = justSaved && pm.pendingAction === 'mark-unpaid';
+  // The OR here matters: marking unpaid deletes the payment doc, so by
+  // the time this re-renders, existingP (and canMarkUnpaid, computed from
+  // it in renderPaymentModalOverlay) has already gone false — without
+  // justUnpaid forcing this through, the success pill below would never
+  // actually show.
+  var showMarkUnpaid = (canMarkUnpaid || justUnpaid) && (!locked || pm.pendingAction === 'mark-unpaid');
   var showSavePayment = canEditMode && (!pm.isEditing || pm.mode !== pm.originalMode) && (!locked || pm.pendingAction === 'save-payment');
   var spinner = function (color) { return '<div class="spinner" style="width:16px;height:16px;border-color:rgba(255,255,255,0.35);border-top-color:' + color + ';"></div>'; };
-  var successPill = function (label) { return '<div class="btn" style="width:100%;background:var(--color-success-soft);color:var(--color-success);display:flex;align-items:center;justify-content:center;gap:8px;pointer-events:none;">' + iconCheck('var(--color-success)') + label + '</div>'; };
+  // Colored and iconed to match each action's OWN button above it (blue
+  // checkmark for the primary Save Payment button, the same danger tone
+  // and an undo icon for Mark as unpaid) rather than a single generic
+  // green — a collection landing and a payment being reversed are
+  // opposite outcomes and shouldn't read identically at a glance.
+  var successPill = function (label, color, soft, icon) { return '<div class="btn" style="width:100%;background:' + soft + ';color:' + color + ';display:flex;align-items:center;justify-content:center;gap:8px;pointer-events:none;">' + icon + label + '</div>'; };
 
   var html = '';
   if (showMarkUnpaid) {
     if (justSaved && pm.pendingAction === 'mark-unpaid') {
-      html += successPill('Marked as unpaid');
+      html += successPill('Marked as unpaid', 'var(--color-danger)', 'var(--color-danger-soft)', iconUndo('var(--color-danger)'));
     } else if (verifying && pm.pendingAction === 'mark-unpaid') {
       html += '<div class="btn btn-danger-soft disabled" style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px;">' + spinner('var(--color-danger)') + 'Confirming with biometrics…</div>';
     } else {
@@ -206,7 +226,7 @@ function buildActionArea(pm, canMarkUnpaid, canEditMode, verifying, saving, just
   }
   if (showSavePayment) {
     if (justSaved && pm.pendingAction === 'save-payment') {
-      html += successPill('Payment saved');
+      html += successPill('Payment saved', 'var(--color-success)', 'var(--color-success-soft)', iconCheck('var(--color-success)'));
     } else if (verifying && pm.pendingAction === 'save-payment') {
       // The actual OS biometric prompt is what's on screen right now (a
       // native dialog, not anything this sheet draws) — this is just the

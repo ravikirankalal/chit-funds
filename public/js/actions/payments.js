@@ -5,7 +5,7 @@ import { isSuper, adminName } from '../helpers.js';
 import { pushNav } from '../router.js';
 import { render } from '../render.js';
 import { confirmWithBiometrics } from '../webauthn.js';
-import { isPendingHandoff, delay, SAVE_SUCCESS_DISPLAY_MS } from './shared.js';
+import { isPendingHandoff } from './shared.js';
 
 export function openPaymentModal(memberId) {
   if (isSuper()) return;
@@ -20,23 +20,21 @@ export function openPaymentModal(memberId) {
 }
 export function closePaymentModal() {
   var pm = state.ui.paymentModal;
-  // The sheet's own close button already omits data-action for this case
-  // (paymentModal.js) so a click can't normally reach here — this guard
-  // is just so nothing else that might call closePaymentModal directly
-  // can pop the nav entry savePaymentModal itself is about to pop.
+  // The sheet's own close button already omits data-action while a write
+  // is actually in flight (paymentModal.js) so a click can't normally
+  // reach here — this guard is just so nothing else that might call
+  // closePaymentModal directly can pop the nav entry mid-write.
   //
-  // Deliberately does NOT block 'verifying' (the biometric prompt), even
-  // though 'saving'/'success' still do — no Firestore write has started
-  // yet at that point, so there's nothing to race by leaving. This is the
-  // escape hatch for a hung WebAuthn call: mobile browsers throttle JS
-  // timers while a native biometric sheet has focus, so webauthn.js's own
-  // timeout can't be relied on to fire and unstick the UI by itself —
-  // without this, a hang here left the admin with no way out at all
-  // short of a page reload (reported in production). If the old
-  // confirmWithBiometrics() call this abandons resolves later in the
-  // background, savePaymentModal's own pm reference just writes into an
-  // orphaned object nothing reads anymore, harmless either way.
-  if (pm && (pm.saveState === 'saving' || pm.saveState === 'success')) return;
+  // Only 'saving' is blocked. 'verifying' (the biometric prompt) is left
+  // open as the escape hatch for a hung WebAuthn call: mobile browsers
+  // throttle JS timers while a native biometric sheet has focus, so
+  // webauthn.js's own timeout can't be relied on to fire and unstick the
+  // UI by itself — without this, a hang here left the admin with no way
+  // out at all short of a page reload (reported in production). 'success'
+  // is also left open, on purpose: the sheet no longer closes itself once
+  // a save/mark-unpaid lands, so the admin reviews the result and closes
+  // it manually from here.
+  if (pm && pm.saveState === 'saving') return;
   history.back();
 }
 export function setModalMode(mode) { if (!state.ui.paymentModal) return; state.ui.paymentModal.mode = mode; render(); }
@@ -82,21 +80,13 @@ export async function savePaymentModal() {
       transferred: !!(existing && existing.transferred),
       paidAt: (existing && existing.paidAt) || serverTimestamp()
     });
+    // Left on screen — the admin just confirmed this with their own
+    // fingerprint and should see that it actually landed, not have the
+    // sheet vanish out from under them. They close it themselves
+    // (closePaymentModal, which now allows that from 'success') once
+    // they've seen it.
     pm.saveState = 'success';
     render();
-    // A brief beat on the success state so it's actually seen before the
-    // sheet closes itself — same amount of "did that work?" reassurance a
-    // native app's checkmark-then-dismiss pattern gives.
-    await delay(SAVE_SUCCESS_DISPLAY_MS);
-    // openPaymentModal() pushed a nav entry for this member; pop it via
-    // history.back(), same as closePaymentModal() — see router.js's
-    // popstate handler for why the render this triggers is usually
-    // skipped as a no-op. That's only true because THIS render (still
-    // needed here — nothing else fires it once setBusy(false) no longer
-    // does) already applied the closed state first.
-    state.ui.paymentModal = null;
-    render();
-    history.back();
   } catch (err) {
     // Left open on failure, with the error shown inline (paymentModal.js)
     // instead of a blocking alert() — the admin can see what happened,
@@ -139,12 +129,10 @@ export async function markUnpaidFromModal() {
   render();
   try {
     await deleteDoc(doc(db, 'groups', gid, 'months', String(m), 'payments', pm.memberId));
+    // Left on screen — see savePaymentModal() above; the admin closes it
+    // themselves once they've seen the result.
     pm.saveState = 'success';
     render();
-    await delay(SAVE_SUCCESS_DISPLAY_MS);
-    state.ui.paymentModal = null; // see savePaymentModal() above
-    render();
-    history.back();
   } catch (err) {
     pm.saveState = 'error';
     pm.saveError = err.message;
