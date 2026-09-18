@@ -88,11 +88,22 @@ export async function acceptHandoffRequest(reqId) {
   } catch (err) { setHandoffAction({ reqId: reqId, action: 'accept', phase: null, error: err.message }); }
 }
 
-export function declineHandoffRequest(reqId) {
+export async function declineHandoffRequest(reqId) {
   if (isSuper()) return;
   var gid = state.activeGroupId, m = state.viewMonth;
   var req = (handoffReqCache.get(monthKey(gid, m)) || {})[reqId];
   if (!req || req.to !== state.currentAdmin) return;
+  setHandoffAction({ reqId: reqId, action: 'decline', phase: 'verifying', error: null });
+  // No money moves on a decline — this confirms identity, not a
+  // transaction. But it's still the recipient making a real, one-way call
+  // on someone else's money (the sender has to re-request from scratch),
+  // so it gets the same biometric gate as accept rather than the free
+  // pass cancel gets on the sender's own, easily-redone request.
+  var confirmation = await confirmWithBiometrics(state.currentAdmin, adminName(state.currentAdmin));
+  if (!confirmation.ok) {
+    setHandoffAction({ reqId: reqId, action: 'decline', phase: null, error: confirmation.message });
+    return;
+  }
   setHandoffAction({ reqId: reqId, action: 'decline', phase: 'working', error: null });
   deleteDoc(doc(db, 'groups', gid, 'months', String(m), 'handoffRequests', reqId))
     .then(function () { setHandoffAction(null); })

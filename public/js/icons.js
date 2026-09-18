@@ -97,3 +97,15 @@ export function iconGroupStack(color, size) {
 export function iconFillToMax(color, size) {
   return '<svg width="' + (size || 16) + '" height="' + (size || 16) + '" viewBox="0 0 24 24" fill="none"><path d="M4 5H20" stroke="' + (color || 'currentColor') + '" stroke-width="1.8" stroke-linecap="round"/><path d="M12 19V7M12 7L7.5 11.5M12 7L16.5 11.5" stroke="' + (color || 'currentColor') + '" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 }
+// A diagonal arrow heading away, top-right — "outgoing" (this side sent
+// it), paired with iconArrowDownLeft below so a hand-off's two ends read
+// as distinct directions rather than the same bidirectional glyph
+// (iconTransfer) on both.
+export function iconArrowUpRight(color, size) {
+  return '<svg width="' + (size || 14) + '" height="' + (size || 14) + '" viewBox="0 0 24 24" fill="none"><path d="M7 17L17 7M17 7H9M17 7V15" stroke="' + (color || 'currentColor') + '" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+}
+// The receiving-end counterpart to iconArrowUpRight — "incoming" (this
+// side is being asked to accept it).
+export function iconArrowDownLeft(color, size) {
+  return '<svg width="' + (size || 14) + '" height="' + (size || 14) + '" viewBox="0 0 24 24" fill="none"><path d="M17 7L7 17M7 17H15M7 17V9" stroke="' + (color || 'currentColor') + '" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+}
