@@ -5,7 +5,6 @@ import { isSuper, monthLabel, fmt } from '../../helpers.js';
 import { getMonthWinners } from '../../finance/shared.js';
 import { pushNav } from '../../router.js';
 import { render } from '../../render.js';
-import { delay, SAVE_SUCCESS_DISPLAY_MS } from '../shared.js';
 
 export function openPayoutModal(memberId) {
   if (isSuper()) return;
@@ -43,8 +42,10 @@ export function closePayoutModal() {
   var pm = state.ui.payoutModal;
   // See payments.js's closePaymentModal() for why — the sheet's own close
   // button already omits data-action for this case (payout.js's
-  // renderPayoutModalOverlay).
-  if (pm && (pm.saveState === 'saving' || pm.saveState === 'success')) return;
+  // renderPayoutModalOverlay). Only 'saving' blocks it; 'success' is left
+  // open on purpose — the sheet no longer closes itself once a
+  // contribution lands, so the admin closes it manually after seeing it.
+  if (pm && pm.saveState === 'saving') return;
   history.back();
 }
 
@@ -129,14 +130,13 @@ export async function setPayoutContribution(memberId, amount) {
     } else {
       await updateDoc(doc(db, 'groups', gid, 'months', String(m)), { winners: updated });
     }
+    // Left on screen — same as payments.js's savePaymentModal: the admin
+    // just recorded this and should see that it actually landed, not have
+    // the sheet vanish out from under them. They close it themselves
+    // (closePayoutModal, which allows that from 'success') once they've
+    // seen it.
     pm.saveState = 'success';
     render();
-    // A brief beat on the success state so it's actually seen before the
-    // sheet closes itself — see payments.js's savePaymentModal.
-    await delay(SAVE_SUCCESS_DISPLAY_MS);
-    state.ui.payoutModal = null;
-    render();
-    history.back(); // see payments.js's savePaymentModal()
   } catch (err) {
     pm.saveState = 'error';
     pm.saveError = err.message;
