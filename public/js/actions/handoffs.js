@@ -8,6 +8,15 @@ import { render } from '../render.js';
 import { confirmWithBiometrics } from '../webauthn.js';
 import { setBusy, isPendingHandoff } from './shared.js';
 
+// Scopes an accept/decline/cancel's loading + error state to the one
+// pending card it's acting on (see renderHandoffRequests in
+// views/monthDetail/handoffRequests.js) instead of the app-wide busy
+// overlay — with several requests pending at once, blanking the whole
+// screen for one of them read as though all of them had frozen. Still
+// single-flight (only one handoffAction at a time, same as setBusy(true)
+// was), just rendered on the specific card instead of over everything.
+function setHandoffAction(v) { state.ui.handoffAction = v; render(); }
+
 // Proposes handing the selected already-collected payments off to the
 // other admin — it no longer moves them immediately. A handoffRequests doc
 // is created instead (see renderHandoffRequests in views/monthDetail/handoffRequests.js); the
@@ -41,16 +50,16 @@ export async function confirmTransfer() {
 export async function acceptHandoffRequest(reqId) {
   if (isSuper()) return;
   var gid = state.activeGroupId, m = state.viewMonth;
-  setBusy(true);
+  setHandoffAction({ reqId: reqId, action: 'accept', phase: 'verifying', error: null });
   // Same biometric gate as acceptTransferRequest (adminTransfers.js) and
   // savePaymentModal — accepting a hand-off moves already-collected money
   // from one admin's holdings to the other's, same as those.
   var confirmation = await confirmWithBiometrics(state.currentAdmin, adminName(state.currentAdmin));
   if (!confirmation.ok) {
-    setBusy(false);
-    alert('Could not accept transfer: ' + confirmation.message);
+    setHandoffAction({ reqId: reqId, action: 'accept', phase: null, error: confirmation.message });
     return;
   }
+  setHandoffAction({ reqId: reqId, action: 'accept', phase: 'working', error: null });
   try {
     await runTransaction(db, async function (tx) {
       var reqRef = doc(db, 'groups', gid, 'months', String(m), 'handoffRequests', reqId);
@@ -75,8 +84,8 @@ export async function acceptHandoffRequest(reqId) {
       });
       tx.delete(reqRef);
     });
-  } catch (err) { alert('Could not accept transfer: ' + err.message); }
-  finally { setBusy(false); }
+    setHandoffAction(null); // the request doc's own delete will also remove this card once the listener catches up
+  } catch (err) { setHandoffAction({ reqId: reqId, action: 'accept', phase: null, error: err.message }); }
 }
 
 export function declineHandoffRequest(reqId) {
@@ -84,9 +93,10 @@ export function declineHandoffRequest(reqId) {
   var gid = state.activeGroupId, m = state.viewMonth;
   var req = (handoffReqCache.get(monthKey(gid, m)) || {})[reqId];
   if (!req || req.to !== state.currentAdmin) return;
-  setBusy(true);
+  setHandoffAction({ reqId: reqId, action: 'decline', phase: 'working', error: null });
   deleteDoc(doc(db, 'groups', gid, 'months', String(m), 'handoffRequests', reqId))
-    .catch(function (err) { alert(err.message); }).finally(function () { setBusy(false); });
+    .then(function () { setHandoffAction(null); })
+    .catch(function (err) { setHandoffAction({ reqId: reqId, action: 'decline', phase: null, error: err.message }); });
 }
 
 export function cancelHandoffRequest(reqId) {
@@ -94,7 +104,8 @@ export function cancelHandoffRequest(reqId) {
   var gid = state.activeGroupId, m = state.viewMonth;
   var req = (handoffReqCache.get(monthKey(gid, m)) || {})[reqId];
   if (!req || req.requestedBy !== state.currentAdmin) return;
-  setBusy(true);
+  setHandoffAction({ reqId: reqId, action: 'cancel', phase: 'working', error: null });
   deleteDoc(doc(db, 'groups', gid, 'months', String(m), 'handoffRequests', reqId))
-    .catch(function (err) { alert(err.message); }).finally(function () { setBusy(false); });
+    .then(function () { setHandoffAction(null); })
+    .catch(function (err) { setHandoffAction({ reqId: reqId, action: 'cancel', phase: null, error: err.message }); });
 }
