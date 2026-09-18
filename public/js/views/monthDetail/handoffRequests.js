@@ -48,10 +48,14 @@ export function renderHandoffRequests(gid, viewMonth, readOnly, members) {
     var accentColor = needsMyAction ? 'var(--color-gold)' : 'var(--color-secondary)';
     var accentSoft = needsMyAction ? 'var(--color-gold-soft)' : 'var(--color-secondary-soft)';
     // The Total figure is the one number in this card actually worth
-    // lingering on, so it gets the darker -strong shade rather than the
-    // same flat tone as the pill — more weight/contrast than accentColor
-    // without introducing a third color for the same direction.
-    var accentStrong = needsMyAction ? 'var(--color-gold-strong)' : 'var(--color-secondary-strong)';
+    // lingering on, so it gets a stronger shade than the pill's flat tone
+    // — but --color-secondary-strong (#2a3346) turned out to be close
+    // enough to the app's near-black body text (#1c1b19) that it just
+    // read as plain black, not "a stronger blue." --color-primary is the
+    // vivid blue the app actually uses for money figures elsewhere (the
+    // dashboard's own totals), so outgoing borrows that instead; gold
+    // already had a real -strong shade with visible contrast.
+    var accentStrong = needsMyAction ? 'var(--color-gold-strong)' : 'var(--color-primary)';
     var title = readOnly ? 'Transfer pending' : (iSent ? 'Transfer pending acceptance' : 'Transfer needs your acceptance');
     // A direction pill (plus a distinct arrow icon per direction, rather
     // than the same bidirectional iconTransfer glyph for both) so a
