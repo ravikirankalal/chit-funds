@@ -28,15 +28,34 @@ import { state } from './store.js';
 var STORAGE_PREFIX = 'chitfunds:biometricCredentialId:';
 
 function storageKey(adminId) { return STORAGE_PREFIX + adminId; }
+function transportsKey(adminId) { return STORAGE_PREFIX + adminId + ':transports'; }
 
 function getStoredCredentialId(adminId) {
   try { return localStorage.getItem(storageKey(adminId)); } catch (e) { return null; }
 }
-function setStoredCredentialId(adminId, id) {
-  try { localStorage.setItem(storageKey(adminId), id); } catch (e) {}
+// The transports hint recorded when this credential was created — see the
+// comment on assertCredential() below for why this is the actual fix for
+// the "stuck at Confirming biometrics" reports, not just another timeout
+// tweak. Every credential this module has ever created came from
+// registerCredential()'s platform-only request, so 'internal' is always
+// the correct default for a stored id that predates this field.
+function getStoredTransports(adminId) {
+  try {
+    var parsed = JSON.parse(localStorage.getItem(transportsKey(adminId)));
+    return (Array.isArray(parsed) && parsed.length) ? parsed : ['internal'];
+  } catch (e) { return ['internal']; }
+}
+function setStoredCredential(adminId, id, transports) {
+  try {
+    localStorage.setItem(storageKey(adminId), id);
+    localStorage.setItem(transportsKey(adminId), JSON.stringify((transports && transports.length) ? transports : ['internal']));
+  } catch (e) {}
 }
 function clearStoredCredentialId(adminId) {
-  try { localStorage.removeItem(storageKey(adminId)); } catch (e) {}
+  try {
+    localStorage.removeItem(storageKey(adminId));
+    localStorage.removeItem(transportsKey(adminId));
+  } catch (e) {}
 }
 
 var BIOMETRIC_TIMEOUT_MS = 30000;
@@ -142,16 +161,34 @@ function registerCredential(adminId, adminLabel) {
       signal: signal
     });
     if (!credential) throw new Error('Setup was cancelled.');
-    setStoredCredentialId(adminId, credential.id);
+    // getTransports() reports how THIS credential is actually reachable
+    // (['internal'] for a platform authenticator, always the case here).
+    // Recording it now is what lets assertCredential() below pass it back
+    // on every future check — see that function's comment for why that
+    // hint is not optional on Android.
+    var transports = (credential.response && typeof credential.response.getTransports === 'function')
+      ? credential.response.getTransports() : ['internal'];
+    setStoredCredential(adminId, credential.id, transports);
   });
 }
 
-function assertCredential(credentialId) {
+function assertCredential(credentialId, transports) {
   return withTimeout(async function (signal) {
     var assertion = await navigator.credentials.get({
       publicKey: {
         challenge: randomBytes(32),
-        allowCredentials: [{ id: base64UrlToBytes(credentialId), type: 'public-key' }],
+        // transports is a routing hint, not a security check — Chrome on
+        // Android is documented (dfinity/internet-identity#4334) to hang
+        // for 25-45s and then throw ("Transport smart-card not
+        // supported") when it's omitted, because Play Services' Credential
+        // Manager has to itself figure out how to reach the credential
+        // with no hint at all. This is almost certainly the actual cause
+        // behind every "stuck at Confirming biometrics" / "already
+        // pending" report so far — every earlier fix here (timeouts,
+        // abort-on-visibilitychange) only shortened the hang, since none
+        // of them addressed why the browser was hanging in the first
+        // place.
+        allowCredentials: [{ id: base64UrlToBytes(credentialId), type: 'public-key', transports: transports }],
         userVerification: 'required',
         timeout: BIOMETRIC_TIMEOUT_MS
       },
@@ -200,7 +237,7 @@ export async function confirmWithBiometrics(adminId, adminLabel) {
   inFlight = true;
   try {
     try {
-      if (storedId) await assertCredential(storedId);
+      if (storedId) await assertCredential(storedId, getStoredTransports(adminId));
       else await registerCredential(adminId, adminLabel);
       return { ok: true };
     } catch (err) {
