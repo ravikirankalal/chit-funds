@@ -1,6 +1,7 @@
 import { state, handoffReqCache, monthKey } from '../../store.js';
 import { fmt, escapeHtml, adminName, colorFor, initialsOf, formatDateTime } from '../../helpers.js';
-import { iconTransfer, iconWarningTriangle, iconArrowUpRight, iconArrowDownLeft } from '../../icons.js';
+import { iconTransfer, iconWarningTriangle, iconArrowUpRight, iconArrowDownLeft, iconCheck } from '../../icons.js';
+import { signed } from './shared.js';
 
 // Pending hand-offs (see confirmTransfer/acceptHandoffRequest in
 // actions/handoffs.js) for this month — shown above the collection summary in both
@@ -9,19 +10,44 @@ import { iconTransfer, iconWarningTriangle, iconArrowUpRight, iconArrowDownLeft 
 // be pending at once, each independent, so each gets its own card and its
 // own accept/decline/cancel target via data-req-id.
 //
-// Deliberately doesn't show either admin's before/after holdings the way
-// the old version did — this card is about a set of payments changing
-// hands, not a running balance; the admins' totals are already one tap
-// away on the summary card above, and repeating them here just competed
-// with the actual decision (accept or decline) for attention.
-export function renderHandoffRequests(gid, viewMonth, readOnly, members) {
+// Deliberately doesn't show either admin's before/after holdings on the
+// PENDING card the way an earlier version did — that one was about a set
+// of payments changing hands, not a running balance, and the admins'
+// totals were already one tap away on the summary card above. The
+// accept SUCCESS card below is a different, narrower case: confirming
+// what accepting actually just did to your own holdings.
+//
+// Sourced straight from state.ui.handoffAction rather than the request
+// doc, because by the time accept succeeds the doc is already deleted
+// (see acceptHandoffRequest in actions/handoffs.js) — this has to
+// survive the listener pulling the pending card out from under it.
+// Decline/cancel don't get one: no holdings change, nothing to confirm.
+function renderAcceptSuccessCard(acting, f, isClosed) {
+  var after = state.currentAdmin === 'A' ? (isClosed ? f.finalA : f.adjA) : (isClosed ? f.finalB : f.adjB);
+  var before = after - acting.amount;
+  return '<div class="banner card" style="border-top:4px solid var(--color-success);">' +
+    '<div class="banner-title" style="color:var(--color-success);">' + iconCheck('var(--color-success)') + 'Transfer accepted</div>' +
+    '<div style="font-size:12.5px;color:var(--color-text-muted);">You accepted <span class="mono" style="font-weight:700;color:var(--color-success);">' + fmt(acting.amount) + '</span></div>' +
+    '<div class="stat">' +
+      '<div class="label">' + escapeHtml(adminName(state.currentAdmin)) + ' now holds</div>' +
+      '<div class="value" style="' + (after < 0 ? 'color:var(--color-danger);' : '') + '">' + signed(before) + ' <span style="color:var(--color-text-faint);font-weight:400;">→</span> ' + signed(after) + '</div>' +
+    '</div>' +
+    // Stays up until dismissed rather than a timed auto-close — see
+    // dismissHandoffAction in actions/handoffs.js and the same rule on
+    // the payment/payout sheets' own success state.
+    '<button class="btn btn-soft" style="width:100%;" data-action="dismiss-handoff-success">Done</button>' +
+  '</div>';
+}
+
+export function renderHandoffRequests(gid, viewMonth, readOnly, members, f, isClosed) {
   var reqs = handoffReqCache.get(monthKey(gid, viewMonth)) || {};
   var ids = Object.keys(reqs);
-  if (!ids.length) return '';
   // Scoped to the one card being acted on — see setHandoffAction in
   // actions/handoffs.js for why this replaced the app-wide busy overlay.
   var acting = state.ui.handoffAction;
-  return ids.map(function (id) {
+  var successCard = (acting && acting.phase === 'success' && acting.action === 'accept') ? renderAcceptSuccessCard(acting, f, isClosed) : '';
+  if (!ids.length && !successCard) return '';
+  var cards = ids.map(function (id) {
     var req = reqs[id];
     var iSent = req.from === state.currentAdmin;
     var mids = req.mids || [];
@@ -130,4 +156,5 @@ export function renderHandoffRequests(gid, viewMonth, readOnly, members) {
       actionArea +
     '</div>';
   }).join('');
+  return successCard + cards;
 }

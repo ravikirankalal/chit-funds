@@ -100,7 +100,7 @@ export function renderMonthDetail() {
     '</div>' +
     '<div class="content">';
 
-  if (isOpen || isClosed) html += renderHandoffRequests(gid, viewMonth, readOnly, members);
+  if (isOpen || isClosed) html += renderHandoffRequests(gid, viewMonth, readOnly, members, f, isClosed);
 
   if (isClosed) {
     html += renderClosedSummary(f, members, readOnly, gid, viewMonth);

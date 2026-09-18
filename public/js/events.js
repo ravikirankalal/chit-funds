@@ -21,7 +21,7 @@ import {
   openMemberForm, closeMemberForm, saveMemberForm,
   openAddMemberToGroup, closeAddMemberToGroup, addExistingMemberToGroup, createAndAddMemberToGroup,
   togglePaymentSelection, cancelTransferSelection, confirmTransfer,
-  acceptHandoffRequest, declineHandoffRequest, cancelHandoffRequest
+  acceptHandoffRequest, declineHandoffRequest, cancelHandoffRequest, dismissHandoffAction
 } from './actions/index.js';
 
 // Holding a payment row (in the logged-in admin's own "collected by"
@@ -131,6 +131,7 @@ document.addEventListener('click', function (e) {
     case 'accept-handoff-request': acceptHandoffRequest(el.getAttribute('data-req-id')); break;
     case 'decline-handoff-request': declineHandoffRequest(el.getAttribute('data-req-id')); break;
     case 'cancel-handoff-request': cancelHandoffRequest(el.getAttribute('data-req-id')); break;
+    case 'dismiss-handoff-success': dismissHandoffAction(); break;
     case 'open-member-form': openMemberForm(el.getAttribute('data-id')); break;
     case 'close-member-form': closeMemberForm(); break;
     case 'save-member-form': saveMemberForm(); break;

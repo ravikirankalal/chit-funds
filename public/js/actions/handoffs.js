@@ -50,6 +50,11 @@ export async function confirmTransfer() {
 export async function acceptHandoffRequest(reqId) {
   if (isSuper()) return;
   var gid = state.activeGroupId, m = state.viewMonth;
+  // Grabbed up front purely to fail fast on a stale/foreign reqId before
+  // even prompting for biometrics — once the transaction below commits,
+  // this cache entry is gone too (the doc it's read from gets deleted).
+  var req = (handoffReqCache.get(monthKey(gid, m)) || {})[reqId];
+  if (!req || req.to !== state.currentAdmin) return;
   setHandoffAction({ reqId: reqId, action: 'accept', phase: 'verifying', error: null });
   // Same biometric gate as acceptTransferRequest (adminTransfers.js) and
   // savePaymentModal — accepting a hand-off moves already-collected money
@@ -61,18 +66,26 @@ export async function acceptHandoffRequest(reqId) {
   }
   setHandoffAction({ reqId: reqId, action: 'accept', phase: 'working', error: null });
   try {
-    await runTransaction(db, async function (tx) {
+    // Returns the amount actually moved rather than the amount originally
+    // requested — a payment can drop out between the request and the
+    // accept (marked unpaid again, or already re-transferred elsewhere;
+    // see the per-payment skip below), so req.amount can overstate what
+    // this accept really did. The success card (below) needs the true
+    // figure, not the ask.
+    var movedAmount = await runTransaction(db, async function (tx) {
       var reqRef = doc(db, 'groups', gid, 'months', String(m), 'handoffRequests', reqId);
       var reqSnap = await tx.get(reqRef);
-      if (!reqSnap.exists()) return;
+      if (!reqSnap.exists()) return 0;
       var req = reqSnap.data();
-      if (req.to !== state.currentAdmin) return; // only the recipient may accept
+      if (req.to !== state.currentAdmin) return 0; // only the recipient may accept
 
       // Firestore transactions require every read before any write.
       var paymentRefs = req.mids.map(function (mid) { return doc(db, 'groups', gid, 'months', String(m), 'payments', mid); });
       var paymentSnaps = [];
       for (var i = 0; i < paymentRefs.length; i++) paymentSnaps.push(await tx.get(paymentRefs[i]));
 
+      var perAmount = req.mids.length ? req.amount / req.mids.length : 0;
+      var moved = 0;
       var now = Timestamp.now();
       paymentSnaps.forEach(function (snap, i) {
         if (!snap.exists()) return; // marked unpaid since the request was made — nothing to hand off anymore
@@ -81,12 +94,24 @@ export async function acceptHandoffRequest(reqId) {
         var priorLog = data.transferLog || [];
         var updatedLog = priorLog.concat([{ from: req.from, to: req.to, at: now }]);
         tx.update(paymentRefs[i], { collectedBy: req.to, transferred: true, transferredAt: serverTimestamp(), transferLog: updatedLog });
+        moved += perAmount;
       });
       tx.delete(reqRef);
+      return moved;
     });
-    setHandoffAction(null); // the request doc's own delete will also remove this card once the listener catches up
+    // The request doc's own delete removes the pending card once the
+    // listener catches up, but that would otherwise leave no confirmation
+    // at all that the accept actually did anything — this holds a
+    // separate success card up (rendered straight from handoffAction,
+    // independent of the now-gone request doc; see renderHandoffRequests)
+    // until the admin dismisses it themselves via dismissHandoffAction
+    // below — same "stays up until you close it" rule as the payment and
+    // payout sheets' own success state, not a timed auto-dismiss.
+    setHandoffAction({ reqId: reqId, action: 'accept', phase: 'success', amount: movedAmount, error: null });
   } catch (err) { setHandoffAction({ reqId: reqId, action: 'accept', phase: null, error: err.message }); }
 }
+
+export function dismissHandoffAction() { setHandoffAction(null); }
 
 export async function declineHandoffRequest(reqId) {
   if (isSuper()) return;
