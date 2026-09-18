@@ -159,15 +159,17 @@ export function renderPaymentModalOverlay(gid, viewMonth, group, members, f) {
     ? '<div style="display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--color-border);padding-top:16px;">' + actionHtml + '</div>'
     : '';
 
-  // A small badge on the avatar's corner (same pattern as the winner
-  // card's trophy badge in monthDetail/summary.js) plus a colored kicker
-  // pill above the name — together they mean this sheet reads as
-  // "Collection" at a glance, even next to the payout sheet's visually
-  // near-identical layout, without leaning on either alone.
-  var kindBadge = '<div style="position:absolute;right:-3px;bottom:-3px;width:18px;height:18px;border-radius:50%;background:var(--color-success);display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 2px var(--color-surface);">' + iconCollection('var(--on-brand)', 10) + '</div>';
-  var kindPill = '<div style="display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;letter-spacing:0.03em;text-transform:uppercase;color:var(--color-success);margin-bottom:2px;">' + iconCollection('var(--color-success)', 11) + 'Collection</div>';
+  // A solid-colored top edge on the sheet itself is the first thing seen,
+  // before any text — same "which kind of sheet is this" job the winner
+  // card's left accent stripe does in monthDetail/summary.js, just along
+  // the top instead. The badge on the avatar's corner and a real pill
+  // (not just colored text) reinforce it up close for anyone who missed
+  // the top edge; three signals so it can't read as a coincidence of
+  // color next to the payout sheet's near-identical layout.
+  var kindBadge = '<div style="position:absolute;right:-4px;bottom:-4px;width:22px;height:22px;border-radius:50%;background:var(--color-success);display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 2px var(--color-surface);">' + iconCollection('var(--on-brand)', 12) + '</div>';
+  var kindPill = '<div style="display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;letter-spacing:0.03em;text-transform:uppercase;color:var(--color-success);background:var(--color-success-soft);padding:3px 9px;border-radius:20px;margin-bottom:4px;">' + iconCollection('var(--color-success)', 12) + 'Collection</div>';
 
-  return '<div class="overlay"><div class="sheet">' +
+  return '<div class="overlay"><div class="sheet" style="border-top:4px solid var(--color-success);">' +
     '<div class="sheet-header">' +
       '<div style="position:relative;flex-shrink:0;"><div class="avatar" style="background:' + colorFor(pidx) + ';">' + initialsOf(pmem.name) + '</div>' + kindBadge + '</div>' +
       '<div style="flex:1 1 auto;min-width:0;">' + kindPill +

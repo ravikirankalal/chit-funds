@@ -60,14 +60,14 @@ export function renderPayoutModalOverlay(f, members) {
   var saveError = pm.saveState === 'error' ? pm.saveError : null;
   var locked = saving || justSaved;
 
-  // Same badge-on-avatar + kicker-pill pairing as the payment sheet's
-  // "Collection" marker (paymentModal.js) — same layout, opposite color
-  // and icon (accent/payout vs. success/collection), so which sheet is
-  // open reads at a glance instead of by process of elimination.
-  var kindBadge = '<div style="position:absolute;right:-3px;bottom:-3px;width:16px;height:16px;border-radius:50%;background:var(--color-accent);display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 2px var(--color-surface);">' + iconPayout('var(--on-brand)', 9) + '</div>';
-  var kindPill = '<div style="display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;letter-spacing:0.03em;text-transform:uppercase;color:var(--color-accent);margin-bottom:2px;">' + iconPayout('var(--color-accent)', 11) + 'Payout</div>';
+  // Same top-edge + badge + pill trio as the payment sheet's "Collection"
+  // marker (paymentModal.js) — same layout, opposite color and icon
+  // (accent/payout vs. success/collection), so which sheet is open reads
+  // at a glance instead of by process of elimination.
+  var kindBadge = '<div style="position:absolute;right:-4px;bottom:-4px;width:20px;height:20px;border-radius:50%;background:var(--color-accent);display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 2px var(--color-surface);">' + iconPayout('var(--on-brand)', 11) + '</div>';
+  var kindPill = '<div style="display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;letter-spacing:0.03em;text-transform:uppercase;color:var(--color-accent);background:var(--color-accent-soft);padding:3px 9px;border-radius:20px;margin-bottom:4px;">' + iconPayout('var(--color-accent)', 12) + 'Payout</div>';
 
-  return '<div class="overlay"><div class="sheet">' +
+  return '<div class="overlay"><div class="sheet" style="border-top:4px solid var(--color-accent);">' +
     '<div class="sheet-header">' +
       '<div style="position:relative;flex-shrink:0;"><div class="avatar sm" style="background:' + colorFor(widx) + ';">' + (winner ? initialsOf(winner.name) : '?') + '</div>' + kindBadge + '</div>' +
       '<div style="flex:1 1 auto;min-width:0;">' + kindPill +
