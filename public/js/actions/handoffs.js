@@ -11,8 +11,10 @@ import { setBusy, isPendingHandoff, delay } from './shared.js';
 // How long the accept success card stays up before closing itself — kept
 // in sync with the countdown-bar CSS animation's own 10s duration
 // (overlays.css) so the visible "how much longer" bar and the actual
-// auto-close line up.
-var HANDOFF_SUCCESS_AUTOCLOSE_MS = 10000;
+// auto-close line up. Exported so listeners.js can run the sender-side
+// outgoing-success card (see handoffOutgoingSuccess below) on the same
+// timing.
+export var HANDOFF_SUCCESS_AUTOCLOSE_MS = 10000;
 
 // Scopes an accept/decline/cancel's loading + error state to the one
 // pending card it's acting on (see renderHandoffRequests in
@@ -102,32 +104,64 @@ export async function acceptHandoffRequest(reqId) {
         tx.update(paymentRefs[i], { collectedBy: req.to, transferred: true, transferredAt: serverTimestamp(), transferLog: updatedLog });
         moved += perAmount;
       });
-      tx.delete(reqRef);
+      // Marked rather than deleted outright — the sender's own client is a
+      // completely different browser session from this one, with no other
+      // way to learn the accept actually happened. The listener
+      // (listeners.js) watches for this status flip on a doc it's already
+      // subscribed to and surfaces the sender's own success card off of
+      // it (handoffOutgoingSuccess). The doc is real cleanup, not display
+      // state, by the time either side's success card auto-closes or is
+      // dismissed — see the delay() below and dismissHandoffOutgoingSuccess.
+      tx.update(reqRef, { status: 'accepted', resolvedAmount: moved, resolvedAt: serverTimestamp() });
       return moved;
     });
-    // The request doc's own delete removes the pending card once the
-    // listener catches up, but that would otherwise leave no confirmation
-    // at all that the accept actually did anything — this holds a
-    // separate success card up (rendered straight from handoffAction,
-    // independent of the now-gone request doc; see renderHandoffRequests)
-    // for HANDOFF_SUCCESS_AUTOCLOSE_MS, or until the admin dismisses it
-    // early via dismissHandoffAction ("Done") below.
+    // The status flip above removes the pending card (both here and on the
+    // sender's side) once the listener catches up, but that would
+    // otherwise leave no confirmation at all that the accept actually did
+    // anything — this holds a separate success card up (rendered straight
+    // from handoffAction, independent of the request doc's own state; see
+    // renderHandoffRequests) for HANDOFF_SUCCESS_AUTOCLOSE_MS, or until the
+    // admin dismisses it early via dismissHandoffAction ("Done") below.
     setHandoffAction({ reqId: reqId, action: 'accept', phase: 'success', amount: movedAmount, error: null });
     // Fire-and-forget, not awaited — this function is done once the
     // success card is showing; the close-out just happens later on its
     // own. Guarded so a stale timer (say, "Done" was already tapped, or
     // another accept started in the meantime) can't clobber whatever's
-    // actually showing by the time it fires.
+    // actually showing by the time it fires. Also does the real Firestore
+    // cleanup now that accept no longer deletes the doc itself — harmless
+    // if the sender's own client (or an earlier "Done" tap) already beat
+    // it to the delete.
     delay(HANDOFF_SUCCESS_AUTOCLOSE_MS).then(function () {
       var current = state.ui.handoffAction;
       if (current && current.reqId === reqId && current.action === 'accept' && current.phase === 'success') {
         setHandoffAction(null);
       }
+      deleteDoc(doc(db, 'groups', gid, 'months', String(m), 'handoffRequests', reqId)).catch(function () {});
     });
   } catch (err) { setHandoffAction({ reqId: reqId, action: 'accept', phase: null, error: err.message }); }
 }
 
-export function dismissHandoffAction() { setHandoffAction(null); }
+export function dismissHandoffAction() {
+  var acting = state.ui.handoffAction;
+  setHandoffAction(null);
+  // Tapping "Done" early on an accept success card means there's no need
+  // to wait for the 10s auto-close timer to do its own cleanup — do it
+  // right away instead. A no-op if the doc's already gone.
+  if (acting && acting.action === 'accept' && acting.phase === 'success') {
+    var gid = state.activeGroupId, m = state.viewMonth;
+    deleteDoc(doc(db, 'groups', gid, 'months', String(m), 'handoffRequests', acting.reqId)).catch(function () {});
+  }
+}
+
+// Mirrors dismissHandoffAction above, but for the sender-side success
+// card (handoffOutgoingSuccess, set by the listener in listeners.js) —
+// same "Done" early-exit + best-effort cleanup delete.
+export function dismissHandoffOutgoingSuccess() {
+  var s = state.ui.handoffOutgoingSuccess;
+  state.ui.handoffOutgoingSuccess = null;
+  render();
+  if (s) deleteDoc(doc(db, 'groups', s.gid, 'months', String(s.m), 'handoffRequests', s.reqId)).catch(function () {});
+}
 
 export async function declineHandoffRequest(reqId) {
   if (isSuper()) return;

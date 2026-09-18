@@ -3,16 +3,23 @@ import { fmt, escapeHtml, initialsOf, colorFor, adminDot, adminName, monthLabel 
 import { iconTrophy, iconWallet, iconWarningTriangle, iconClock, iconCheck } from '../../icons.js';
 import { signed, summaryStat, renderMemberPaymentStrip } from './shared.js';
 
-// True right after a transfer accept succeeds (see acceptHandoffRequest
-// in actions/handoffs.js and its success card in handoffRequests.js).
-// Both admins' "holds" figures just moved — the accepting admin's went
-// up and the sender's went down by the same amount, since both are
-// derived from who currently holds each payment — so both stat cards
-// below get a one-shot flash (see .stat.flash in components.css) tying
-// them back to the success confirmation sitting just above this card.
-function justAcceptedTransfer() {
+// True right after a transfer accept succeeds — either on the accepting
+// admin's own client (state.ui.handoffAction, set by acceptHandoffRequest)
+// or on the sender's client once the listener picks up the accept
+// (state.ui.handoffOutgoingSuccess; see handoffOutgoingSuccess in
+// listeners.js and its success card in handoffRequests.js). Both admins'
+// "holds" figures just moved on both screens — one went up, the other down
+// by the same amount, since both are derived from who currently holds each
+// payment — so both stat cards below get a one-shot flash (see .stat.flash
+// in components.css) tying them back to whichever success confirmation is
+// sitting just above this card. Scoped to the month actually being viewed,
+// since handoffOutgoingSuccess isn't tied to which month/group is on screen
+// the way handoffAction effectively is.
+function justAcceptedTransfer(gid, viewMonth) {
   var a = state.ui.handoffAction;
-  return !!(a && a.phase === 'success' && a.action === 'accept');
+  if (a && a.phase === 'success' && a.action === 'accept') return true;
+  var o = state.ui.handoffOutgoingSuccess;
+  return !!(o && o.gid === gid && o.m === viewMonth);
 }
 
 // The single color behind both the status pill and the paid-so-far figure
@@ -142,8 +149,8 @@ export function renderClosedSummary(f, members, readOnly, gid, viewMonth) {
       summaryStat('Profit', '<span style="color:' + closedProfitColor + ';">' + signed(closedProfit) + '</span>', true) +
     '</div>' +
     '<div class="stat-row">' +
-      '<div class="stat' + (justAcceptedTransfer() ? ' flash' : '') + '"><div class="label">' + adminDot('A') + escapeHtml(adminName('A')) + ' holds</div><div class="value" style="' + (f.finalA < 0 ? 'color:var(--color-danger);' : '') + '">' + signed(f.finalA) + '</div><div style="font-size:10.5px;color:var(--color-text-muted);margin-top:1px;">' + f.paidCountA + ' member' + (f.paidCountA === 1 ? '' : 's') + ' collected</div></div>' +
-      '<div class="stat' + (justAcceptedTransfer() ? ' flash' : '') + '"><div class="label">' + adminDot('B') + escapeHtml(adminName('B')) + ' holds</div><div class="value" style="' + (f.finalB < 0 ? 'color:var(--color-danger);' : '') + '">' + signed(f.finalB) + '</div><div style="font-size:10.5px;color:var(--color-text-muted);margin-top:1px;">' + f.paidCountB + ' member' + (f.paidCountB === 1 ? '' : 's') + ' collected</div></div>' +
+      '<div class="stat' + (justAcceptedTransfer(gid, viewMonth) ? ' flash' : '') + '"><div class="label">' + adminDot('A') + escapeHtml(adminName('A')) + ' holds</div><div class="value" style="' + (f.finalA < 0 ? 'color:var(--color-danger);' : '') + '">' + signed(f.finalA) + '</div><div style="font-size:10.5px;color:var(--color-text-muted);margin-top:1px;">' + f.paidCountA + ' member' + (f.paidCountA === 1 ? '' : 's') + ' collected</div></div>' +
+      '<div class="stat' + (justAcceptedTransfer(gid, viewMonth) ? ' flash' : '') + '"><div class="label">' + adminDot('B') + escapeHtml(adminName('B')) + ' holds</div><div class="value" style="' + (f.finalB < 0 ? 'color:var(--color-danger);' : '') + '">' + signed(f.finalB) + '</div><div style="font-size:10.5px;color:var(--color-text-muted);margin-top:1px;">' + f.paidCountB + ' member' + (f.paidCountB === 1 ? '' : 's') + ' collected</div></div>' +
     '</div>' +
     '<div style="display:flex;align-items:center;justify-content:center;gap:4px;font-size:11px;color:var(--color-text-muted);">' + iconCheck('var(--color-text-muted)') + 'Closed ' + escapeHtml(f.monthDoc.closedLabel || '') + '</div>' +
   '</div>';
@@ -181,8 +188,8 @@ export function renderOpenSummary(f, members, group, readOnly, gid, viewMonth) {
       '</div>' +
       renderMemberPaymentStrip(gid, viewMonth, members) +
       '<div class="stat-row">' +
-        '<div class="stat' + (justAcceptedTransfer() ? ' flash' : '') + '"><div class="label">' + adminDot('A') + escapeHtml(adminName('A')) + ' holds</div><div class="value" style="' + (f.adjA < 0 ? 'color:var(--color-danger);' : '') + '">' + signed(f.adjA) + '</div><div style="font-size:10.5px;color:var(--color-text-muted);margin-top:1px;">' + f.paidCountA + ' member' + (f.paidCountA === 1 ? '' : 's') + ' collected</div></div>' +
-        '<div class="stat' + (justAcceptedTransfer() ? ' flash' : '') + '"><div class="label">' + adminDot('B') + escapeHtml(adminName('B')) + ' holds</div><div class="value" style="' + (f.adjB < 0 ? 'color:var(--color-danger);' : '') + '">' + signed(f.adjB) + '</div><div style="font-size:10.5px;color:var(--color-text-muted);margin-top:1px;">' + f.paidCountB + ' member' + (f.paidCountB === 1 ? '' : 's') + ' collected</div></div>' +
+        '<div class="stat' + (justAcceptedTransfer(gid, viewMonth) ? ' flash' : '') + '"><div class="label">' + adminDot('A') + escapeHtml(adminName('A')) + ' holds</div><div class="value" style="' + (f.adjA < 0 ? 'color:var(--color-danger);' : '') + '">' + signed(f.adjA) + '</div><div style="font-size:10.5px;color:var(--color-text-muted);margin-top:1px;">' + f.paidCountA + ' member' + (f.paidCountA === 1 ? '' : 's') + ' collected</div></div>' +
+        '<div class="stat' + (justAcceptedTransfer(gid, viewMonth) ? ' flash' : '') + '"><div class="label">' + adminDot('B') + escapeHtml(adminName('B')) + ' holds</div><div class="value" style="' + (f.adjB < 0 ? 'color:var(--color-danger);' : '') + '">' + signed(f.adjB) + '</div><div style="font-size:10.5px;color:var(--color-text-muted);margin-top:1px;">' + f.paidCountB + ' member' + (f.paidCountB === 1 ? '' : 's') + ' collected</div></div>' +
       '</div>' +
     '</div>' +
   '</div>';

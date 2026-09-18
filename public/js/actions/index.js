@@ -20,7 +20,7 @@ export {
   savePaymentModal, markUnpaidFromModal,
   togglePaymentSelection, cancelTransferSelection
 } from './payments.js';
-export { confirmTransfer, acceptHandoffRequest, declineHandoffRequest, cancelHandoffRequest, dismissHandoffAction } from './handoffs.js';
+export { confirmTransfer, acceptHandoffRequest, declineHandoffRequest, cancelHandoffRequest, dismissHandoffAction, dismissHandoffOutgoingSuccess } from './handoffs.js';
 export {
   openWinnerPicker, closeWinnerPicker, addWinner, removeWinner,
   openPayoutModal, closePayoutModal, setPayoutContribution

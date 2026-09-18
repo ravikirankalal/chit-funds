@@ -1,5 +1,5 @@
 import { state, handoffReqCache, monthKey } from '../../store.js';
-import { fmt, escapeHtml, adminName, colorFor, initialsOf, formatDateTime } from '../../helpers.js';
+import { fmt, escapeHtml, adminName, otherAdmin, colorFor, initialsOf, formatDateTime } from '../../helpers.js';
 import { iconTransfer, iconWarningTriangle, iconArrowUpRight, iconArrowDownLeft, iconCheck } from '../../icons.js';
 import { signed } from './shared.js';
 
@@ -43,13 +43,44 @@ function renderAcceptSuccessCard(acting, f, isClosed) {
   '</div>';
 }
 
+// The sender-side counterpart to renderAcceptSuccessCard above — shown on
+// the OTHER admin's client when a request this admin sent gets accepted
+// over there (see the handoffRequests listener in listeners.js, which
+// sets state.ui.handoffOutgoingSuccess once it sees the doc flip to
+// status:'accepted' with from === this admin). The sender's holdings went
+// DOWN by the handed-off amount rather than up, so before/after run the
+// opposite direction from the accept card's.
+function renderOutgoingSuccessCard(outgoing, f, isClosed) {
+  var after = state.currentAdmin === 'A' ? (isClosed ? f.finalA : f.adjA) : (isClosed ? f.finalB : f.adjB);
+  var before = after + outgoing.amount;
+  return '<div class="banner card" style="position:relative;overflow:hidden;">' +
+    '<div class="countdown-bar" style="background:var(--color-success);"></div>' +
+    '<div class="banner-title" style="color:var(--color-success);">' + iconCheck('var(--color-success)') + 'Transfer accepted</div>' +
+    '<div style="font-size:12.5px;color:var(--color-text-muted);">' + escapeHtml(adminName(otherAdmin(state.currentAdmin))) + ' accepted <span class="mono" style="font-weight:700;color:var(--color-success);">' + fmt(outgoing.amount) + '</span></div>' +
+    '<div class="stat">' +
+      '<div class="label">' + escapeHtml(adminName(state.currentAdmin)) + ' now holds</div>' +
+      '<div class="value" style="' + (after < 0 ? 'color:var(--color-danger);' : '') + '">' + signed(before) + ' <span style="color:var(--color-text-faint);font-weight:400;">→</span> ' + signed(after) + '</div>' +
+    '</div>' +
+    '<button class="btn btn-soft" style="width:100%;" data-action="dismiss-handoff-outgoing-success">Done</button>' +
+  '</div>';
+}
+
 export function renderHandoffRequests(gid, viewMonth, readOnly, members, f, isClosed) {
   var reqs = handoffReqCache.get(monthKey(gid, viewMonth)) || {};
-  var ids = Object.keys(reqs);
+  // A doc lingers briefly with status:'accepted' after acceptHandoffRequest
+  // marks it (real cleanup happens later — see the delay() in
+  // actions/handoffs.js) purely so the sender's client gets a chance to
+  // see the transition; it's not "pending" anymore, so it's excluded here
+  // rather than still showing Accept/Decline buttons for something already
+  // settled.
+  var ids = Object.keys(reqs).filter(function (id) { return reqs[id].status !== 'accepted'; });
   // Scoped to the one card being acted on — see setHandoffAction in
   // actions/handoffs.js for why this replaced the app-wide busy overlay.
   var acting = state.ui.handoffAction;
-  var successCard = (acting && acting.phase === 'success' && acting.action === 'accept') ? renderAcceptSuccessCard(acting, f, isClosed) : '';
+  var outgoing = state.ui.handoffOutgoingSuccess;
+  var successCard = (acting && acting.phase === 'success' && acting.action === 'accept') ? renderAcceptSuccessCard(acting, f, isClosed)
+    : (outgoing && outgoing.gid === gid && outgoing.m === viewMonth) ? renderOutgoingSuccessCard(outgoing, f, isClosed)
+    : '';
   if (!ids.length && !successCard) return '';
   var cards = ids.map(function (id) {
     var req = reqs[id];
