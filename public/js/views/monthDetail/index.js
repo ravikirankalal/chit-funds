@@ -133,18 +133,18 @@ export function renderMonthDetail() {
   // track before the first is even settled; it reappears the moment every
   // current winner is fully covered.
   if (!readOnly && !state.ui.transferSelection && (isOpen || isClosed) && (!f.winners.length || f.allPayoutCovered)) {
-    // Picking the first winner is the thing this button exists for on
-    // almost every month, so it stays the strong .btn-primary CTA with
-    // just the trophy — no "add" connotation yet, there's nothing to add
-    // to. Once a winner already exists, doing it again is the rare,
-    // optional case (per the comment above: most months only ever need
-    // the one) — .btn-soft says "this is here if you need it" instead of
-    // competing for attention with everything else on the page, and the
-    // extra plus icon in front of the trophy spells out "add" rather than
-    // relying on the label text alone.
-    html += f.winners.length
-      ? '<button class="btn btn-soft" style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px;" data-action="open-winner-picker">' + iconPlusSmall('var(--color-primary)', 14) + iconTrophy('var(--color-primary)', 16) + 'Add another winner</button>'
-      : '<button class="btn btn-primary" style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px;" data-action="open-winner-picker">' + iconTrophy('var(--on-brand)', 16) + 'Select Winner</button>';
+    // Same button, same icon pairing, same weight either way — only the
+    // label changes. An earlier version gave "Add another winner" a
+    // softer style and dropped the plus icon from "Select Winner", on the
+    // idea that picking a first winner and picking an extra one carry
+    // different weight; in practice that just made the one button people
+    // tap the exact same way look and feel like two different controls.
+    // Picking a winner (first or another) is always the same deliberate
+    // action, so it's always the same btn-primary CTA with a plus (this
+    // adds a winner to the month, every time) in front of the trophy
+    // (what's being added).
+    html += '<button class="btn btn-primary" style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px;" data-action="open-winner-picker">' +
+      iconPlusSmall('var(--on-brand)', 14) + iconTrophy('var(--on-brand)', 16) + (f.winners.length ? 'Add another winner' : 'Select Winner') + '</button>';
   }
 
   html += '</div>';
