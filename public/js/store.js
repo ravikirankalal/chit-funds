@@ -18,11 +18,25 @@ export var state = {
   busy: false,
   // Remote feature flags — kept live by listeners.js's config/app listener
   // instead of anything in firebase-config.js, since these are meant to be
-  // flipped from the Firebase console without a redeploy. Defaults to off
-  // here so a missing/not-yet-created config doc is the same as "disabled",
-  // never accidentally "enabled".
+  // flipped from the Firebase console without a redeploy. biometricAuthEnabled
+  // defaults to off so a missing/not-yet-created config doc is never
+  // accidentally "enabled"; addMembersEnabled/addGroupsEnabled default to on
+  // so the same missing-doc case matches today's always-on behavior instead
+  // of silently hiding those buttons before anyone has touched the doc.
+  //
+  // admins overrides firebase-config.js's ADMINS/SUPER_ADMIN (see helpers.js's
+  // adminName()) — null until the config listener delivers a real doc, or if
+  // that doc has no admins field at all, in which case every id falls back to
+  // firebase-config.js unchanged. IMPORTANT: this only overrides *display*
+  // name/email for the app's own UI — firestore.rules hardcodes its own copy
+  // of these emails as the actual security boundary (rules can't read this
+  // doc's fields), so changing an email here does NOT change who Firestore
+  // actually grants admin write access to; see auth.js and firebase-config.js.
   config: {
-    biometricAuthEnabled: false
+    biometricAuthEnabled: false,
+    addMembersEnabled: true,
+    addGroupsEnabled: true,
+    admins: null
   },
   ui: {
     showWinnerPicker: false,

@@ -1,4 +1,3 @@
-import { ADMINS } from '../../../firebase-config.js';
 import { state, paymentsCache, monthsCache, transferReqCache, handoffReqCache, monthKey } from '../../store.js';
 import { fmt, escapeHtml, colorFor, initialsOf, adminName, adminDot, formatDateTime, monthLabel } from '../../helpers.js';
 import { iconClose, iconCash, iconCard, iconTransfer, iconWallet, iconCheck, iconWarningTriangle } from '../../icons.js';
@@ -127,12 +126,12 @@ export function renderPaymentModalOverlay(gid, viewMonth, group, members, f) {
     });
     var monthNet = (monthsCache.get(monthKey(gid, viewMonth)) || {}).transferNet || 0;
     if (monthNet) {
-      rows += timelineRow('var(--color-secondary)', (monthNet > 0 ? ADMINS.A.name + ' → ' + ADMINS.B.name : ADMINS.B.name + ' → ' + ADMINS.A.name),
+      rows += timelineRow('var(--color-secondary)', escapeHtml(monthNet > 0 ? adminName('A') + ' → ' + adminName('B') : adminName('B') + ' → ' + adminName('A')),
         'Accepted', 'color:var(--color-secondary);', fmt(Math.abs(monthNet)));
     }
     var pendingReq = transferReqCache.get(monthKey(gid, viewMonth));
     if (pendingReq) {
-      rows += timelineRow('var(--color-secondary)', (pendingReq.direction === 'AtoB' ? ADMINS.A.name + ' → ' + ADMINS.B.name : ADMINS.B.name + ' → ' + ADMINS.A.name),
+      rows += timelineRow('var(--color-secondary)', escapeHtml(pendingReq.direction === 'AtoB' ? adminName('A') + ' → ' + adminName('B') : adminName('B') + ' → ' + adminName('A')),
         'Pending acceptance', 'color:var(--color-secondary);', fmt(pendingReq.amount));
     }
     if (pendingHandoffId) {

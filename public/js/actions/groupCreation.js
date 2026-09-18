@@ -8,6 +8,7 @@ import { setBusy } from './shared.js';
 
 export function startCreateGroup() {
   if (isSuper()) return;
+  if (!state.config.addGroupsEnabled) return;
   var durationMonths = 20, payoutStart = 70000;
   var now = new Date();
   state.ui.newGroup = {
@@ -62,6 +63,7 @@ export function removeDraftMember(idx) {
 export async function submitCreateGroup() {
   var g = state.ui.newGroup;
   if (!g.members.length) return;
+  if (!state.config.addGroupsEnabled) return;
   setBusy(true);
   try {
     var batch = writeBatch(db);

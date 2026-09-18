@@ -20,7 +20,29 @@ export function initialsOf(name) {
 
 export function colorFor(idx) { return PALETTE[((idx % PALETTE.length) + PALETTE.length) % PALETTE.length]; }
 
-export function adminName(id) { return id === 'B' ? ADMINS.B.name : (id === 'SUPER' ? SUPER_ADMIN.name : ADMINS.A.name); }
+// Merges a config/app doc's `admins` override (see store.js) onto the
+// hardcoded firebase-config.js defaults, field by field — so setting just a
+// name (or just an email) for one admin in Firestore doesn't blank out the
+// other field. Exported so auth.js can run the same merge against a one-off
+// fetch of the doc at sign-in time, before state.config.admins exists (the
+// live listener that fills it only starts once we already know who's
+// signing in — see auth.js).
+function mergeAdminRecord(id, override) {
+  var fallback = id === 'B' ? ADMINS.B : (id === 'SUPER' ? SUPER_ADMIN : ADMINS.A);
+  return {
+    name: (override && override.name) || fallback.name,
+    email: (override && override.email) || fallback.email
+  };
+}
+export function mergeAdmins(configAdmins) {
+  return {
+    A: mergeAdminRecord('A', configAdmins && configAdmins.A),
+    B: mergeAdminRecord('B', configAdmins && configAdmins.B),
+    SUPER: mergeAdminRecord('SUPER', configAdmins && configAdmins.SUPER)
+  };
+}
+
+export function adminName(id) { return mergeAdminRecord(id, state.config.admins && state.config.admins[id]).name; }
 
 export function adminAvatarColor(id) { return id === 'B' ? colorFor(1) : (id === 'SUPER' ? '#3b3a36' : colorFor(0)); }
 

@@ -13,6 +13,11 @@ import { setBusy } from './shared.js';
 // group — both independent of any single group's creation flow.
 export function openMemberForm(id) {
   if (isSuper()) return;
+  // Editing an existing member is never gated — only starting a brand-new
+  // one is, so the config/app addMembersEnabled toggle (see store.js) can't
+  // be bypassed by an overlay left open from before it was flipped off or a
+  // direct console call, matching this app's other config-gated actions.
+  if (!id && !state.config.addMembersEnabled) return;
   var existing = id ? membersById.get(id) : null;
   state.ui.memberForm = { id: id || null, name: existing ? existing.name : '' };
   render();
@@ -24,6 +29,7 @@ export async function saveMemberForm() {
   if (isSuper()) return;
   var mf = state.ui.memberForm;
   if (!mf) return;
+  if (!mf.id && !state.config.addMembersEnabled) return;
   var name = (mf.name || '').trim();
   if (!name) return;
   setBusy(true);
@@ -44,6 +50,7 @@ export async function saveMemberForm() {
 
 export function openAddMemberToGroup(gid) {
   if (isSuper()) return;
+  if (!state.config.addMembersEnabled) return;
   state.ui.addMemberToGroup = { gid: gid, draftName: '' };
   render();
   pushNav();
@@ -52,6 +59,7 @@ export function closeAddMemberToGroup() { history.back(); }
 
 export async function addExistingMemberToGroup(gid, memberId) {
   if (isSuper()) return;
+  if (!state.config.addMembersEnabled) return;
   setBusy(true);
   try {
     await updateDoc(doc(db, 'groups', gid), { memberIds: arrayUnion(memberId) });
@@ -62,6 +70,7 @@ export async function addExistingMemberToGroup(gid, memberId) {
 
 export async function createAndAddMemberToGroup(gid) {
   if (isSuper()) return;
+  if (!state.config.addMembersEnabled) return;
   var amg = state.ui.addMemberToGroup;
   if (!amg) return;
   var name = (amg.draftName || '').trim();
