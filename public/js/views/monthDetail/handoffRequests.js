@@ -47,6 +47,11 @@ export function renderHandoffRequests(gid, viewMonth, readOnly, members) {
     var needsMyAction = !readOnly && !iSent;
     var accentColor = needsMyAction ? 'var(--color-gold)' : 'var(--color-secondary)';
     var accentSoft = needsMyAction ? 'var(--color-gold-soft)' : 'var(--color-secondary-soft)';
+    // The Total figure is the one number in this card actually worth
+    // lingering on, so it gets the darker -strong shade rather than the
+    // same flat tone as the pill — more weight/contrast than accentColor
+    // without introducing a third color for the same direction.
+    var accentStrong = needsMyAction ? 'var(--color-gold-strong)' : 'var(--color-secondary-strong)';
     var title = readOnly ? 'Transfer pending' : (iSent ? 'Transfer pending acceptance' : 'Transfer needs your acceptance');
     // A direction pill (plus a distinct arrow icon per direction, rather
     // than the same bidirectional iconTransfer glyph for both) so a
@@ -71,7 +76,7 @@ export function renderHandoffRequests(gid, viewMonth, readOnly, members) {
     }).join('');
     var totalRow = count > 1
       ? '<div style="display:flex;justify-content:space-between;align-items:center;font-size:12.5px;font-weight:700;padding-top:6px;margin-top:2px;border-top:1px solid var(--color-border);">' +
-          '<span>Total</span><span class="mono" style="color:' + accentColor + ';">' + fmt(req.amount) + '</span>' +
+          '<span>Total</span><span class="mono" style="color:' + accentStrong + ';">' + fmt(req.amount) + '</span>' +
         '</div>'
       : '';
 
