@@ -92,7 +92,7 @@ export function renderGroupMembers() {
       '<div class="content">' +
         '<div class="row-list">' + rows + '</div>' +
       '</div>' +
-      (readOnly ? '' : '<button class="fab" data-action="open-add-member-to-group" data-gid="' + gid + '">' + iconPlus() + '</button>') +
+      ((readOnly || !state.config.addMembersEnabled) ? '' : '<button class="fab" data-action="open-add-member-to-group" data-gid="' + gid + '">' + iconPlus() + '</button>') +
     '</div>';
 
   if (state.ui.addMemberToGroup && state.ui.addMemberToGroup.gid === gid) {

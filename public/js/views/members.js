@@ -32,7 +32,7 @@ export function renderMembers() {
       '<div class="content">' +
         '<div class="row-list">' + rows + '</div>' +
       '</div>' +
-      (isSuper() ? '' : '<button class="fab" data-action="open-member-form">' + iconPlus() + '</button>') +
+      ((isSuper() || !state.config.addMembersEnabled) ? '' : '<button class="fab" data-action="open-member-form">' + iconPlus() + '</button>') +
       renderBottomNav('members');
 
   if (state.ui.memberForm) html += renderMemberFormOverlay(state.ui.memberForm);

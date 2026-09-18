@@ -1,6 +1,5 @@
-import { ADMINS } from '../../firebase-config.js';
 import { state } from '../store.js';
-import { fmt, escapeHtml, adminDot } from '../helpers.js';
+import { fmt, escapeHtml, adminDot, adminName } from '../helpers.js';
 import { renderBottomNav } from './bottomNav.js';
 import { iconCollection, iconPayout, iconTransfer, iconInfo, iconCalendar, iconLedger, iconWallet } from '../icons.js';
 
@@ -41,8 +40,8 @@ export function renderLedger() {
       '<div style="font-size:12px;color:var(--color-text-muted);margin-top:2px;">Balances &amp; transactions across all groups</div></div>' +
       '<div class="content">' +
         '<div style="display:flex; gap:12px;">' +
-          '<div class="stat"><div class="label">' + adminDot('A') + ADMINS.A.name + '</div><div class="value">' + fmt(state.balances.A) + '</div></div>' +
-          '<div class="stat"><div class="label">' + adminDot('B') + ADMINS.B.name + '</div><div class="value">' + fmt(state.balances.B) + '</div></div>' +
+          '<div class="stat"><div class="label">' + adminDot('A') + escapeHtml(adminName('A')) + '</div><div class="value">' + fmt(state.balances.A) + '</div></div>' +
+          '<div class="stat"><div class="label">' + adminDot('B') + escapeHtml(adminName('B')) + '</div><div class="value">' + fmt(state.balances.B) + '</div></div>' +
         '</div>' +
         '<div class="card" style="display:flex;justify-content:space-between;align-items:center;">' +
           '<div style="display:flex;align-items:center;gap:5px;font-size:13px;color:var(--color-text-muted);">' + iconWallet() + 'Total in ledger</div><div class="mono" style="font-size:15px;font-weight:700;">' + fmt(state.balances.total) + '</div>' +

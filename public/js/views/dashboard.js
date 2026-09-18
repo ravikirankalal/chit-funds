@@ -1,4 +1,3 @@
-import { ADMINS } from '../../firebase-config.js';
 import { state, groupsById, membersByGroup } from '../store.js';
 import { fmt, escapeHtml, adminName, adminAvatarColor, adminDot, initialsOf, colorFor, isSuper, monthLabel } from '../helpers.js';
 import { monthFinances } from '../finance/monthFinances.js';
@@ -66,16 +65,16 @@ function approvalCardConfig(a) {
   if (a.kind === 'handoff') {
     return {
       colorVar: 'secondary', icon: iconTransfer('var(--color-secondary)'),
-      who: adminName(a.requestedBy), amountText: fmt(a.amount), headlineRest: ' wants to send you ',
+      who: escapeHtml(adminName(a.requestedBy)), amountText: fmt(a.amount), headlineRest: ' wants to send you ',
       subtitle: escapeHtml(a.groupName) + ' · ' + monthText + ' · ' + a.count + ' payment' + (a.count === 1 ? '' : 's')
     };
   }
   // kind === 'transfer' — the net-balance request.
   return {
     colorVar: 'secondary', icon: iconTransfer('var(--color-secondary)'),
-    who: adminName(a.requestedBy), amountText: fmt(a.amount), headlineRest: ' wants to send ',
+    who: escapeHtml(adminName(a.requestedBy)), amountText: fmt(a.amount), headlineRest: ' wants to send ',
     subtitle: escapeHtml(a.groupName) + ' · ' + monthText + ' · ' +
-      (a.direction === 'AtoB' ? adminName('A') + ' → ' + adminName('B') : adminName('B') + ' → ' + adminName('A'))
+      escapeHtml(a.direction === 'AtoB' ? adminName('A') + ' → ' + adminName('B') : adminName('B') + ' → ' + adminName('A'))
   };
 }
 
@@ -210,18 +209,18 @@ export function renderDashboard() {
           '<div class="mono" style="font-size:30px;font-weight:700;margin-top:4px;color:' + onBrandAmountColor(state.balances.total) + ';">' + fmt(state.balances.total) + '</div>' +
           '<div style="display:flex;gap:12px;margin-top:16px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.2);">' +
             '<div data-action="go-ledger" style="flex:1 1 0;min-width:0;cursor:pointer;">' +
-              '<div style="display:flex;align-items:center;gap:5px;font-size:11px;opacity:0.85;">' + adminDot('A') + ADMINS.A.name + '</div>' +
+              '<div style="display:flex;align-items:center;gap:5px;font-size:11px;opacity:0.85;">' + adminDot('A') + escapeHtml(adminName('A')) + '</div>' +
               '<div class="mono" style="font-size:15px;font-weight:700;margin-top:3px;color:' + onBrandAmountColor(state.balances.A) + ';">' + fmt(state.balances.A) + '</div>' +
             '</div>' +
             '<div data-action="go-ledger" style="flex:1 1 0;min-width:0;cursor:pointer;padding-left:12px;border-left:1px solid rgba(255,255,255,0.2);">' +
-              '<div style="display:flex;align-items:center;gap:5px;font-size:11px;opacity:0.85;">' + adminDot('B') + ADMINS.B.name + '</div>' +
+              '<div style="display:flex;align-items:center;gap:5px;font-size:11px;opacity:0.85;">' + adminDot('B') + escapeHtml(adminName('B')) + '</div>' +
               '<div class="mono" style="font-size:15px;font-weight:700;margin-top:3px;color:' + onBrandAmountColor(state.balances.B) + ';">' + fmt(state.balances.B) + '</div>' +
             '</div>' +
           '</div>' +
         '</div>' +
         '<div><div class="section-label">' + iconGroupStack() + 'Groups</div><div class="row-list">' + groupCards + '</div></div>' +
       '</div>' +
-      (isSuper() ? '' : '<button class="fab" data-action="create-group">' + iconPlus() + '</button>') +
+      ((isSuper() || !state.config.addGroupsEnabled) ? '' : '<button class="fab" data-action="create-group">' + iconPlus() + '</button>') +
       renderBottomNav('dashboard') +
     '</div>';
 }

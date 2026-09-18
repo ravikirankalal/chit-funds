@@ -58,6 +58,9 @@ export function startListeners() {
   unsubs.push(onSnapshot(doc(db, 'config', 'app'), function (snap) {
     var data = snap.exists() ? snap.data() : {};
     state.config.biometricAuthEnabled = !!data.biometricAuthEnabled;
+    state.config.addMembersEnabled = data.addMembersEnabled !== false;
+    state.config.addGroupsEnabled = data.addGroupsEnabled !== false;
+    state.config.admins = data.admins || null;
     render();
   }));
 

@@ -4,19 +4,20 @@
 import {
   GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut
 } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
-import { auth } from './firebase.js';
-import { ADMINS, SUPER_ADMIN } from '../firebase-config.js';
+import { doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
+import { auth, db } from './firebase.js';
 import { state } from './store.js';
+import { mergeAdmins } from './helpers.js';
 import { goTo, getRestorableSnapshot } from './router.js';
 import { render } from './render.js';
 import { startListeners, stopListeners } from './listeners.js';
 
-function findAdminIdByEmail(email) {
+function findAdminIdByEmail(email, admins) {
   if (!email) return null;
   email = email.toLowerCase();
-  if (ADMINS.A.email.toLowerCase() === email) return 'A';
-  if (ADMINS.B.email.toLowerCase() === email) return 'B';
-  if (SUPER_ADMIN.email.toLowerCase() === email) return 'SUPER';
+  if (admins.A.email.toLowerCase() === email) return 'A';
+  if (admins.B.email.toLowerCase() === email) return 'B';
+  if (admins.SUPER.email.toLowerCase() === email) return 'SUPER';
   return null;
 }
 
@@ -41,15 +42,34 @@ onAuthStateChanged(auth, function (user) {
     goTo('login');
     return;
   }
-  var adminId = findAdminIdByEmail(user.email);
-  if (!adminId) {
-    state.authError = 'The Google account "' + user.email + '" is not authorized for this app.';
+  // config/app's admins field can override the hardcoded emails in
+  // firebase-config.js (see store.js and helpers.js's mergeAdmins) — but
+  // WHO is signing in has to be known before startListeners() begins the
+  // live version of that same doc, so this is a one-off fetch rather than
+  // waiting on the listener. firestore.rules still only grants read/write
+  // access by the emails hardcoded there, unchanged by this doc — so if an
+  // admin's email was changed here without also updating firestore.rules,
+  // that new email has no Firestore access at all and this fetch itself
+  // fails, landing in the catch below.
+  getDoc(doc(db, 'config', 'app')).then(function (snap) {
+    var admins = mergeAdmins(snap.exists() ? snap.data().admins : null);
+    var adminId = findAdminIdByEmail(user.email, admins);
+    if (!adminId) {
+      state.authError = 'The Google account "' + user.email + '" is not authorized for this app.';
+      signOut(auth);
+      return;
+    }
+    state.currentAdmin = adminId;
+    // Seeds state.config.admins immediately so the very first render (before
+    // startListeners()'s own live listener delivers its first snapshot)
+    // already shows the right names, not a one-frame flash of the defaults.
+    state.config.admins = admins;
+    startListeners();
+    var restorable = getRestorableSnapshot();
+    if (restorable) goTo(restorable.screen, { activeGroupId: restorable.activeGroupId, viewMonth: restorable.viewMonth, viewMemberId: restorable.viewMemberId });
+    else goTo('dashboard');
+  }).catch(function (err) {
+    state.authError = 'Could not verify admin access: ' + err.message;
     signOut(auth);
-    return;
-  }
-  state.currentAdmin = adminId;
-  startListeners();
-  var snap = getRestorableSnapshot();
-  if (snap) goTo(snap.screen, { activeGroupId: snap.activeGroupId, viewMonth: snap.viewMonth, viewMemberId: snap.viewMemberId });
-  else goTo('dashboard');
+  });
 });
