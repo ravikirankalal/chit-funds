@@ -1,10 +1,11 @@
 import { doc, updateDoc, runTransaction, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
 import { db } from '../../firebase.js';
 import { state, groupsById, monthsCache, monthKey } from '../../store.js';
-import { isSuper, monthLabel, fmt } from '../../helpers.js';
+import { isSuper, monthLabel, fmt, adminName } from '../../helpers.js';
 import { getMonthWinners } from '../../finance/shared.js';
 import { pushNav } from '../../router.js';
 import { render } from '../../render.js';
+import { confirmWithBiometrics } from '../../webauthn.js';
 
 export function openPayoutModal(memberId) {
   if (isSuper()) return;
@@ -93,11 +94,24 @@ export async function setPayoutContribution(memberId, amount) {
     return (w.paidByA || 0) + (w.paidByB || 0) >= (w.payoutAmount || 0);
   });
 
-  // Drives the sheet's own saving/success/error states (payout.js's
-  // renderPayoutModalOverlay) instead of the app-wide busy overlay — see
-  // payments.js's savePaymentModal for why (the same fix, same reasoning).
-  pm.saveState = 'saving';
+  // Drives the sheet's own verifying/saving/success/error states
+  // (payout.js's renderPayoutModalOverlay) instead of the app-wide busy
+  // overlay — see payments.js's savePaymentModal for why (the same fix,
+  // same reasoning). A no-op { ok: true } when the feature is off
+  // (webauthn.js's own config check) — otherwise this is the actual
+  // device fingerprint/Face ID/PIN prompt, gating a payout exactly like
+  // a collection, since both move real money between admins.
+  pm.saveState = 'verifying';
   pm.saveError = null;
+  render();
+  var confirmation = await confirmWithBiometrics(state.currentAdmin, adminName(state.currentAdmin));
+  if (!confirmation.ok) {
+    pm.saveState = 'error';
+    pm.saveError = confirmation.message;
+    render();
+    return;
+  }
+  pm.saveState = 'saving';
   render();
   try {
     // The close-and-advance-to-next-month side effects only belong to the
