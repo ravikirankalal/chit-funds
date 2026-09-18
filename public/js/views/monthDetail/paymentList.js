@@ -5,7 +5,7 @@ import { iconCheck, iconTransfer, iconWallet } from '../../icons.js';
 function paymentRow(r, readOnly, transferable, pending) {
   var paidAtLabel = formatDateTime(r.paidAt);
   var subtitle = r.paid
-    ? 'Collected by <span style="font-weight:600;color:var(--color-success);">' + adminName(r.collectedBy) + '</span> · ' + (r.mode === 'online' ? 'Online' : 'Cash') + (paidAtLabel ? ' · ' + paidAtLabel : '') + (r.transferred ? ' · <span style="display:inline-flex;align-items:center;gap:3px;color:var(--color-secondary);">' + iconTransfer('var(--color-secondary)') + 'Transferred</span>' : '') + (pending ? ' · <span style="font-weight:600;color:var(--color-secondary);">Pending transfer</span>' : '')
+    ? 'Collected by <span style="font-weight:600;color:var(--color-success);">' + escapeHtml(adminName(r.collectedBy)) + '</span> · ' + (r.mode === 'online' ? 'Online' : 'Cash') + (paidAtLabel ? ' · ' + paidAtLabel : '') + (r.transferred ? ' · <span style="display:inline-flex;align-items:center;gap:3px;color:var(--color-secondary);">' + iconTransfer('var(--color-secondary)') + 'Transferred</span>' : '') + (pending ? ' · <span style="font-weight:600;color:var(--color-secondary);">Pending transfer</span>' : '')
     : '<span style="color:var(--color-danger);">Not paid yet' + (readOnly ? '' : ' · tap to record') + '</span>';
   var selection = state.ui.transferSelection;
   var canTransfer = transferable && r.paid && !readOnly && !pending;
@@ -69,8 +69,8 @@ export function renderPaymentList(gid, viewMonth, members, f, readOnly, group, c
   // than one that reflows on every save.
   var tabs = [
     { key: 'unpaid', label: 'Unpaid', rows: unpaidRows, amount: unpaidAmount, amountColor: 'var(--color-danger)', transferable: false },
-    { key: firstKey, label: adminName(firstKey), rows: firstRows, amount: firstAmount, amountColor: 'var(--color-success)', transferable: canTransfer },
-    { key: secondKey, label: adminName(secondKey), rows: secondRows, amount: secondAmount, amountColor: 'var(--color-success)', transferable: false }
+    { key: firstKey, label: escapeHtml(adminName(firstKey)), rows: firstRows, amount: firstAmount, amountColor: 'var(--color-success)', transferable: canTransfer },
+    { key: secondKey, label: escapeHtml(adminName(secondKey)), rows: secondRows, amount: secondAmount, amountColor: 'var(--color-success)', transferable: false }
   ];
 
   if (!members.length) return '<div><div class="section-label">' + iconWallet() + 'Member payments (' + f.paidCount + '/' + members.length + ')</div></div>';

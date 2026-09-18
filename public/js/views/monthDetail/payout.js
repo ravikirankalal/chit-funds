@@ -97,7 +97,7 @@ export function renderPayoutModalOverlay(f, members) {
         // the after figure alone deciding the whole line's tone — a healthy
         // before sliding into a negative after (or the reverse) should read
         // as two distinct facts, not get flattened into one color.
-        '<div class="stat"><div class="label">' + adminDot(state.currentAdmin) + adminName(state.currentAdmin) + '</div><div class="value"><span style="color:' + (myBefore < 0 ? 'var(--color-danger)' : 'var(--color-text)') + ';">' + signed(myBefore) + '</span> <span style="color:var(--color-text-faint);font-weight:400;">→</span> <span style="color:' + (myAfter < 0 ? 'var(--color-danger)' : 'var(--color-text)') + ';">' + signed(myAfter) + '</span></div></div>' +
+        '<div class="stat"><div class="label">' + adminDot(state.currentAdmin) + escapeHtml(adminName(state.currentAdmin)) + '</div><div class="value"><span style="color:' + (myBefore < 0 ? 'var(--color-danger)' : 'var(--color-text)') + ';">' + signed(myBefore) + '</span> <span style="color:var(--color-text-faint);font-weight:400;">→</span> <span style="color:' + (myAfter < 0 ? 'var(--color-danger)' : 'var(--color-text)') + ';">' + signed(myAfter) + '</span></div></div>' +
       '</div>' +
       (saveError ? '<div class="error-text" style="display:flex;align-items:center;gap:6px;font-weight:600;">' + iconWarningTriangle('var(--color-danger)') + 'Could not save: ' + escapeHtml(saveError) + '</div>' : '') +
       (justSaved

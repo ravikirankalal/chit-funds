@@ -40,8 +40,8 @@ export function renderOpenMonthRow(gid, group, m, f, members) {
         (payoutPaidTotal > 0
           ? '<div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;">' +
               '<span style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">' +
-                adminAmountSpan('A', adminName('A') + ': ' + fmt(f.payoutPaidA)) +
-                adminAmountSpan('B', adminName('B') + ': ' + fmt(f.payoutPaidB)) +
+                adminAmountSpan('A', escapeHtml(adminName('A')) + ': ' + fmt(f.payoutPaidA)) +
+                adminAmountSpan('B', escapeHtml(adminName('B')) + ': ' + fmt(f.payoutPaidB)) +
               '</span>' +
               '<span style="flex-shrink:0;color:var(--color-gold-strong);font-weight:600;">' + payoutPct + '% paid out</span>' +
             '</div>' +

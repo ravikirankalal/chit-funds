@@ -31,7 +31,7 @@ export function renderMemberPayments() {
     var subtitle, statusBg, statusColor, statusLabel;
     if (p && p.paid) {
       totalPaid += group.monthlyDeposit;
-      subtitle = 'Collected by <span style="font-weight:600;color:var(--color-success);">' + adminName(p.collectedBy) + '</span> · ' + (p.mode === 'online' ? 'Online' : 'Cash') + (formatDateTime(p.paidAt) ? ' · ' + formatDateTime(p.paidAt) : '');
+      subtitle = 'Collected by <span style="font-weight:600;color:var(--color-success);">' + escapeHtml(adminName(p.collectedBy)) + '</span> · ' + (p.mode === 'online' ? 'Online' : 'Cash') + (formatDateTime(p.paidAt) ? ' · ' + formatDateTime(p.paidAt) : '');
       statusBg = 'var(--color-success-soft)'; statusColor = 'var(--color-success)'; statusLabel = iconCheck('var(--color-success)') + 'Paid';
     } else {
       subtitle = '<span style="color:var(--color-danger);">Not paid</span>';

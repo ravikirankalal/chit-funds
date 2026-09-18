@@ -1,5 +1,5 @@
 import { state, paymentsCache, monthKey } from '../../store.js';
-import { fmt, otherAdmin, adminName } from '../../helpers.js';
+import { fmt, escapeHtml, otherAdmin, adminName } from '../../helpers.js';
 import { iconClose } from '../../icons.js';
 
 // A floating bar, not a modal overlay — the payment list underneath must
@@ -20,7 +20,7 @@ export function renderTransferBar(gid, viewMonth, group) {
         '<div class="mono" style="font-size:16px;font-weight:700;">' + fmt(total) + '</div>' +
       '</div>' +
       '<div data-action="cancel-transfer-selection" style="width:32px;height:32px;border-radius:10px;background:var(--color-bg);display:flex;align-items:center;justify-content:center;flex-shrink:0;">' + iconClose() + '</div>' +
-      '<button class="btn btn-primary" style="flex-shrink:0;padding:12px 16px;white-space:nowrap;" data-action="confirm-transfer">Request transfer to ' + adminName(target) + '</button>' +
+      '<button class="btn btn-primary" style="flex-shrink:0;padding:12px 16px;white-space:nowrap;" data-action="confirm-transfer">Request transfer to ' + escapeHtml(adminName(target)) + '</button>' +
     '</div>' +
   '</div>';
 }

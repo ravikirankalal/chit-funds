@@ -34,8 +34,8 @@ export function renderClosedMonthRow(gid, group, m, f, members, monthPct) {
   // column's "Payout" figure needs the real total, not the target.
   var payoutPaidTotal = f.payoutPaidA + f.payoutPaidB;
   var paidByParts = [];
-  if (f.payoutPaidA > 0) paidByParts.push(adminAmountSpan('A', adminName('A') + (f.payoutPaidB > 0 ? ' (' + fmt(f.payoutPaidA) + ')' : '')));
-  if (f.payoutPaidB > 0) paidByParts.push(adminAmountSpan('B', adminName('B') + (f.payoutPaidA > 0 ? ' (' + fmt(f.payoutPaidB) + ')' : '')));
+  if (f.payoutPaidA > 0) paidByParts.push(adminAmountSpan('A', escapeHtml(adminName('A')) + (f.payoutPaidB > 0 ? ' (' + fmt(f.payoutPaidA) + ')' : '')));
+  if (f.payoutPaidB > 0) paidByParts.push(adminAmountSpan('B', escapeHtml(adminName('B')) + (f.payoutPaidA > 0 ? ' (' + fmt(f.payoutPaidB) + ')' : '')));
   var payoutByLine = paidByParts.length ? '<div style="display:flex;align-items:center;gap:4px;">' + iconPayout('var(--color-text-muted)', 14) + 'Paid by ' + paidByParts.join(' + ') + '</div>' : '';
   // The "Closed" lifecycle pill was redundant here — this component only
   // ever renders for a month that's already closed (see openRow.js for

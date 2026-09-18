@@ -20,7 +20,7 @@ function renderProfileMenu() {
 
 function avatarWithMenu() {
   return '<div style="position:relative;flex-shrink:0;">' +
-    '<div data-action="toggle-profile-menu" class="avatar" style="cursor:pointer; background:' + adminAvatarColor(state.currentAdmin) + ';">' + initialsOf(adminName(state.currentAdmin)) + '</div>' +
+    '<div data-action="toggle-profile-menu" class="avatar" style="cursor:pointer; background:' + adminAvatarColor(state.currentAdmin) + ';">' + escapeHtml(initialsOf(adminName(state.currentAdmin))) + '</div>' +
     renderProfileMenu() +
   '</div>';
 }
@@ -102,7 +102,7 @@ export function renderDashboard() {
     return '<div class="screen">' +
       '<div style="padding:20px 20px 4px; display:flex; align-items:center; justify-content:space-between;">' +
         '<div><div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--color-text-faint);font-weight:700;letter-spacing:0.04em;text-transform:uppercase;">' + iconWallet('var(--color-text-faint)', 13) + 'Chit Funds</div>' +
-        '<div style="font-size:19px;font-weight:700;margin-top:3px;">Welcome back, ' + adminName(state.currentAdmin) + '</div></div>' +
+        '<div style="font-size:19px;font-weight:700;margin-top:3px;">Welcome back, ' + escapeHtml(adminName(state.currentAdmin)) + '</div></div>' +
         avatarWithMenu() +
       '</div>' +
       '<div class="content">' + renderLoadingSkeleton() + '</div>' +
@@ -194,7 +194,7 @@ export function renderDashboard() {
     '<div class="screen">' +
       '<div style="padding:20px 20px 4px; display:flex; align-items:center; justify-content:space-between;">' +
         '<div><div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--color-text-faint);font-weight:700;letter-spacing:0.04em;text-transform:uppercase;">' + iconWallet('var(--color-text-faint)', 13) + 'Chit Funds</div>' +
-        '<div style="font-size:19px;font-weight:700;margin-top:3px;">Welcome back, ' + adminName(state.currentAdmin) + '</div></div>' +
+        '<div style="font-size:19px;font-weight:700;margin-top:3px;">Welcome back, ' + escapeHtml(adminName(state.currentAdmin)) + '</div></div>' +
         avatarWithMenu() +
       '</div>' +
       '<div class="content">' +
