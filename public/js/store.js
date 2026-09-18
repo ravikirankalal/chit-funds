@@ -20,9 +20,17 @@ export var state = {
   // instead of anything in firebase-config.js, since these are meant to be
   // flipped from the Firebase console without a redeploy. biometricAuthEnabled
   // defaults to off so a missing/not-yet-created config doc is never
-  // accidentally "enabled"; addMembersEnabled/addGroupsEnabled default to on
-  // so the same missing-doc case matches today's always-on behavior instead
-  // of silently hiding those buttons before anyone has touched the doc.
+  // accidentally "enabled"; the add* flags below default to on so the same
+  // missing-doc case matches today's always-on behavior instead of silently
+  // hiding those buttons before anyone has touched the doc.
+  //
+  // addMemberToGroupEnabled and addMemberEnabled are deliberately separate
+  // flags, not one shared "add members" toggle — they gate two different
+  // pages: the FAB on a single group's own Members list (add/create a
+  // member for THAT group, groupMembers.js) vs. the FAB on the standalone
+  // Members directory (create a brand-new person in the shared directory,
+  // not tied to any group, members.js). An admin may want to freeze one
+  // without freezing the other.
   //
   // admins overrides firebase-config.js's ADMINS/SUPER_ADMIN (see helpers.js's
   // adminName()) — null until the config listener delivers a real doc, or if
@@ -34,7 +42,8 @@ export var state = {
   // actually grants admin write access to; see auth.js and firebase-config.js.
   config: {
     biometricAuthEnabled: false,
-    addMembersEnabled: true,
+    addMemberToGroupEnabled: true,
+    addMemberEnabled: true,
     addGroupsEnabled: true,
     admins: null
   },
