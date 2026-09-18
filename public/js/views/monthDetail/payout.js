@@ -51,14 +51,15 @@ export function renderPayoutModalOverlay(f, members) {
   // itself in blue wherever it's named, matching Collections elsewhere.
   var otherColor = adminAvatarColor(otherAdmin(state.currentAdmin));
   // setPayoutContribution (actions/winners/payout.js) drives this sheet
-  // through its own saving/success/error states instead of the app-wide
-  // busy overlay — see payments.js's savePaymentModal for the same fix.
-  // `locked` covers both saving and the success state the sheet now sits
-  // in until the admin closes it themselves.
+  // through its own verifying/saving/success/error states instead of the
+  // app-wide busy overlay — see payments.js's savePaymentModal for the
+  // same fix. `locked` covers verifying, saving, and the success state
+  // the sheet now sits in until the admin closes it themselves.
+  var verifying = pm.saveState === 'verifying';
   var saving = pm.saveState === 'saving';
   var justSaved = pm.saveState === 'success';
   var saveError = pm.saveState === 'error' ? pm.saveError : null;
-  var locked = saving || justSaved;
+  var locked = verifying || saving || justSaved;
 
   // Same top-edge + badge + pill trio as the payment sheet's "Collection"
   // marker (paymentModal.js) — same layout, opposite color and icon
@@ -111,6 +112,11 @@ export function renderPayoutModalOverlay(f, members) {
       (saveError ? '<div class="error-text" style="display:flex;align-items:center;gap:6px;font-weight:600;">' + iconWarningTriangle('var(--color-danger)') + 'Could not save: ' + escapeHtml(saveError) + '</div>' : '') +
       (justSaved
         ? '<div class="btn" style="width:100%;background:var(--color-success-soft);color:var(--color-success);display:flex;align-items:center;justify-content:center;gap:8px;pointer-events:none;">' + iconCheck('var(--color-success)') + 'Saved</div>'
+        : verifying
+        // The actual OS biometric prompt is what's on screen right now (a
+        // native dialog, not anything this sheet draws) — same treatment
+        // as paymentModal.js's own verifying state for save-payment.
+        ? '<div class="btn btn-accent disabled" style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px;">' + '<div class="spinner" style="width:16px;height:16px;border-color:rgba(255,255,255,0.35);border-top-color:#fff;"></div>Confirming with biometrics…</div>'
         : '<button class="btn btn-accent' + ((exceeds || saving) ? ' disabled' : '') + '" style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px;" data-mid="' + w.memberId + '"' + (saving ? '' : ' data-action="save-payout"') + '>' +
             (saving ? '<div class="spinner" style="width:16px;height:16px;border-color:rgba(255,255,255,0.35);border-top-color:#fff;"></div>Paying out…' : 'Payout') +
           '</button>'
