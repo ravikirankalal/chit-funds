@@ -44,7 +44,14 @@ export function renderPaymentList(gid, viewMonth, members, f, readOnly, group, c
   var payments = paymentsCache.get(monthKey(gid, viewMonth)) || {};
   var handoffReqs = handoffReqCache.get(monthKey(gid, viewMonth)) || {};
   var pendingMids = {};
-  Object.keys(handoffReqs).forEach(function (id) { (handoffReqs[id].mids || []).forEach(function (mid) { pendingMids[mid] = true; }); });
+  // Skips a request already marked 'accepted' — same reasoning as
+  // isPendingHandoff in actions/shared.js: acceptHandoffRequest leaves that
+  // status on the doc for a few seconds after the transfer actually
+  // completed (real deletion happens slightly later, purely so the
+  // sender's own client gets a chance to notice — see handoffOutgoingSuccess
+  // in listeners.js), so it's not "pending" from this list's point of view
+  // even while the doc briefly still exists.
+  Object.keys(handoffReqs).forEach(function (id) { if (handoffReqs[id].status !== 'accepted') (handoffReqs[id].mids || []).forEach(function (mid) { pendingMids[mid] = true; }); });
   var payRows = members.map(function (mm, idx) {
     var p = payments[mm.id] || { paid: false };
     return { mm: mm, idx: idx, paid: !!p.paid, collectedBy: p.collectedBy, mode: p.mode, paidAt: p.paidAt, transferred: !!p.transferred, pending: !!pendingMids[mm.id] };

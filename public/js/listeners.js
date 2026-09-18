@@ -9,6 +9,15 @@ import { state, groupsById, membersById, membersByGroup, monthsCache, paymentsCa
 import { pathParts } from './helpers.js';
 import { recompute } from './finance/ledger.js';
 import { render } from './render.js';
+import { delay } from './actions/shared.js';
+import { dismissHandoffOutgoingSuccess, HANDOFF_SUCCESS_AUTOCLOSE_MS } from './actions/handoffs.js';
+
+// Tracks which accepted hand-offs this client has already surfaced a
+// handoffOutgoingSuccess card for (see the handoffRequests listener
+// below) — a reconnect can redeliver the same 'modified' snapshot for a
+// doc that hasn't changed further, which would otherwise reopen a card
+// the sender already dismissed.
+var notifiedAccepts = new Set();
 
 var recomputeScheduled = false;
 function scheduleRecompute() {
@@ -127,8 +136,36 @@ export function startListeners() {
       var gid = parts[1], m = parseInt(parts[3], 10), reqId = parts[5];
       var key = monthKey(gid, m);
       var map = handoffReqCache.get(key) || {};
-      if (change.type === 'removed') delete map[reqId];
-      else map[reqId] = change.doc.data();
+      if (change.type === 'removed') {
+        delete map[reqId];
+      } else {
+        var data = change.doc.data();
+        map[reqId] = data;
+        // acceptHandoffRequest (actions/handoffs.js) marks the doc
+        // 'accepted' rather than deleting it outright, specifically so
+        // the SENDER's client — a different browser session from the one
+        // that tapped Accept — gets a chance to see this transition and
+        // show its own "Transfer accepted" card (handoffOutgoingSuccess
+        // in store.js). This only fires on the sender's own client:
+        // data.from === state.currentAdmin is never true for the admin
+        // who just accepted (their currentAdmin is req.to, not req.from).
+        if (data.status === 'accepted' && data.from === state.currentAdmin && !notifiedAccepts.has(reqId)) {
+          notifiedAccepts.add(reqId);
+          state.ui.handoffOutgoingSuccess = {
+            reqId: reqId, gid: gid, m: m,
+            amount: data.resolvedAmount != null ? data.resolvedAmount : data.amount
+          };
+          // Own client-local auto-close, same duration as the accepting
+          // admin's card — independently timed rather than synchronized to
+          // a shared server clock, since a second or two of drift between
+          // the two admins' auto-closes is invisible in practice and far
+          // simpler than reasoning about listener latency + clock skew.
+          delay(HANDOFF_SUCCESS_AUTOCLOSE_MS).then(function () {
+            var cur = state.ui.handoffOutgoingSuccess;
+            if (cur && cur.reqId === reqId) dismissHandoffOutgoingSuccess();
+          });
+        }
+      }
       handoffReqCache.set(key, map);
     });
     scheduleRecompute();

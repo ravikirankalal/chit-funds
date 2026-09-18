@@ -34,8 +34,13 @@ export function delay(ms) {
 // Whether this payment is named in some still-pending hand-off request for
 // the month — used to lock editing while a transfer against it is in
 // flight, same reasoning as the `transferred` lock once one actually goes
-// through (see payments.js/handoffs.js).
+// through (see payments.js/handoffs.js). Excludes a request already marked
+// 'accepted' — acceptHandoffRequest leaves that status on the doc for a few
+// seconds after the transfer actually completes (real deletion happens
+// later; see the delay() in actions/handoffs.js) purely so the sender's own
+// client gets a chance to notice the transition, not because anything is
+// still in flight against this payment.
 export function isPendingHandoff(gid, m, mid) {
   var reqs = handoffReqCache.get(monthKey(gid, m)) || {};
-  return Object.keys(reqs).some(function (id) { return (reqs[id].mids || []).indexOf(mid) !== -1; });
+  return Object.keys(reqs).some(function (id) { return reqs[id].status !== 'accepted' && (reqs[id].mids || []).indexOf(mid) !== -1; });
 }

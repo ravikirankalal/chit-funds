@@ -6,7 +6,15 @@ import { state, groupsById, paymentsCache, handoffReqCache, monthKey } from '../
 import { isSuper, otherAdmin, adminName } from '../helpers.js';
 import { render } from '../render.js';
 import { confirmWithBiometrics } from '../webauthn.js';
-import { setBusy, isPendingHandoff } from './shared.js';
+import { setBusy, isPendingHandoff, delay } from './shared.js';
+
+// How long the accept success card stays up before closing itself — kept
+// in sync with the countdown-bar CSS animation's own 10s duration
+// (overlays.css) so the visible "how much longer" bar and the actual
+// auto-close line up. Exported so listeners.js can run the sender-side
+// outgoing-success card (see handoffOutgoingSuccess below) on the same
+// timing.
+export var HANDOFF_SUCCESS_AUTOCLOSE_MS = 10000;
 
 // Scopes an accept/decline/cancel's loading + error state to the one
 // pending card it's acting on (see renderHandoffRequests in
@@ -50,6 +58,11 @@ export async function confirmTransfer() {
 export async function acceptHandoffRequest(reqId) {
   if (isSuper()) return;
   var gid = state.activeGroupId, m = state.viewMonth;
+  // Grabbed up front purely to fail fast on a stale/foreign reqId before
+  // even prompting for biometrics — once the transaction below commits,
+  // this cache entry is gone too (the doc it's read from gets deleted).
+  var req = (handoffReqCache.get(monthKey(gid, m)) || {})[reqId];
+  if (!req || req.to !== state.currentAdmin) return;
   setHandoffAction({ reqId: reqId, action: 'accept', phase: 'verifying', error: null });
   // Same biometric gate as acceptTransferRequest (adminTransfers.js) and
   // savePaymentModal — accepting a hand-off moves already-collected money
@@ -61,18 +74,26 @@ export async function acceptHandoffRequest(reqId) {
   }
   setHandoffAction({ reqId: reqId, action: 'accept', phase: 'working', error: null });
   try {
-    await runTransaction(db, async function (tx) {
+    // Returns the amount actually moved rather than the amount originally
+    // requested — a payment can drop out between the request and the
+    // accept (marked unpaid again, or already re-transferred elsewhere;
+    // see the per-payment skip below), so req.amount can overstate what
+    // this accept really did. The success card (below) needs the true
+    // figure, not the ask.
+    var movedAmount = await runTransaction(db, async function (tx) {
       var reqRef = doc(db, 'groups', gid, 'months', String(m), 'handoffRequests', reqId);
       var reqSnap = await tx.get(reqRef);
-      if (!reqSnap.exists()) return;
+      if (!reqSnap.exists()) return 0;
       var req = reqSnap.data();
-      if (req.to !== state.currentAdmin) return; // only the recipient may accept
+      if (req.to !== state.currentAdmin) return 0; // only the recipient may accept
 
       // Firestore transactions require every read before any write.
       var paymentRefs = req.mids.map(function (mid) { return doc(db, 'groups', gid, 'months', String(m), 'payments', mid); });
       var paymentSnaps = [];
       for (var i = 0; i < paymentRefs.length; i++) paymentSnaps.push(await tx.get(paymentRefs[i]));
 
+      var perAmount = req.mids.length ? req.amount / req.mids.length : 0;
+      var moved = 0;
       var now = Timestamp.now();
       paymentSnaps.forEach(function (snap, i) {
         if (!snap.exists()) return; // marked unpaid since the request was made — nothing to hand off anymore
@@ -81,18 +102,83 @@ export async function acceptHandoffRequest(reqId) {
         var priorLog = data.transferLog || [];
         var updatedLog = priorLog.concat([{ from: req.from, to: req.to, at: now }]);
         tx.update(paymentRefs[i], { collectedBy: req.to, transferred: true, transferredAt: serverTimestamp(), transferLog: updatedLog });
+        moved += perAmount;
       });
-      tx.delete(reqRef);
+      // Marked rather than deleted outright — the sender's own client is a
+      // completely different browser session from this one, with no other
+      // way to learn the accept actually happened. The listener
+      // (listeners.js) watches for this status flip on a doc it's already
+      // subscribed to and surfaces the sender's own success card off of
+      // it (handoffOutgoingSuccess). The doc is real cleanup, not display
+      // state, by the time either side's success card auto-closes or is
+      // dismissed — see the delay() below and dismissHandoffOutgoingSuccess.
+      tx.update(reqRef, { status: 'accepted', resolvedAmount: moved, resolvedAt: serverTimestamp() });
+      return moved;
     });
-    setHandoffAction(null); // the request doc's own delete will also remove this card once the listener catches up
+    // The status flip above removes the pending card (both here and on the
+    // sender's side) once the listener catches up, but that would
+    // otherwise leave no confirmation at all that the accept actually did
+    // anything — this holds a separate success card up (rendered straight
+    // from handoffAction, independent of the request doc's own state; see
+    // renderHandoffRequests) for HANDOFF_SUCCESS_AUTOCLOSE_MS, or until the
+    // admin dismisses it early via dismissHandoffAction ("Done") below.
+    setHandoffAction({ reqId: reqId, action: 'accept', phase: 'success', amount: movedAmount, error: null });
+    // Fire-and-forget, not awaited — this function is done once the
+    // success card is showing; the close-out just happens later on its
+    // own. Guarded so a stale timer (say, "Done" was already tapped, or
+    // another accept started in the meantime) can't clobber whatever's
+    // actually showing by the time it fires. Also does the real Firestore
+    // cleanup now that accept no longer deletes the doc itself — harmless
+    // if the sender's own client (or an earlier "Done" tap) already beat
+    // it to the delete.
+    delay(HANDOFF_SUCCESS_AUTOCLOSE_MS).then(function () {
+      var current = state.ui.handoffAction;
+      if (current && current.reqId === reqId && current.action === 'accept' && current.phase === 'success') {
+        setHandoffAction(null);
+      }
+      deleteDoc(doc(db, 'groups', gid, 'months', String(m), 'handoffRequests', reqId)).catch(function () {});
+    });
   } catch (err) { setHandoffAction({ reqId: reqId, action: 'accept', phase: null, error: err.message }); }
 }
 
-export function declineHandoffRequest(reqId) {
+export function dismissHandoffAction() {
+  var acting = state.ui.handoffAction;
+  setHandoffAction(null);
+  // Tapping "Done" early on an accept success card means there's no need
+  // to wait for the 10s auto-close timer to do its own cleanup — do it
+  // right away instead. A no-op if the doc's already gone.
+  if (acting && acting.action === 'accept' && acting.phase === 'success') {
+    var gid = state.activeGroupId, m = state.viewMonth;
+    deleteDoc(doc(db, 'groups', gid, 'months', String(m), 'handoffRequests', acting.reqId)).catch(function () {});
+  }
+}
+
+// Mirrors dismissHandoffAction above, but for the sender-side success
+// card (handoffOutgoingSuccess, set by the listener in listeners.js) —
+// same "Done" early-exit + best-effort cleanup delete.
+export function dismissHandoffOutgoingSuccess() {
+  var s = state.ui.handoffOutgoingSuccess;
+  state.ui.handoffOutgoingSuccess = null;
+  render();
+  if (s) deleteDoc(doc(db, 'groups', s.gid, 'months', String(s.m), 'handoffRequests', s.reqId)).catch(function () {});
+}
+
+export async function declineHandoffRequest(reqId) {
   if (isSuper()) return;
   var gid = state.activeGroupId, m = state.viewMonth;
   var req = (handoffReqCache.get(monthKey(gid, m)) || {})[reqId];
   if (!req || req.to !== state.currentAdmin) return;
+  setHandoffAction({ reqId: reqId, action: 'decline', phase: 'verifying', error: null });
+  // No money moves on a decline — this confirms identity, not a
+  // transaction. But it's still the recipient making a real, one-way call
+  // on someone else's money (the sender has to re-request from scratch),
+  // so it gets the same biometric gate as accept rather than the free
+  // pass cancel gets on the sender's own, easily-redone request.
+  var confirmation = await confirmWithBiometrics(state.currentAdmin, adminName(state.currentAdmin));
+  if (!confirmation.ok) {
+    setHandoffAction({ reqId: reqId, action: 'decline', phase: null, error: confirmation.message });
+    return;
+  }
   setHandoffAction({ reqId: reqId, action: 'decline', phase: 'working', error: null });
   deleteDoc(doc(db, 'groups', gid, 'months', String(m), 'handoffRequests', reqId))
     .then(function () { setHandoffAction(null); })
