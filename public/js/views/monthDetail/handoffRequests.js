@@ -32,22 +32,28 @@ export function renderHandoffRequests(gid, viewMonth, readOnly, members) {
     // monthlyDeposit through just for this.
     var perAmount = count ? req.amount / count : 0;
     // Only the recipient has anything to actually decide here — the
-    // sender is just waiting. Giving their card the warn (amber) banner
-    // instead of the calmer info (blue) one makes that difference visible
-    // at a glance instead of relying on reading the title text, matching
-    // how a collection vs. payout sheet is told apart by more than its
-    // label. A read-only viewer gets the calm treatment either way, since
-    // there's nothing for them to act on.
+    // sender is just waiting. Gold vs. blue carries that difference (gold
+    // already means "needs attention" elsewhere — the month status pill's
+    // "Payout pending"/"in progress" state — so this reuses a meaning
+    // instead of adding a new one). A read-only viewer gets the calm blue
+    // either way, since there's nothing for them to act on.
+    //
+    // The card itself stays a plain white surface rather than a full
+    // color wash (an earlier pass tried tinting the whole incoming card
+    // pale yellow — it read as duller/heavier than the rest of the app's
+    // white cards, not more urgent). All the color lives in the direction
+    // pill/icon/border instead, matching how the payment/payout sheets
+    // carry their own color on a badge + border, not a tinted background.
     var needsMyAction = !readOnly && !iSent;
-    var bannerClass = needsMyAction ? 'warn' : 'info';
-    var accentColor = needsMyAction ? 'var(--color-warning)' : 'var(--color-secondary)';
+    var accentColor = needsMyAction ? 'var(--color-gold)' : 'var(--color-secondary)';
+    var accentSoft = needsMyAction ? 'var(--color-gold-soft)' : 'var(--color-secondary-soft)';
     var title = readOnly ? 'Transfer pending' : (iSent ? 'Transfer pending acceptance' : 'Transfer needs your acceptance');
     // A direction pill (plus a distinct arrow icon per direction, rather
     // than the same bidirectional iconTransfer glyph for both) so a
     // request you sent and one you were sent are told apart at a glance,
     // not just by reading the title. Read-only has no side in it, so it
     // gets neither.
-    var directionPill = readOnly ? '' : '<div style="display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;letter-spacing:0.03em;text-transform:uppercase;color:' + accentColor + ';background:' + (needsMyAction ? 'var(--color-warning-soft)' : 'var(--color-secondary-soft)') + ';padding:3px 9px;border-radius:20px;align-self:flex-start;">' +
+    var directionPill = readOnly ? '' : '<div style="display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;letter-spacing:0.03em;text-transform:uppercase;color:' + accentColor + ';background:' + accentSoft + ';padding:3px 9px;border-radius:20px;align-self:flex-start;">' +
       (iSent ? iconArrowUpRight(accentColor) + 'Outgoing' : iconArrowDownLeft(accentColor) + 'Incoming') + '</div>';
     var requestedLabel = formatDateTime(req.createdAt);
     // Each row now matches the look of an actual member-list row (avatar +
@@ -108,11 +114,11 @@ export function renderHandoffRequests(gid, viewMonth, readOnly, members) {
       '</div>';
     }
 
-    return '<div class="banner ' + bannerClass + '">' +
+    return '<div class="banner card" style="border-top:4px solid ' + accentColor + ';">' +
       directionPill +
       '<div class="banner-title">' + iconTransfer(accentColor) + title + '</div>' +
       '<div style="font-size:12.5px;color:var(--color-text-muted);">' + escapeHtml(adminName(req.from) + ' → ' + adminName(req.to)) + ' · ' + count + ' payment' + (count === 1 ? '' : 's') + (requestedLabel ? ' · Requested ' + requestedLabel : '') + '</div>' +
-      '<div style="background:var(--color-surface);border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;gap:8px;">' + memberRows + totalRow + '</div>' +
+      '<div style="background:var(--color-bg);border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;gap:8px;">' + memberRows + totalRow + '</div>' +
       (error ? '<div class="error-text" style="display:flex;align-items:center;gap:6px;font-weight:600;">' + iconWarningTriangle('var(--color-danger)') + 'Could not ' + acting.action + ': ' + escapeHtml(error) + '</div>' : '') +
       actionArea +
     '</div>';
