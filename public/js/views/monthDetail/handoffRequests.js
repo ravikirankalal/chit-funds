@@ -1,7 +1,6 @@
 import { state, handoffReqCache, monthKey } from '../../store.js';
-import { fmt, escapeHtml, adminName, adminDot } from '../../helpers.js';
-import { iconTransfer } from '../../icons.js';
-import { signed } from './shared.js';
+import { fmt, escapeHtml, adminName } from '../../helpers.js';
+import { iconTransfer, iconWarningTriangle } from '../../icons.js';
 
 // Pending hand-offs (see confirmTransfer/acceptHandoffRequest in
 // actions/handoffs.js) for this month — shown above the collection summary in both
@@ -9,16 +8,19 @@ import { signed } from './shared.js';
 // after close (same as the transfer bar itself allows). More than one can
 // be pending at once, each independent, so each gets its own card and its
 // own accept/decline/cancel target via data-req-id.
-export function renderHandoffRequests(gid, viewMonth, readOnly, members, f, isClosed) {
+//
+// Deliberately doesn't show either admin's before/after holdings the way
+// the old version did — this card is about a set of payments changing
+// hands, not a running balance; the admins' totals are already one tap
+// away on the summary card above, and repeating them here just competed
+// with the actual decision (accept or decline) for attention.
+export function renderHandoffRequests(gid, viewMonth, readOnly, members) {
   var reqs = handoffReqCache.get(monthKey(gid, viewMonth)) || {};
   var ids = Object.keys(reqs);
   if (!ids.length) return '';
-  // Same "X holds" figures shown on the open/closed summary card above
-  // (f.adjA/adjB while open, f.finalA/finalB once closed) — a hand-off
-  // hasn't moved collectedBy yet (see acceptHandoffRequest in actions/handoffs.js),
-  // so these are still the pre-acceptance ("before") balances.
-  var holdA = isClosed ? f.finalA : f.adjA;
-  var holdB = isClosed ? f.finalB : f.adjB;
+  // Scoped to the one card being acted on — see setHandoffAction in
+  // actions/handoffs.js for why this replaced the app-wide busy overlay.
+  var acting = state.ui.handoffAction;
   return ids.map(function (id) {
     var req = reqs[id];
     var iSent = req.from === state.currentAdmin;
@@ -29,6 +31,16 @@ export function renderHandoffRequests(gid, viewMonth, readOnly, members, f, isCl
     // dividing back out is exact — no need to thread the group's
     // monthlyDeposit through just for this.
     var perAmount = count ? req.amount / count : 0;
+    // Only the recipient has anything to actually decide here — the
+    // sender is just waiting. Giving their card the warn (amber) banner
+    // instead of the calmer info (blue) one makes that difference visible
+    // at a glance instead of relying on reading the title text, matching
+    // how a collection vs. payout sheet is told apart by more than its
+    // label. A read-only viewer gets the calm treatment either way, since
+    // there's nothing for them to act on.
+    var needsMyAction = !readOnly && !iSent;
+    var bannerClass = needsMyAction ? 'warn' : 'info';
+    var accentColor = needsMyAction ? 'var(--color-warning)' : 'var(--color-secondary)';
     var title = readOnly ? 'Transfer pending' : (iSent ? 'Transfer pending acceptance' : 'Transfer needs your acceptance');
     var memberRows = mids.map(function (mid) {
       var mm = members.find(function (x) { return x.id === mid; });
@@ -39,26 +51,48 @@ export function renderHandoffRequests(gid, viewMonth, readOnly, members, f, isCl
     }).join('');
     var totalRow = count > 1
       ? '<div style="display:flex;justify-content:space-between;align-items:center;font-size:12.5px;font-weight:700;padding-top:6px;margin-top:2px;border-top:1px solid var(--color-border);">' +
-          '<span>Total</span><span class="mono" style="color:var(--color-secondary);">' + fmt(req.amount) + '</span>' +
+          '<span>Total</span><span class="mono" style="color:' + accentColor + ';">' + fmt(req.amount) + '</span>' +
         '</div>'
       : '';
-    var fromBefore = req.from === 'A' ? holdA : holdB, fromAfter = fromBefore - req.amount;
-    var toBefore = req.to === 'A' ? holdA : holdB, toAfter = toBefore + req.amount;
-    var holdingRow = '<div class="stat-row">' +
-      '<div class="stat"><div class="label">' + adminDot(req.from) + escapeHtml(adminName(req.from)) + '</div><div class="value" style="' + (fromAfter < 0 ? 'color:var(--color-danger);' : '') + '">' + signed(fromBefore) + ' <span style="color:var(--color-text-faint);font-weight:400;">→</span> ' + signed(fromAfter) + '</div></div>' +
-      '<div class="stat"><div class="label">' + adminDot(req.to) + escapeHtml(adminName(req.to)) + '</div><div class="value" style="' + (toAfter < 0 ? 'color:var(--color-danger);' : '') + '">' + signed(toBefore) + ' <span style="color:var(--color-text-faint);font-weight:400;">→</span> ' + signed(toAfter) + '</div></div>' +
-    '</div>';
-    return '<div class="banner info">' +
-      '<div class="banner-title">' + iconTransfer('var(--color-secondary)') + title + '</div>' +
+
+    var isActing = acting && acting.reqId === id;
+    var verifying = isActing && acting.phase === 'verifying';
+    var working = isActing && acting.phase === 'working';
+    var error = isActing ? acting.error : null;
+    // Any card's action in flight disables every OTHER card's buttons too
+    // — same single-flight guarantee the old app-wide overlay gave, just
+    // without blanking the whole screen to enforce it.
+    var otherDisabled = !!acting && !isActing;
+    var actionArea;
+    if (readOnly) {
+      actionArea = '';
+    } else if (verifying) {
+      // The actual OS biometric prompt is what's on screen right now —
+      // same treatment as paymentModal.js/payout.js's own verifying state.
+      actionArea = '<div class="btn btn-primary disabled" style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px;">' +
+        '<div class="spinner" style="width:16px;height:16px;border-color:rgba(255,255,255,0.35);border-top-color:#fff;"></div>Confirming with biometrics…</div>';
+    } else if (iSent) {
+      var cancelling = working && acting.action === 'cancel';
+      actionArea = '<button class="btn btn-danger-soft' + (otherDisabled || cancelling ? ' disabled' : '') + '" style="width:100%;display:flex;align-items:center;justify-content:center;gap:6px;"' + (otherDisabled || cancelling ? '' : ' data-action="cancel-handoff-request" data-req-id="' + id + '"') + '>' +
+        (cancelling ? '<div class="spinner" style="width:14px;height:14px;border-color:var(--color-danger-soft);border-top-color:var(--color-danger);"></div>Cancelling…' : 'Cancel') + '</button>';
+    } else {
+      var declining = working && acting.action === 'decline';
+      var accepting = working && acting.action === 'accept';
+      var busyHere = declining || accepting;
+      actionArea = '<div style="display:flex;gap:8px;">' +
+        '<button class="btn btn-danger-soft' + (otherDisabled || busyHere ? ' disabled' : '') + '" style="flex:1 1 0;display:flex;align-items:center;justify-content:center;gap:6px;"' + (otherDisabled || busyHere ? '' : ' data-action="decline-handoff-request" data-req-id="' + id + '"') + '>' +
+          (declining ? '<div class="spinner" style="width:14px;height:14px;border-color:var(--color-danger-soft);border-top-color:var(--color-danger);"></div>Declining…' : 'Decline') + '</button>' +
+        '<button class="btn btn-primary' + (otherDisabled || busyHere ? ' disabled' : '') + '" style="flex:1 1 0;display:flex;align-items:center;justify-content:center;gap:6px;"' + (otherDisabled || busyHere ? '' : ' data-action="accept-handoff-request" data-req-id="' + id + '"') + '>' +
+          (accepting ? '<div class="spinner" style="width:14px;height:14px;border-color:rgba(255,255,255,0.35);border-top-color:#fff;"></div>Accepting…' : 'Accept') + '</button>' +
+      '</div>';
+    }
+
+    return '<div class="banner ' + bannerClass + '">' +
+      '<div class="banner-title">' + iconTransfer(accentColor) + title + '</div>' +
       '<div style="font-size:12.5px;color:var(--color-text-muted);">' + escapeHtml(adminName(req.from) + ' → ' + adminName(req.to)) + ' · ' + count + ' payment' + (count === 1 ? '' : 's') + '</div>' +
       '<div style="background:var(--color-surface);border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;gap:6px;">' + memberRows + totalRow + '</div>' +
-      holdingRow +
-      (readOnly ? '' : iSent
-        ? '<button class="btn btn-danger-soft" style="width:100%;" data-action="cancel-handoff-request" data-req-id="' + id + '">Cancel</button>'
-        : '<div style="display:flex;gap:8px;">' +
-            '<button class="btn btn-danger-soft" style="flex:1 1 0;" data-action="decline-handoff-request" data-req-id="' + id + '">Decline</button>' +
-            '<button class="btn btn-primary" style="flex:1 1 0;" data-action="accept-handoff-request" data-req-id="' + id + '">Accept</button>' +
-          '</div>') +
+      (error ? '<div class="error-text" style="display:flex;align-items:center;gap:6px;font-weight:600;">' + iconWarningTriangle('var(--color-danger)') + 'Could not ' + acting.action + ': ' + escapeHtml(error) + '</div>' : '') +
+      actionArea +
     '</div>';
   }).join('');
 }
