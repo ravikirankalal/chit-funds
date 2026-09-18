@@ -5,7 +5,7 @@
 
 import { state, groupsById, membersById, membersByGroup } from '../store.js';
 import { escapeHtml, initialsOf, colorFor, isSuper } from '../helpers.js';
-import { iconPlus, iconPlusSmall, iconClose, iconGroupStack, iconPeople } from '../icons.js';
+import { iconPlus, iconPlusSmall, iconClose, iconGroupStack, iconPeople, iconChevronLeft } from '../icons.js';
 import { renderBottomNav } from './bottomNav.js';
 
 export function renderMembers() {
@@ -27,8 +27,10 @@ export function renderMembers() {
 
   var html = '' +
     '<div class="screen">' +
-      '<div style="padding:20px 20px 4px;"><div class="mono" style="display:flex;align-items:center;gap:7px;font-size:20px;font-weight:700;">' + iconPeople('var(--color-primary)') + 'Members</div>' +
-      '<div style="font-size:12px;color:var(--color-text-muted);margin-top:2px;">Everyone across all groups — add once, use in any group</div></div>' +
+      '<div class="topbar">' +
+        '<div class="back" data-action="nav-back">' + iconChevronLeft() + '</div>' +
+        '<div><div class="title">' + iconPeople('var(--color-primary)') + 'Members</div><div class="subtitle">Everyone across all groups — add once, use in any group</div></div>' +
+      '</div>' +
       '<div class="content">' +
         '<div class="row-list">' + rows + '</div>' +
       '</div>' +
