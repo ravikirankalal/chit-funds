@@ -1,6 +1,6 @@
 import { state } from '../../store.js';
 import { fmt, escapeHtml, colorFor, initialsOf, adminName, adminDot, adminAvatarColor, otherAdmin } from '../../helpers.js';
-import { iconClose, iconFillToMax, iconCheck, iconWarningTriangle } from '../../icons.js';
+import { iconClose, iconFillToMax, iconCheck, iconWarningTriangle, iconPayout } from '../../icons.js';
 import { signed } from './shared.js';
 
 // Each admin records their own contribution toward a winner's payout —
@@ -60,10 +60,18 @@ export function renderPayoutModalOverlay(f, members) {
   var saveError = pm.saveState === 'error' ? pm.saveError : null;
   var locked = saving || justSaved;
 
-  return '<div class="overlay"><div class="sheet">' +
+  // Same top-edge + badge + pill trio as the payment sheet's "Collection"
+  // marker (paymentModal.js) — same layout, opposite color and icon
+  // (accent/payout vs. success/collection), so which sheet is open reads
+  // at a glance instead of by process of elimination.
+  var kindBadge = '<div style="position:absolute;right:-4px;bottom:-4px;width:20px;height:20px;border-radius:50%;background:var(--color-accent);display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 2px var(--color-surface);">' + iconPayout('var(--on-brand)', 11) + '</div>';
+  var kindPill = '<div style="display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;letter-spacing:0.03em;text-transform:uppercase;color:var(--color-accent);background:var(--color-accent-soft);padding:3px 9px;border-radius:20px;margin-bottom:4px;">' + iconPayout('var(--color-accent)', 12) + 'Payout</div>';
+
+  return '<div class="overlay"><div class="sheet" style="border-top:4px solid var(--color-accent);">' +
     '<div class="sheet-header">' +
-      '<div class="avatar sm" style="background:' + colorFor(widx) + ';">' + (winner ? initialsOf(winner.name) : '?') + '</div>' +
-      '<div style="flex:1 1 auto;min-width:0;"><div style="font-size:14px;font-weight:700;">' + (winner ? escapeHtml(winner.name) : '—') + '</div>' +
+      '<div style="position:relative;flex-shrink:0;"><div class="avatar sm" style="background:' + colorFor(widx) + ';">' + (winner ? initialsOf(winner.name) : '?') + '</div>' + kindBadge + '</div>' +
+      '<div style="flex:1 1 auto;min-width:0;">' + kindPill +
+      '<div style="font-size:14px;font-weight:700;">' + (winner ? escapeHtml(winner.name) : '—') + '</div>' +
       '<div style="font-size:11.5px;color:var(--color-text);">Payout target <span style="color:var(--color-primary);font-weight:700;">' + fmt(w.payoutAmount) + '</span></div></div>' +
       // Dropped entirely (not just visually dimmed) only while the write
       // is actually in flight — same convention as payments.js's payment
@@ -103,8 +111,8 @@ export function renderPayoutModalOverlay(f, members) {
       (saveError ? '<div class="error-text" style="display:flex;align-items:center;gap:6px;font-weight:600;">' + iconWarningTriangle('var(--color-danger)') + 'Could not save: ' + escapeHtml(saveError) + '</div>' : '') +
       (justSaved
         ? '<div class="btn" style="width:100%;background:var(--color-success-soft);color:var(--color-success);display:flex;align-items:center;justify-content:center;gap:8px;pointer-events:none;">' + iconCheck('var(--color-success)') + 'Saved</div>'
-        : '<button class="btn btn-primary' + ((exceeds || saving) ? ' disabled' : '') + '" style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px;" data-mid="' + w.memberId + '"' + (saving ? '' : ' data-action="save-payout"') + '>' +
-            (saving ? '<div class="spinner" style="width:16px;height:16px;border-color:rgba(255,255,255,0.35);border-top-color:#fff;"></div>Saving…' : 'Save') +
+        : '<button class="btn btn-accent' + ((exceeds || saving) ? ' disabled' : '') + '" style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px;" data-mid="' + w.memberId + '"' + (saving ? '' : ' data-action="save-payout"') + '>' +
+            (saving ? '<div class="spinner" style="width:16px;height:16px;border-color:rgba(255,255,255,0.35);border-top-color:#fff;"></div>Paying out…' : 'Payout') +
           '</button>'
       ) +
     '</div>' +

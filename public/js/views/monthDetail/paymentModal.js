@@ -1,6 +1,6 @@
 import { state, paymentsCache, monthsCache, transferReqCache, handoffReqCache, monthKey } from '../../store.js';
 import { fmt, escapeHtml, colorFor, initialsOf, adminName, adminDot, formatDateTime, monthLabel } from '../../helpers.js';
-import { iconClose, iconCash, iconCard, iconTransfer, iconWallet, iconCheck, iconWarningTriangle, iconUndo } from '../../icons.js';
+import { iconClose, iconCash, iconCard, iconTransfer, iconWallet, iconCheck, iconWarningTriangle, iconUndo, iconCollection } from '../../icons.js';
 import { timelineRow, signed } from './shared.js';
 
 export function renderPaymentModalOverlay(gid, viewMonth, group, members, f) {
@@ -159,10 +159,21 @@ export function renderPaymentModalOverlay(gid, viewMonth, group, members, f) {
     ? '<div style="display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--color-border);padding-top:16px;">' + actionHtml + '</div>'
     : '';
 
-  return '<div class="overlay"><div class="sheet">' +
+  // A solid-colored top edge on the sheet itself is the first thing seen,
+  // before any text — same "which kind of sheet is this" job the winner
+  // card's left accent stripe does in monthDetail/summary.js, just along
+  // the top instead. The badge on the avatar's corner and a real pill
+  // (not just colored text) reinforce it up close for anyone who missed
+  // the top edge; three signals so it can't read as a coincidence of
+  // color next to the payout sheet's near-identical layout.
+  var kindBadge = '<div style="position:absolute;right:-4px;bottom:-4px;width:22px;height:22px;border-radius:50%;background:var(--color-success);display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 2px var(--color-surface);">' + iconCollection('var(--on-brand)', 12) + '</div>';
+  var kindPill = '<div style="display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;letter-spacing:0.03em;text-transform:uppercase;color:var(--color-success);background:var(--color-success-soft);padding:3px 9px;border-radius:20px;margin-bottom:4px;">' + iconCollection('var(--color-success)', 12) + 'Collection</div>';
+
+  return '<div class="overlay"><div class="sheet" style="border-top:4px solid var(--color-success);">' +
     '<div class="sheet-header">' +
-      '<div class="avatar" style="background:' + colorFor(pidx) + ';">' + initialsOf(pmem.name) + '</div>' +
-      '<div style="flex:1 1 auto;min-width:0;"><div style="font-size:14px;font-weight:700;">' + escapeHtml(pmem.name) + '</div>' +
+      '<div style="position:relative;flex-shrink:0;"><div class="avatar" style="background:' + colorFor(pidx) + ';">' + initialsOf(pmem.name) + '</div>' + kindBadge + '</div>' +
+      '<div style="flex:1 1 auto;min-width:0;">' + kindPill +
+      '<div style="font-size:14px;font-weight:700;">' + escapeHtml(pmem.name) + '</div>' +
       '<div style="font-size:11.5px;color:var(--color-text-muted);">' + monthLabel(group.startYear, group.startMonthIndex, viewMonth) + ' · collected by ' + escapeHtml(adminName(holder)) + '</div></div>' +
       // Dropped entirely (not just visually dimmed) while the write is
       // actually in flight — same "no data-action when the action
