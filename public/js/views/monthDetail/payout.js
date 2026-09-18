@@ -111,8 +111,8 @@ export function renderPayoutModalOverlay(f, members) {
       (saveError ? '<div class="error-text" style="display:flex;align-items:center;gap:6px;font-weight:600;">' + iconWarningTriangle('var(--color-danger)') + 'Could not save: ' + escapeHtml(saveError) + '</div>' : '') +
       (justSaved
         ? '<div class="btn" style="width:100%;background:var(--color-success-soft);color:var(--color-success);display:flex;align-items:center;justify-content:center;gap:8px;pointer-events:none;">' + iconCheck('var(--color-success)') + 'Saved</div>'
-        : '<button class="btn btn-primary' + ((exceeds || saving) ? ' disabled' : '') + '" style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px;" data-mid="' + w.memberId + '"' + (saving ? '' : ' data-action="save-payout"') + '>' +
-            (saving ? '<div class="spinner" style="width:16px;height:16px;border-color:rgba(255,255,255,0.35);border-top-color:#fff;"></div>Saving…' : 'Save') +
+        : '<button class="btn btn-accent' + ((exceeds || saving) ? ' disabled' : '') + '" style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px;" data-mid="' + w.memberId + '"' + (saving ? '' : ' data-action="save-payout"') + '>' +
+            (saving ? '<div class="spinner" style="width:16px;height:16px;border-color:rgba(255,255,255,0.35);border-top-color:#fff;"></div>Paying out…' : 'Payout') +
           '</button>'
       ) +
     '</div>' +

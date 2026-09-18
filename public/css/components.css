@@ -51,6 +51,14 @@
   color: var(--on-brand); box-shadow: var(--shadow-sm);
 }
 .btn-primary:active { filter: brightness(0.96); }
+/* The payout sheet's own action color — distinct from .btn-primary so a
+   payout can't be mistaken for a collection save at a glance, matching
+   the accent badge/pill payout.js's header already carries. */
+.btn-accent {
+  background: linear-gradient(155deg, var(--color-accent) 0%, var(--color-accent-strong) 100%);
+  color: var(--on-brand); box-shadow: var(--shadow-sm);
+}
+.btn-accent:active { filter: brightness(0.96); }
 .btn-soft { background: var(--color-primary-soft); color: var(--color-primary); }
 .btn-outline { background: transparent; border: 1px solid var(--color-border); color: var(--color-text-muted); }
 .btn-danger-text { background: transparent; color: var(--color-danger); }
