@@ -45,12 +45,12 @@ export function renderHandoffRequests(gid, viewMonth, readOnly, members, f, isCl
     var fromBefore = req.from === 'A' ? holdA : holdB, fromAfter = fromBefore - req.amount;
     var toBefore = req.to === 'A' ? holdA : holdB, toAfter = toBefore + req.amount;
     var holdingRow = '<div class="stat-row">' +
-      '<div class="stat"><div class="label">' + adminDot(req.from) + adminName(req.from) + '</div><div class="value" style="' + (fromAfter < 0 ? 'color:var(--color-danger);' : '') + '">' + signed(fromBefore) + ' <span style="color:var(--color-text-faint);font-weight:400;">→</span> ' + signed(fromAfter) + '</div></div>' +
-      '<div class="stat"><div class="label">' + adminDot(req.to) + adminName(req.to) + '</div><div class="value" style="' + (toAfter < 0 ? 'color:var(--color-danger);' : '') + '">' + signed(toBefore) + ' <span style="color:var(--color-text-faint);font-weight:400;">→</span> ' + signed(toAfter) + '</div></div>' +
+      '<div class="stat"><div class="label">' + adminDot(req.from) + escapeHtml(adminName(req.from)) + '</div><div class="value" style="' + (fromAfter < 0 ? 'color:var(--color-danger);' : '') + '">' + signed(fromBefore) + ' <span style="color:var(--color-text-faint);font-weight:400;">→</span> ' + signed(fromAfter) + '</div></div>' +
+      '<div class="stat"><div class="label">' + adminDot(req.to) + escapeHtml(adminName(req.to)) + '</div><div class="value" style="' + (toAfter < 0 ? 'color:var(--color-danger);' : '') + '">' + signed(toBefore) + ' <span style="color:var(--color-text-faint);font-weight:400;">→</span> ' + signed(toAfter) + '</div></div>' +
     '</div>';
     return '<div class="banner info">' +
       '<div class="banner-title">' + iconTransfer('var(--color-secondary)') + title + '</div>' +
-      '<div style="font-size:12.5px;color:var(--color-text-muted);">' + adminName(req.from) + ' → ' + adminName(req.to) + ' · ' + count + ' payment' + (count === 1 ? '' : 's') + '</div>' +
+      '<div style="font-size:12.5px;color:var(--color-text-muted);">' + escapeHtml(adminName(req.from) + ' → ' + adminName(req.to)) + ' · ' + count + ' payment' + (count === 1 ? '' : 's') + '</div>' +
       '<div style="background:var(--color-surface);border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;gap:6px;">' + memberRows + totalRow + '</div>' +
       holdingRow +
       (readOnly ? '' : iSent

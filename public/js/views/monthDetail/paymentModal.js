@@ -75,7 +75,7 @@ export function renderPaymentModalOverlay(gid, viewMonth, group, members, f) {
       '</div>' +
     '</div>';
   } else if (!canEditMode) {
-    modeSection = '<div style="font-size:11px;color:var(--color-text-muted);">' + (existingP && existingP.transferred ? 'Locked — this amount has been transferred and can no longer be edited.' : pendingHandoffId ? 'Locked — a transfer request is pending on this amount.' : 'Only ' + adminName(holder) + ' can change this.') + '</div>';
+    modeSection = '<div style="font-size:11px;color:var(--color-text-muted);">' + (existingP && existingP.transferred ? 'Locked — this amount has been transferred and can no longer be edited.' : pendingHandoffId ? 'Locked — a transfer request is pending on this amount.' : 'Only ' + escapeHtml(adminName(holder)) + ' can change this.') + '</div>';
   }
 
   // Only meaningful for an actual collection — a mode-only edit on an
@@ -95,7 +95,7 @@ export function renderPaymentModalOverlay(gid, viewMonth, group, members, f) {
     if (justSaved) {
       holdingsPreview = '<div>' +
         '<div class="section-label">Your holdings</div>' +
-        '<div class="stat"><div class="label">' + adminDot(state.currentAdmin) + adminName(state.currentAdmin) + '</div>' +
+        '<div class="stat"><div class="label">' + adminDot(state.currentAdmin) + escapeHtml(adminName(state.currentAdmin)) + '</div>' +
         '<div class="value" style="color:' + (beforeHold < 0 ? 'var(--color-danger)' : 'var(--color-text)') + ';">' + signed(beforeHold) + '</div></div>' +
       '</div>';
     } else {
@@ -104,7 +104,7 @@ export function renderPaymentModalOverlay(gid, viewMonth, group, members, f) {
       var afterHold = (existingP && existingP.paid) ? beforeHold : beforeHold + group.monthlyDeposit;
       holdingsPreview = '<div>' +
         '<div class="section-label">Your holdings, if you save this</div>' +
-        '<div class="stat"><div class="label">' + adminDot(state.currentAdmin) + adminName(state.currentAdmin) + '</div>' +
+        '<div class="stat"><div class="label">' + adminDot(state.currentAdmin) + escapeHtml(adminName(state.currentAdmin)) + '</div>' +
         '<div class="value"><span style="color:' + (beforeHold < 0 ? 'var(--color-danger)' : 'var(--color-text)') + ';">' + signed(beforeHold) + '</span> <span style="color:var(--color-text-faint);font-weight:400;">→</span> <span style="color:' + (afterHold < 0 ? 'var(--color-danger)' : 'var(--color-text)') + ';">' + signed(afterHold) + '</span></div></div>' +
       '</div>';
     }
@@ -119,10 +119,10 @@ export function renderPaymentModalOverlay(gid, viewMonth, group, members, f) {
     // collected it, before any transfer happened.
     var log = existingP.transferLog || [];
     var originalCollector = log.length ? log[0].from : existingP.collectedBy;
-    var rows = timelineRow('var(--color-success)', escapeHtml(pmem.name) + ' collected by ' + adminName(originalCollector),
+    var rows = timelineRow('var(--color-success)', escapeHtml(pmem.name) + ' collected by ' + escapeHtml(adminName(originalCollector)),
       (existingP.mode === 'online' ? 'Online' : 'Cash'), '', formatDateTime(existingP.paidAt));
     log.forEach(function (t) {
-      rows += timelineRow('var(--color-secondary)', adminName(t.from) + ' → ' + adminName(t.to), 'Transferred', 'color:var(--color-secondary);', formatDateTime(t.at));
+      rows += timelineRow('var(--color-secondary)', escapeHtml(adminName(t.from) + ' → ' + adminName(t.to)), 'Transferred', 'color:var(--color-secondary);', formatDateTime(t.at));
     });
     var monthNet = (monthsCache.get(monthKey(gid, viewMonth)) || {}).transferNet || 0;
     if (monthNet) {
@@ -136,7 +136,7 @@ export function renderPaymentModalOverlay(gid, viewMonth, group, members, f) {
     }
     if (pendingHandoffId) {
       var pendingHandoff = handoffReqs[pendingHandoffId];
-      rows += timelineRow('var(--color-secondary)', adminName(pendingHandoff.from) + ' → ' + adminName(pendingHandoff.to),
+      rows += timelineRow('var(--color-secondary)', escapeHtml(adminName(pendingHandoff.from) + ' → ' + adminName(pendingHandoff.to)),
         'Pending acceptance', 'color:var(--color-secondary);', fmt(group.monthlyDeposit));
     }
     transferHistory = '<div><div class="section-label">' + iconTransfer() + 'Transfer history</div>' +
@@ -156,7 +156,7 @@ export function renderPaymentModalOverlay(gid, viewMonth, group, members, f) {
     '<div class="sheet-header">' +
       '<div class="avatar" style="background:' + colorFor(pidx) + ';">' + initialsOf(pmem.name) + '</div>' +
       '<div style="flex:1 1 auto;min-width:0;"><div style="font-size:14px;font-weight:700;">' + escapeHtml(pmem.name) + '</div>' +
-      '<div style="font-size:11.5px;color:var(--color-text-muted);">' + monthLabel(group.startYear, group.startMonthIndex, viewMonth) + ' · collected by ' + adminName(holder) + '</div></div>' +
+      '<div style="font-size:11.5px;color:var(--color-text-muted);">' + monthLabel(group.startYear, group.startMonthIndex, viewMonth) + ' · collected by ' + escapeHtml(adminName(holder)) + '</div></div>' +
       // Closing mid-save would race the write's own history.back() (see
       // savePaymentModal) — dropped entirely rather than just visually
       // dimmed, same "no data-action when the action shouldn't fire"

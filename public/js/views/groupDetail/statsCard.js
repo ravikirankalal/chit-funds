@@ -1,4 +1,4 @@
-import { fmt, adminDot, adminName, monthLabel } from '../../helpers.js';
+import { fmt, escapeHtml, adminDot, adminName, monthLabel } from '../../helpers.js';
 import { iconWallet, iconPeopleSmall, iconChevronRight, iconTrendingUp } from '../../icons.js';
 import { signed } from './shared.js';
 
@@ -67,8 +67,8 @@ export function renderStatsCard(gid, group, members, figures, trend) {
       true
     ) +
     statRow(
-      statCell(adminDot('A') + adminName('A') + ' holds', '<span style="' + (holdA < 0 ? 'color:var(--color-danger);' : '') + '">' + signed(holdA) + '</span>') +
-      statCell(adminDot('B') + adminName('B') + ' holds', '<span style="' + (holdB < 0 ? 'color:var(--color-danger);' : '') + '">' + signed(holdB) + '</span>', { border: true }),
+      statCell(adminDot('A') + escapeHtml(adminName('A')) + ' holds', '<span style="' + (holdA < 0 ? 'color:var(--color-danger);' : '') + '">' + signed(holdA) + '</span>') +
+      statCell(adminDot('B') + escapeHtml(adminName('B')) + ' holds', '<span style="' + (holdB < 0 ? 'color:var(--color-danger);' : '') + '">' + signed(holdB) + '</span>', { border: true }),
       true
     ) +
     trendRow(gid, group, trend) +
