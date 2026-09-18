@@ -1,6 +1,6 @@
 import { state, paymentsCache, monthsCache, transferReqCache, handoffReqCache, monthKey } from '../../store.js';
 import { fmt, escapeHtml, colorFor, initialsOf, adminName, adminDot, formatDateTime, monthLabel } from '../../helpers.js';
-import { iconClose, iconCash, iconCard, iconTransfer, iconWallet, iconCheck, iconWarningTriangle } from '../../icons.js';
+import { iconClose, iconCash, iconCard, iconTransfer, iconWallet, iconCheck, iconWarningTriangle, iconUndo } from '../../icons.js';
 import { timelineRow, signed } from './shared.js';
 
 export function renderPaymentModalOverlay(gid, viewMonth, group, members, f) {
@@ -202,12 +202,17 @@ function buildActionArea(pm, canMarkUnpaid, canEditMode, verifying, saving, just
   var showMarkUnpaid = (canMarkUnpaid || justUnpaid) && (!locked || pm.pendingAction === 'mark-unpaid');
   var showSavePayment = canEditMode && (!pm.isEditing || pm.mode !== pm.originalMode) && (!locked || pm.pendingAction === 'save-payment');
   var spinner = function (color) { return '<div class="spinner" style="width:16px;height:16px;border-color:rgba(255,255,255,0.35);border-top-color:' + color + ';"></div>'; };
-  var successPill = function (label) { return '<div class="btn" style="width:100%;background:var(--color-success-soft);color:var(--color-success);display:flex;align-items:center;justify-content:center;gap:8px;pointer-events:none;">' + iconCheck('var(--color-success)') + label + '</div>'; };
+  // Colored and iconed to match each action's OWN button above it (blue
+  // checkmark for the primary Save Payment button, the same danger tone
+  // and an undo icon for Mark as unpaid) rather than a single generic
+  // green — a collection landing and a payment being reversed are
+  // opposite outcomes and shouldn't read identically at a glance.
+  var successPill = function (label, color, soft, icon) { return '<div class="btn" style="width:100%;background:' + soft + ';color:' + color + ';display:flex;align-items:center;justify-content:center;gap:8px;pointer-events:none;">' + icon + label + '</div>'; };
 
   var html = '';
   if (showMarkUnpaid) {
     if (justSaved && pm.pendingAction === 'mark-unpaid') {
-      html += successPill('Marked as unpaid');
+      html += successPill('Marked as unpaid', 'var(--color-danger)', 'var(--color-danger-soft)', iconUndo('var(--color-danger)'));
     } else if (verifying && pm.pendingAction === 'mark-unpaid') {
       html += '<div class="btn btn-danger-soft disabled" style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px;">' + spinner('var(--color-danger)') + 'Confirming with biometrics…</div>';
     } else {
@@ -221,7 +226,7 @@ function buildActionArea(pm, canMarkUnpaid, canEditMode, verifying, saving, just
   }
   if (showSavePayment) {
     if (justSaved && pm.pendingAction === 'save-payment') {
-      html += successPill('Payment saved');
+      html += successPill('Payment saved', 'var(--color-success)', 'var(--color-success-soft)', iconCheck('var(--color-success)'));
     } else if (verifying && pm.pendingAction === 'save-payment') {
       // The actual OS biometric prompt is what's on screen right now (a
       // native dialog, not anything this sheet draws) — this is just the

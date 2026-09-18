@@ -70,6 +70,9 @@ export function iconClock(color, size) {
 export function iconTrash(color, size) {
   return '<svg width="' + (size || 14) + '" height="' + (size || 14) + '" viewBox="0 0 24 24" fill="none"><path d="M4.5 7H19.5M9.5 7V4.8C9.5 4.4 9.8 4 10.3 4H13.7C14.2 4 14.5 4.4 14.5 4.8V7M18 7L17.3 19.2C17.3 19.7 16.9 20 16.4 20H7.6C7.1 20 6.7 19.7 6.7 19.2L6 7" stroke="' + (color || 'currentColor') + '" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 }
+export function iconUndo(color, size) {
+  return '<svg width="' + (size || 14) + '" height="' + (size || 14) + '" viewBox="0 0 24 24" fill="none"><polyline points="2 5 2 11 8 11" stroke="' + (color || 'currentColor') + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M4.5 16A9 9 0 1 0 6.6 6.6L2 11" stroke="' + (color || 'currentColor') + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+}
 export function iconTag(color, size) {
   return '<svg width="' + (size || 14) + '" height="' + (size || 14) + '" viewBox="0 0 24 24" fill="none"><path d="M11.5 3.5H5.5C4.9 3.5 4.5 3.9 4.5 4.5V10.5C4.5 10.8 4.6 11.1 4.8 11.3L12.7 19.2C13.3 19.8 14.3 19.8 14.9 19.2L19.2 14.9C19.8 14.3 19.8 13.3 19.2 12.7L11.3 4.8C11.1 4.6 10.8 4.5 10.5 4.5" stroke="' + (color || 'currentColor') + '" stroke-width="1.8" stroke-linejoin="round"/><circle cx="8.2" cy="8.2" r="1.3" fill="' + (color || 'currentColor') + '"/></svg>';
 }
