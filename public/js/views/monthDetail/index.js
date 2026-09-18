@@ -19,7 +19,7 @@
 import { state, groupsById, membersByGroup } from '../../store.js';
 import { isSuper, escapeHtml, monthLabel } from '../../helpers.js';
 import { monthFinances } from '../../finance/monthFinances.js';
-import { iconChevronLeft, iconCheck, iconClock, iconCalendar } from '../../icons.js';
+import { iconChevronLeft, iconCheck, iconClock, iconGroupStack } from '../../icons.js';
 import { bar, skeletonListRow } from '../../skeleton.js';
 import { renderHandoffRequests } from './handoffRequests.js';
 import { renderClosedSummary, renderUpcomingNotice, renderOpenSummary } from './summary.js';
@@ -87,7 +87,12 @@ export function renderMonthDetail() {
   var html = '<div class="screen">' +
     '<div class="topbar">' +
       '<div class="back" data-action="nav-back">' + iconChevronLeft() + '</div>' +
-      '<div style="flex:1 1 auto;"><div class="title">' + iconCalendar('var(--color-primary)', 18) + monthLabel(group.startYear, group.startMonthIndex, viewMonth) + '</div><div class="subtitle">' + escapeHtml(group.name) + ' · Month ' + viewMonth + ' of ' + group.durationMonths + '</div></div>' +
+      // Group name leads as the title (same convention as groupDetail's own
+      // topbar) — this screen is reached by drilling into a specific
+      // group, and it's easy to lose track of which one you're in once
+      // you're this deep; the month itself moves to the subtitle, still
+      // right there but no longer competing for top billing.
+      '<div style="flex:1 1 auto;"><div class="title">' + iconGroupStack('var(--color-primary)', 18) + escapeHtml(group.name) + '</div><div class="subtitle">' + monthLabel(group.startYear, group.startMonthIndex, viewMonth) + ' · Month ' + viewMonth + ' of ' + group.durationMonths + '</div></div>' +
       '<div style="display:flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:5px 10px;border-radius:8px;background:' + statusBg + ';color:' + statusColor + ';">' + statusIcon + statusLabel + '</div>' +
     '</div>' +
     '<div class="content">';
