@@ -53,8 +53,8 @@ export function renderPayoutModalOverlay(f, members) {
   // setPayoutContribution (actions/winners/payout.js) drives this sheet
   // through its own saving/success/error states instead of the app-wide
   // busy overlay — see payments.js's savePaymentModal for the same fix.
-  // `locked` covers both saving and the brief success beat right before
-  // the sheet closes itself.
+  // `locked` covers both saving and the success state the sheet now sits
+  // in until the admin closes it themselves.
   var saving = pm.saveState === 'saving';
   var justSaved = pm.saveState === 'success';
   var saveError = pm.saveState === 'error' ? pm.saveError : null;
@@ -65,10 +65,11 @@ export function renderPayoutModalOverlay(f, members) {
       '<div class="avatar sm" style="background:' + colorFor(widx) + ';">' + (winner ? initialsOf(winner.name) : '?') + '</div>' +
       '<div style="flex:1 1 auto;min-width:0;"><div style="font-size:14px;font-weight:700;">' + (winner ? escapeHtml(winner.name) : '—') + '</div>' +
       '<div style="font-size:11.5px;color:var(--color-text);">Payout target <span style="color:var(--color-primary);font-weight:700;">' + fmt(w.payoutAmount) + '</span></div></div>' +
-      // Closing mid-save would race the write's own history.back() (see
-      // setPayoutContribution) — dropped entirely rather than just
-      // visually dimmed, same convention as payments.js's payment sheet.
-      (locked ? '<div class="sheet-close" style="opacity:0.35;">' + iconClose() + '</div>' : '<div class="sheet-close" data-action="close-payout-modal">' + iconClose() + '</div>') +
+      // Dropped entirely (not just visually dimmed) only while the write
+      // is actually in flight — same convention as payments.js's payment
+      // sheet. Stays clickable once justSaved, since the sheet no longer
+      // closes itself: this is how the admin dismisses it afterward.
+      (saving ? '<div class="sheet-close" style="opacity:0.35;">' + iconClose() + '</div>' : '<div class="sheet-close" data-action="close-payout-modal">' + iconClose() + '</div>') +
     '</div>' +
     '<div class="sheet-body">' +
       '<div style="text-align:center;padding:8px 0 4px;">' +
