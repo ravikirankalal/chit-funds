@@ -19,7 +19,7 @@
 import { state, groupsById, membersByGroup } from '../../store.js';
 import { isSuper, escapeHtml, monthLabel } from '../../helpers.js';
 import { monthFinances } from '../../finance/monthFinances.js';
-import { iconChevronLeft, iconCheck, iconClock, iconCalendar } from '../../icons.js';
+import { iconChevronLeft, iconCheck, iconClock, iconCalendar, iconGroupStack } from '../../icons.js';
 import { bar, skeletonListRow } from '../../skeleton.js';
 import { renderHandoffRequests } from './handoffRequests.js';
 import { renderClosedSummary, renderUpcomingNotice, renderOpenSummary } from './summary.js';
@@ -87,7 +87,15 @@ export function renderMonthDetail() {
   var html = '<div class="screen">' +
     '<div class="topbar">' +
       '<div class="back" data-action="nav-back">' + iconChevronLeft() + '</div>' +
-      '<div style="flex:1 1 auto;"><div class="title">' + iconCalendar('var(--color-primary)', 18) + monthLabel(group.startYear, group.startMonthIndex, viewMonth) + '</div><div class="subtitle">' + escapeHtml(group.name) + ' · Month ' + viewMonth + ' of ' + group.durationMonths + '</div></div>' +
+      // The month stays the lead title — that's the actual point of this
+      // screen — but the group name gets its own bolder, full-contrast
+      // line right under it (not the usual muted .subtitle treatment)
+      // since it's easy to lose track of which group you're in once
+      // you're this deep. Still visibly secondary to the title above it,
+      // just no longer as easy to miss as a plain subtitle.
+      '<div style="flex:1 1 auto;"><div class="title">' + iconCalendar('var(--color-primary)', 18) + monthLabel(group.startYear, group.startMonthIndex, viewMonth) + '</div>' +
+      '<div style="display:flex;align-items:center;gap:5px;font-size:12.5px;font-weight:700;color:var(--color-text);margin-top:2px;">' + iconGroupStack('var(--color-text-muted)', 12) + escapeHtml(group.name) + '</div>' +
+      '<div class="subtitle" style="margin-top:1px;">Month ' + viewMonth + ' of ' + group.durationMonths + '</div></div>' +
       '<div style="display:flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:5px 10px;border-radius:8px;background:' + statusBg + ';color:' + statusColor + ';">' + statusIcon + statusLabel + '</div>' +
     '</div>' +
     '<div class="content">';
