@@ -23,6 +23,22 @@
 .stat .label svg { flex-shrink: 0; opacity: 0.85; }
 .stat .value { font-family: var(--font-display); font-size: 15px; font-weight: 700; margin-top: 2px; }
 
+/* One-shot highlight for a .stat whose figure just changed for a reason
+   that isn't obvious from the number alone — e.g. both admins' "holds"
+   after accepting a transfer (see justAcceptedTransfer in
+   monthDetail/summary.js). Plays once on mount and settles back to the
+   plain .stat look; a re-render while still applicable replays it, which
+   is fine here since it's rare and just reinforces the highlight rather
+   than looking broken. */
+.stat.flash { animation: stat-flash 1.6s ease; }
+@keyframes stat-flash {
+  0%, 100% { background: var(--color-surface); box-shadow: var(--shadow-xs); }
+  25% { background: var(--color-success-soft); box-shadow: 0 0 0 2px var(--color-success); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .stat.flash { animation: none; }
+}
+
 .section-label { font-size: 13px; font-weight: 600; color: var(--color-text-muted); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
 .section-label svg { flex-shrink: 0; opacity: 0.8; }
 
