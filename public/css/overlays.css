@@ -43,6 +43,22 @@
 .banner.warn .banner-title { color: var(--color-warning); }
 .banner.info .banner-title { color: var(--color-secondary); }
 
+/* A visible "how much longer" cue for a card that closes itself — starts
+   full-width and shrinks to nothing over the same span its JS timer
+   actually waits before closing (10s; see HANDOFF_SUCCESS_AUTOCLOSE_MS
+   in actions/handoffs.js — keep both in sync if this ever changes).
+   Sits on a `position:relative;overflow:hidden;` card so it's clipped to
+   the card's own rounded top corners instead of overhanging them.
+   Deliberately NOT skipped under prefers-reduced-motion: unlike a purely
+   decorative flourish, its shrinking width is the actual countdown, and
+   hiding it would remove real information (how long you have left)
+   rather than just motion. */
+.countdown-bar {
+  position: absolute; top: 0; left: 0; height: 4px; width: 100%;
+  animation: countdown-shrink 10s linear forwards;
+}
+@keyframes countdown-shrink { from { width: 100%; } to { width: 0%; } }
+
 .error-text { color: var(--color-danger); font-size: 12px; margin-top: 4px; }
 
 .spinner {

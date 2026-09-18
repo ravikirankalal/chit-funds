@@ -6,7 +6,13 @@ import { state, groupsById, paymentsCache, handoffReqCache, monthKey } from '../
 import { isSuper, otherAdmin, adminName } from '../helpers.js';
 import { render } from '../render.js';
 import { confirmWithBiometrics } from '../webauthn.js';
-import { setBusy, isPendingHandoff } from './shared.js';
+import { setBusy, isPendingHandoff, delay } from './shared.js';
+
+// How long the accept success card stays up before closing itself — kept
+// in sync with the countdown-bar CSS animation's own 10s duration
+// (overlays.css) so the visible "how much longer" bar and the actual
+// auto-close line up.
+var HANDOFF_SUCCESS_AUTOCLOSE_MS = 10000;
 
 // Scopes an accept/decline/cancel's loading + error state to the one
 // pending card it's acting on (see renderHandoffRequests in
@@ -104,10 +110,20 @@ export async function acceptHandoffRequest(reqId) {
     // at all that the accept actually did anything — this holds a
     // separate success card up (rendered straight from handoffAction,
     // independent of the now-gone request doc; see renderHandoffRequests)
-    // until the admin dismisses it themselves via dismissHandoffAction
-    // below — same "stays up until you close it" rule as the payment and
-    // payout sheets' own success state, not a timed auto-dismiss.
+    // for HANDOFF_SUCCESS_AUTOCLOSE_MS, or until the admin dismisses it
+    // early via dismissHandoffAction ("Done") below.
     setHandoffAction({ reqId: reqId, action: 'accept', phase: 'success', amount: movedAmount, error: null });
+    // Fire-and-forget, not awaited — this function is done once the
+    // success card is showing; the close-out just happens later on its
+    // own. Guarded so a stale timer (say, "Done" was already tapped, or
+    // another accept started in the meantime) can't clobber whatever's
+    // actually showing by the time it fires.
+    delay(HANDOFF_SUCCESS_AUTOCLOSE_MS).then(function () {
+      var current = state.ui.handoffAction;
+      if (current && current.reqId === reqId && current.action === 'accept' && current.phase === 'success') {
+        setHandoffAction(null);
+      }
+    });
   } catch (err) { setHandoffAction({ reqId: reqId, action: 'accept', phase: null, error: err.message }); }
 }
 

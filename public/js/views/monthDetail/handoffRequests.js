@@ -25,16 +25,20 @@ import { signed } from './shared.js';
 function renderAcceptSuccessCard(acting, f, isClosed) {
   var after = state.currentAdmin === 'A' ? (isClosed ? f.finalA : f.adjA) : (isClosed ? f.finalB : f.adjB);
   var before = after - acting.amount;
-  return '<div class="banner card" style="border-top:4px solid var(--color-success);">' +
+  // The top border doubles as a 10s countdown bar (shrinks via the
+  // countdown-bar CSS animation) rather than a plain static stripe —
+  // gives the auto-close a visible "how much longer" cue instead of the
+  // card just vanishing out of nowhere. Its duration must stay in sync
+  // with HANDOFF_SUCCESS_AUTOCLOSE_MS in actions/handoffs.js, which is
+  // what actually fires the close; "Done" below still closes it early.
+  return '<div class="banner card" style="position:relative;overflow:hidden;">' +
+    '<div class="countdown-bar" style="background:var(--color-success);"></div>' +
     '<div class="banner-title" style="color:var(--color-success);">' + iconCheck('var(--color-success)') + 'Transfer accepted</div>' +
     '<div style="font-size:12.5px;color:var(--color-text-muted);">You accepted <span class="mono" style="font-weight:700;color:var(--color-success);">' + fmt(acting.amount) + '</span></div>' +
     '<div class="stat">' +
       '<div class="label">' + escapeHtml(adminName(state.currentAdmin)) + ' now holds</div>' +
       '<div class="value" style="' + (after < 0 ? 'color:var(--color-danger);' : '') + '">' + signed(before) + ' <span style="color:var(--color-text-faint);font-weight:400;">→</span> ' + signed(after) + '</div>' +
     '</div>' +
-    // Stays up until dismissed rather than a timed auto-close — see
-    // dismissHandoffAction in actions/handoffs.js and the same rule on
-    // the payment/payout sheets' own success state.
     '<button class="btn btn-soft" style="width:100%;" data-action="dismiss-handoff-success">Done</button>' +
   '</div>';
 }
