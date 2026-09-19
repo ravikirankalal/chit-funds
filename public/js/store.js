@@ -49,6 +49,7 @@ export var state = {
   },
   ui: {
     showWinnerPicker: false,
+    winnerPickerConfirm: null, // memberId — set once a candidate is tapped in the winner picker, before addWinner (actions/winners/picker.js) actually writes; shows a confirm step (renderWinnerPickerOverlay in views/monthDetail/winner.js) instead of writing straight away. In-place UI state like transferSelection below, not pushNav()'d of its own — the picker's own single history entry still governs Back/close; see router.js's popstate/goTo for where this gets defensively cleared.
     paymentModal: null,   // { memberId, mode, isEditing }
     payoutModal: null,    // { memberId } — bottom sheet for recording the current admin's own partial contribution toward a winner's payout
     newGroup: null,        // set when entering createGroup screen

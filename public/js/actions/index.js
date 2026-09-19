@@ -22,7 +22,7 @@ export {
 } from './payments.js';
 export { confirmTransfer, acceptHandoffRequest, declineHandoffRequest, cancelHandoffRequest, dismissHandoffAction, dismissHandoffOutgoingSuccess } from './handoffs.js';
 export {
-  openWinnerPicker, closeWinnerPicker, addWinner, removeWinner,
+  openWinnerPicker, closeWinnerPicker, selectWinnerCandidate, cancelWinnerCandidate, addWinner, removeWinner,
   openPayoutModal, closePayoutModal, setPayoutContribution
 } from './winners/index.js';
 export {

@@ -14,7 +14,16 @@ export function openWinnerPicker() {
   state.ui.showWinnerPicker = true; render();
   pushNav();
 }
-export function closeWinnerPicker() { history.back(); }
+export function closeWinnerPicker() { state.ui.winnerPickerConfirm = null; history.back(); }
+
+// Tapping a name in the list used to call addWinner() immediately —
+// one tap, no way back if it was the wrong row. This just shows a confirm
+// step (renderWinnerPickerOverlay) with the name/BC/month/amount spelled
+// out; the actual Firestore write still only happens from confirmAddWinner
+// below. In-place, not its own history entry — see winnerPickerConfirm in
+// store.js.
+export function selectWinnerCandidate(memberId) { state.ui.winnerPickerConfirm = memberId; render(); }
+export function cancelWinnerCandidate() { state.ui.winnerPickerConfirm = null; render(); }
 
 // Once any admin has recorded a real contribution toward THIS winner's
 // payout, THIS winner locks — removing them once money has already started
@@ -40,7 +49,7 @@ export async function addWinner(memberId) {
   var monthDoc = monthsCache.get(monthKey(gid, m));
   var scheduled = (group.payoutSchedule && group.payoutSchedule[m - 1]) || 0;
   var current = getMonthWinners(monthDoc, scheduled);
-  if (current.some(function (w) { return w.memberId === memberId; })) { state.ui.showWinnerPicker = false; render(); history.back(); return; }
+  if (current.some(function (w) { return w.memberId === memberId; })) { state.ui.showWinnerPicker = false; state.ui.winnerPickerConfirm = null; render(); history.back(); return; }
   // Migrating off the legacy single-winnerId field (monthDoc.winners
   // doesn't exist yet) loses monthDoc.payoutAdmin's meaning the moment a
   // real winners array is written — finance/monthFinances.js's
@@ -60,6 +69,7 @@ export async function addWinner(memberId) {
   try {
     await updateDoc(doc(db, 'groups', gid, 'months', String(m)), { winners: current.concat([{ memberId: memberId, payoutAmount: scheduled }]) });
     state.ui.showWinnerPicker = false;
+    state.ui.winnerPickerConfirm = null;
     history.back(); // see payments.js's savePaymentModal()
   } catch (err) { alert('Could not add winner: ' + err.message); }
   finally { setBusy(false); }
