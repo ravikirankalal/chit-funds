@@ -19,7 +19,7 @@
 import { state, groupsById, membersByGroup } from '../../store.js';
 import { isSuper, escapeHtml, monthLabel } from '../../helpers.js';
 import { monthFinances } from '../../finance/monthFinances.js';
-import { iconChevronLeft, iconCheck, iconClock, iconCalendar, iconGroupStack } from '../../icons.js';
+import { iconChevronLeft, iconCheck, iconClock, iconCalendar, iconGroupStack, iconTrophy, iconPlusSmall } from '../../icons.js';
 import { bar, skeletonListRow } from '../../skeleton.js';
 import { renderHandoffRequests } from './handoffRequests.js';
 import { renderClosedSummary, renderUpcomingNotice, renderOpenSummary } from './summary.js';
@@ -133,7 +133,18 @@ export function renderMonthDetail() {
   // track before the first is even settled; it reappears the moment every
   // current winner is fully covered.
   if (!readOnly && !state.ui.transferSelection && (isOpen || isClosed) && (!f.winners.length || f.allPayoutCovered)) {
-    html += '<button class="btn btn-primary" style="width:100%;" data-action="open-winner-picker">' + (f.winners.length ? 'Add another winner' : 'Select Winner') + '</button>';
+    // Same button, same icon pairing, same weight either way — only the
+    // label changes. An earlier version gave "Add another winner" a
+    // softer style and dropped the plus icon from "Select Winner", on the
+    // idea that picking a first winner and picking an extra one carry
+    // different weight; in practice that just made the one button people
+    // tap the exact same way look and feel like two different controls.
+    // Picking a winner (first or another) is always the same deliberate
+    // action, so it's always the same btn-primary CTA with a plus (this
+    // adds a winner to the month, every time) in front of the trophy
+    // (what's being added).
+    html += '<button class="btn btn-primary" style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px;" data-action="open-winner-picker">' +
+      iconPlusSmall('var(--on-brand)', 14) + iconTrophy('var(--on-brand)', 16) + (f.winners.length ? 'Add another winner' : 'Select Winner') + '</button>';
   }
 
   html += '</div>';

@@ -14,7 +14,7 @@ import { stepPayoutSchedule } from './helpers.js';
 import {
   startCreateGroup, createGroupStep2, addDraftMember, addExistingDraftMember, removeDraftMember, submitCreateGroup,
   openGroupDetail, openGroupMembers, openMemberPayments, removeMemberFromGroup, openMonth, openPaymentModal, closePaymentModal, setModalMode,
-  savePaymentModal, markUnpaidFromModal, selectPaymentTab, setLedgerFilter, openWinnerPicker, closeWinnerPicker, addWinner, removeWinner,
+  savePaymentModal, markUnpaidFromModal, selectPaymentTab, setLedgerFilter, openWinnerPicker, closeWinnerPicker, selectWinnerCandidate, cancelWinnerCandidate, addWinner, removeWinner,
   openPayoutModal, closePayoutModal, setPayoutContribution,
   requestTransferToB, requestTransferToA,
   acceptTransferRequest, declineTransferRequest, cancelTransferRequest,
@@ -110,6 +110,8 @@ document.addEventListener('click', function (e) {
     case 'set-ledger-filter': setLedgerFilter(el.getAttribute('data-filter')); break;
     case 'open-winner-picker': openWinnerPicker(); break;
     case 'close-winner-picker': closeWinnerPicker(); break;
+    case 'select-winner-candidate': selectWinnerCandidate(el.getAttribute('data-mid')); break;
+    case 'cancel-winner-candidate': cancelWinnerCandidate(); break;
     case 'add-winner': addWinner(el.getAttribute('data-mid')); break;
     case 'remove-winner': removeWinner(el.getAttribute('data-mid')); break;
     case 'open-payout-modal': openPayoutModal(el.getAttribute('data-mid')); break;

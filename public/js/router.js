@@ -105,6 +105,12 @@ window.addEventListener('popstate', function (e) {
   // that could show it is a screen change (monthDetail entered/left), which
   // already forces a render below regardless of this line.
   state.ui.transferSelection = null;
+  // winnerPickerConfirm (actions/winners/picker.js) is the same kind of
+  // in-place, non-pushNav()'d state as transferSelection above — cleared
+  // here for the same reason: a Back out of the picker's own single
+  // history entry should never leave a stale candidate ready to reopen
+  // straight into "Confirm" the next time the picker opens.
+  state.ui.winnerPickerConfirm = null;
   var after = navSnapshot();
   if (JSON.stringify(before) === JSON.stringify(after)) return;
   render();
@@ -118,6 +124,7 @@ export function goTo(screen, extra) {
   state.ui.memberForm = null;
   state.ui.addMemberToGroup = null;
   state.ui.transferSelection = null;
+  state.ui.winnerPickerConfirm = null;
   if (extra) Object.assign(state, extra);
   render();
   if (screen === 'dashboard' || screen === 'login') replaceNav();
