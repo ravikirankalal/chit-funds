@@ -238,7 +238,10 @@ export async function acceptTransferRequest() {
       var reqSnap = await tx.get(reqRef);
       if (!reqSnap.exists()) return;
       var req = reqSnap.data();
-      if (req.requestedBy === state.currentAdmin) return; // only the other admin may accept
+      if (req.requestedBy === state.currentAdmin) {
+        alert('You cannot accept your own transfer request. The other admin must accept it.');
+        return;
+      } // only the other admin may accept
       var monthRef = doc(db, 'groups', gid, 'months', String(m));
       var monthSnap = await tx.get(monthRef);
       var curNet = (monthSnap.data() && monthSnap.data().transferNet) || 0;
