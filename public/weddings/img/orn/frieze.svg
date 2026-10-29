@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 36" width="80" height="36">
+  <defs>
+    <g id="lotus">
+      <path d="M0-14C-9-8-11 2 0 12C11 2 9-8 0-14Z" fill="#f1d58a" stroke="#b8791a" stroke-width="1"/>
+      <path d="M0-9C-5-5-6 1 0 8C6 1 5-5 0-9Z" fill="#c3302a"/>
+      <path d="M-9-6C-17-3-17 6-5 10C-8 4-9-1-9-6Z" fill="#e8b04a" stroke="#b8791a" stroke-width=".8"/>
+      <path d="M9-6C17-3 17 6 5 10C8 4 9-1 9-6Z" fill="#e8b04a" stroke="#b8791a" stroke-width=".8"/>
+      <circle cy="-2" r="1.6" fill="#8c1815"/>
+    </g>
+  </defs>
+  <rect width="80" height="36" fill="#8c1815"/>
+  <path d="M0 3H80M0 33H80" stroke="#e8b04a" stroke-width="1.6"/>
+  <path d="M0 6H80M0 30H80" stroke="#e8b04a" stroke-width=".7" stroke-opacity=".7"/>
+  <g fill="#e8b04a"><circle cx="20" cy="4.5" r="1"/><circle cx="60" cy="4.5" r="1"/><circle cx="20" cy="31.5" r="1"/><circle cx="60" cy="31.5" r="1"/></g>
+  <use href="#lotus" x="40" y="19"/>
+  <use href="#lotus" x="0" y="19"/>
+  <use href="#lotus" x="80" y="19"/>
+  <!-- bead + diamond between lotuses -->
+  <path d="M20 12l4 6-4 6-4-6z" fill="#e8b04a"/>
+  <path d="M20 14.5l2.2 3.5-2.2 3.5-2.2-3.5z" fill="#8c1815"/>
+  <path d="M60 12l4 6-4 6-4-6z" fill="#e8b04a"/>
+  <path d="M60 14.5l2.2 3.5-2.2 3.5-2.2-3.5z" fill="#8c1815"/>
+  <g fill="#f1d58a"><circle cx="9" cy="18" r="1"/><circle cx="31" cy="18" r="1"/><circle cx="49" cy="18" r="1"/><circle cx="71" cy="18" r="1"/></g>
+</svg>

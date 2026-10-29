@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 60" width="60" height="60">
+  <defs>
+    <g id="edge">
+      <path d="M0 2H20" stroke="#d9962b" stroke-width="2.6"/>
+      <path d="M0 6.5H20" stroke="#9c1c1a" stroke-width="1.1"/>
+      <path d="M10 8C4.5 10.5 4 16 8 18.5C11 20 14.5 18 14.5 14.5C14.5 12 12 11 10.5 12.5C11.5 12.8 12 14 11 15C9.5 16 8 14.5 8.5 13C9 11 11 10.5 10 8Z" fill="#9c1c1a" stroke="#d9962b" stroke-width=".7"/>
+      <circle cx="12.6" cy="15.6" r=".7" fill="#f1d58a"/>
+      <path d="M1 9.5C3.5 9.5 5 8.5 5.5 7.4M19 9.5C16.5 9.5 15 8.5 14.5 7.4" fill="none" stroke="#d9962b" stroke-width="1" stroke-linecap="round"/>
+      <circle cx="2" cy="12" r="1" fill="#d9962b"/><circle cx="18" cy="12" r="1" fill="#d9962b"/><circle cx="10" cy="21" r="1.1" fill="#d9962b"/>
+    </g>
+  </defs>
+  <!-- edges (middle cells), drawn on each side -->
+  <g transform="translate(20 0)"><use href="#edge"/></g>
+  <g transform="translate(60 20) rotate(90)"><use href="#edge"/></g>
+  <g transform="translate(40 60) rotate(180)"><use href="#edge"/></g>
+  <g transform="translate(0 40) rotate(270)"><use href="#edge"/></g>
+  <!-- corner joints -->
+  <g id="cj">
+    <path d="M20 2H8C4.7 2 2 4.7 2 8V20" fill="none" stroke="#d9962b" stroke-width="2.6"/>
+    <path d="M20 6.5H9C7.6 6.5 6.5 7.6 6.5 9V20" fill="none" stroke="#9c1c1a" stroke-width="1.1"/>
+    <circle cx="11" cy="11" r="2.4" fill="#9c1c1a"/><circle cx="11" cy="11" r="1" fill="#f1d58a"/>
+  </g>
+  <g transform="translate(60 0) scale(-1 1)"><use href="#cj"/></g>
+  <use href="#cj"/>
+  <g transform="translate(0 60) scale(1 -1)"><use href="#cj"/></g>
+  <g transform="translate(60 60) scale(-1 -1)"><use href="#cj"/></g>
+</svg>

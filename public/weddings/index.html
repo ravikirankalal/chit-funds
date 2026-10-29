@@ -5,16 +5,33 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Wedding Planner — complete wedding planning from ₹5 lakh</title>
   <meta name="description" content="Complete wedding planning starting from ₹5 lakh, or book only the services you need — venue, decor, catering, photography and more. Leave your number and we'll call you back." />
-  <meta name="theme-color" content="#5e1a31" />
+  <meta name="theme-color" content="#9c1c1a" />
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" />
-  <link rel="stylesheet" href="css/weddings.css" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tiro+Kannada:ital@0;1&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Mulish:wght@400;500;600;700&display=swap" />
+  <link rel="stylesheet" href="css/weddings.css?v=37" />
   <link rel="modulepreload" href="js/firebase.js" />
+  <link rel="preload" as="image" href="img/hero.jpg?v=2" />
 </head>
 <body>
-  <div class="strip">Complete wedding planning starting from <strong>₹5,00,000</strong>*</div>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+    <defs>
+      <g id="slotArt" fill="none" stroke="#e8a21c" stroke-opacity=".55" stroke-width="1"><path d="M20 150V60a40 40 0 0 1 80 0v90"/><path d="M34 150V62a26 26 0 0 1 52 0v88"/><g fill="#e8a21c" fill-opacity=".5" stroke="none"><circle cx="60" cy="52" r="4"/><circle cx="60" cy="40" r="3"/><circle cx="60" cy="64" r="3"/><circle cx="48" cy="52" r="3"/><circle cx="72" cy="52" r="3"/></g></g>
+      <!-- Marigold garland unit: a drooping string with a hanging flower and leaf -->
+      <pattern id="toranUnit" width="56" height="64" patternUnits="userSpaceOnUse">
+        <path d="M0 4 Q28 18 56 4" fill="none" stroke="#e8a21c" stroke-width="1.6"/>
+        <path d="M28 14 V30" stroke="#e8a21c" stroke-width="1.2"/>
+        <g transform="translate(28 40)">
+          <g fill="#e8a21c"><circle r="6" cx="0" cy="-8"/><circle r="6" cx="8" cy="-3"/><circle r="6" cx="5" cy="7"/><circle r="6" cx="-5" cy="7"/><circle r="6" cx="-8" cy="-3"/></g>
+          <circle r="5" fill="#c4560f"/>
+        </g>
+        <path d="M14 10 q-5 10 0 18 q5 -8 0 -18z M42 10 q-5 10 0 18 q5 -8 0 -18z" fill="#2f6b4a"/>
+      </pattern>
+    </defs>
+  </svg>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><clipPath id="archClip" clipPathUnits="objectBoundingBox"><path transform="scale(0.01000 0.00752)" d="M0 133 V70 A14.1 14.1 0 0 1 3.0 47.4 A13.4 13.4 0 0 1 11.7 27.6 A12.3 12.3 0 0 1 25.0 12.8 A10.2 10.2 0 0 1 39.6 5.4 A6.5 6.5 0 0 1 50.0 4.0 A6.5 6.5 0 0 1 60.4 5.4 A10.2 10.2 0 0 1 75.0 12.8 A12.3 12.3 0 0 1 88.3 27.6 A13.4 13.4 0 0 1 97.0 47.4 A14.1 14.1 0 0 1 100.0 70.0 V133 Z"/></clipPath></svg>
+  <div class="strip">Wedding planning from <strong>₹5,00,000</strong>*</div>
 
   <header class="top">
     <a class="brand" href="/weddings/">Wedding Planner</a>
@@ -27,22 +44,58 @@
   <main id="app">
     <section class="hero">
       <div class="hero-copy">
-        <p class="eyebrow">Weddings, beautifully handled</p>
-        <h1>Your dream wedding, planned end to end</h1>
+        <svg class="cn tl" aria-hidden="true"><use href="#corner"/></svg><svg class="cn tr" aria-hidden="true"><use href="#corner"/></svg><svg class="cn bl" aria-hidden="true"><use href="#corner"/></svg><svg class="cn br" aria-hidden="true"><use href="#corner"/></svg>
+        <p class="ganesha" lang="kn">॥ ಶ್ರೀ ಗಣೇಶಾಯ ನಮಃ ॥</p>
+        <div class="arch-win" aria-hidden="true"></div>
+        <p class="kicker" lang="kn">ಶುಭ ವಿವಾಹ</p>
+        <p class="invite">You are warmly invited</p>
+        <h1>Your dream wedding, <em>planned end to end</em></h1>
+        <p class="lede">One team for the venue, decor, food and every ceremony.</p>
         <div class="price-badge">
-          <span>Complete plan from</span>
-          <strong>₹5 Lakh</strong>
+          <span>Complete wedding planning from</span>
+          <strong>₹5 Lakh*</strong>
           <small>*Starting price. Final quote depends on guests, venue and services.</small>
         </div>
+        <div class="hero-cta">
+          <a href="#leadForm" class="btn gold" data-focus-form>Request callback</a>
+          <a href="#leadForm" class="btn ghost" data-focus-form>Get quotation</a>
+        </div>
+        <span class="seal" lang="kn" aria-hidden="true">ಶುಭ</span>
         <ul class="ticks">
           <li><span data-ic="check"></span>One team, one point of contact</li>
           <li><span data-ic="check"></span>Or book only the services you need</li>
-          <li><span data-ic="check"></span>Free callback — no obligation</li>
+          <li><span data-ic="check"></span>Free callback, no obligation</li>
         </ul>
       </div>
 
+    </section>
+
+    <div class="frieze" aria-hidden="true"></div>
+    <section class="band alt">
+      <p class="kn" lang="kn">ನಮ್ಮ ಸೇವೆಗಳು</p>
+      <h2>Our wedding services</h2>
+      <div id="serviceGrid" class="grid4"></div>
+    </section>
+
+    <div class="frieze" aria-hidden="true"></div>
+    <section id="ceremonies" class="band programme">
+      <p class="kn" lang="kn">ಕಾರ್ಯಕ್ರಮಗಳು</p>
+      <h2>Ceremonies we plan</h2>
+      <ul class="prog">
+        <svg class="cn tl" aria-hidden="true"><use href="#corner"/></svg><svg class="cn tr" aria-hidden="true"><use href="#corner"/></svg><svg class="cn bl" aria-hidden="true"><use href="#corner"/></svg><svg class="cn br" aria-hidden="true"><use href="#corner"/></svg>
+        <li><span lang="kn">ನಿಶ್ಚಿತಾರ್ಥ</span><i></i><b>Engagement</b></li>
+        <li><span lang="kn">ಅರಿಶಿನ</span><i></i><b>Haldi</b></li>
+        <li><span lang="kn">ಮೆಹಂದಿ</span><i></i><b>Mehendi &amp; sangeet</b></li>
+        <li><span lang="kn">ಮುಹೂರ್ತ</span><i></i><b>Wedding muhurtha</b></li>
+        <li><span lang="kn">ಆರತಕ್ಷತೆ</span><i></i><b>Reception</b></li>
+      </ul>
+    </section>
+
+    <section id="enquire" class="formband">
+      <div id="formSlot">
       <form id="leadForm" class="quick" novalidate>
-        <h2>Get a free callback</h2>
+        <svg class="cn tl" aria-hidden="true"><use href="#corner"/></svg><svg class="cn tr" aria-hidden="true"><use href="#corner"/></svg><svg class="cn bl" aria-hidden="true"><use href="#corner"/></svg><svg class="cn br" aria-hidden="true"><use href="#corner"/></svg>
+        <h2>Request a callback or quotation</h2><p id="picked" class="picked" hidden></p>
         <label>Your name <input name="name" required maxlength="100" autocomplete="name" /></label>
         <label>Phone number <input name="phone" type="tel" required maxlength="20" autocomplete="tel" inputmode="tel" /></label>
 
@@ -73,33 +126,20 @@
 
         <input name="website" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true" />
         <p id="formMsg" class="msg" role="status"></p>
-        <button class="btn block" type="submit">Request callback</button>
+        <button class="btn block" type="submit">Request callback / quote</button>
         <p class="fine">We only use your details to call you about your wedding. <a href="#privacy">Privacy</a></p>
       </form>
-    </section>
-
-    <section class="band">
-      <h2>What’s in the complete plan</h2>
-      <div class="grid3">
-        <div><span data-ic="venue"></span><h3>Venue &amp; vendors</h3><p>We shortlist, negotiate and book the venue and every vendor for you.</p></div>
-        <div><span data-ic="decor"></span><h3>Design &amp; decor</h3><p>A theme that feels like you, from the mandap to the table settings.</p></div>
-        <div><span data-ic="check"></span><h3>Day-of coordination</h3><p>A team on the ground so you and your family can simply enjoy it.</p></div>
       </div>
     </section>
 
-    <section class="band alt">
-      <h2>Or choose only what you need</h2>
-      <div id="serviceGrid" class="grid4"></div>
-    </section>
-
-    <section class="band">
+    <section class="band how">
+      <p class="kn" lang="kn">ಹೀಗೆ ನಡೆಯುತ್ತದೆ</p>
       <h2>How it works</h2>
       <ol class="steps">
         <li><b>1</b><span>Leave your name and number</span></li>
         <li><b>2</b><span>We call you back at your preferred time</span></li>
         <li><b>3</b><span>Get a plan and quote that fits your budget</span></li>
       </ol>
-      <p class="center"><a href="#leadForm" class="btn" data-focus-form>Request callback</a></p>
     </section>
 
     <section id="mine" class="card" hidden>
@@ -116,11 +156,34 @@
       <ul id="leadList" class="list"></ul>
     </section>
 
-    <section id="privacy" class="card">
-      <h2>Privacy</h2>
-      <p>When you request a callback we store the details you enter (name, phone, optional email, wedding details and notes) and which ad or link you came from. They are used only to contact you about your wedding and are not sold or shared with other businesses. To have your details deleted, ask us when we call or email us.</p>
-    </section>
   </main>
+  <div class="frieze full" aria-hidden="true"></div>
+  <section class="rsvp">
+    <svg class="cn tl" aria-hidden="true"><use href="#corner"/></svg><svg class="cn tr" aria-hidden="true"><use href="#corner"/></svg>
+    <p class="shubha" lang="kn">॥ ಶುಭಮಸ್ತು ॥</p>
+    <h2>We await your call</h2>
+    <p class="closing">With best compliments &mdash; we look forward to serving your family.</p>
+    <div class="rsvp-cta">
+      <a href="#leadForm" class="btn gold" data-focus-form>Request a callback</a>
+      <a class="btn ghost light rsvp-call" href="#">Call us</a>
+      <a class="btn ghost light rsvp-wa" href="#" target="_blank" rel="noopener">WhatsApp</a>
+    </div>
+  </section>
+  <footer class="foot">
+    <details id="privacy">
+      <summary>Privacy</summary>
+      <p>When you request a callback we store the details you enter (name, phone, optional email, wedding details and notes) and which ad or link you came from. They are used only to contact you about your wedding and are not sold or shared with other businesses. To have your details deleted, ask us when we call or email us.</p>
+    </details>
+    <p id="credits" class="credits"></p>
+  </footer>
+
+  <div id="sheet" class="sheet" hidden>
+    <div class="backdrop" data-close></div>
+    <div class="panel" tabindex="-1" role="dialog" aria-modal="true" aria-label="Request a callback or quotation">
+      <button class="close" type="button" aria-label="Close" data-close>&times;</button>
+      <div id="sheetBody"></div>
+    </div>
+  </div>
 
   <nav class="dock" aria-label="Contact">
     <a id="phoneLink" href="#"><span data-ic="phone"></span>Call</a>
@@ -128,6 +191,6 @@
     <a href="#leadForm" class="cta" data-focus-form>Request callback</a>
   </nav>
 
-  <script type="module" src="js/main.js"></script>
+  <script type="module" src="js/main.js?v=9"></script>
 </body>
 </html>

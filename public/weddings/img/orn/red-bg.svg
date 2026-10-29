@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <defs>
+    <path id="p" d="M0 -8C-5 -14-5 -24 0 -32C5 -24 5 -14 0 -8Z"/>
+    <g id="kr"><path d="M0 0C-9-2-11-13-4-19C2-24 11-21 11-14C11-9 6-7 3-10C1-12 2-15 5-14C4-17 0-17-2-15C-5-12-4-7 0-4C2-3 3-1 0 0Z" fill="#e8b04a" fill-opacity=".16" stroke="#e8b04a" stroke-opacity=".6" stroke-width=".9"/><circle cx="5" cy="-14" r="1" fill="#e8b04a" fill-opacity=".7"/></g>
+    <g id="ros">
+  <g fill="#c3302a" fill-opacity=".28" stroke="#e8b04a" stroke-opacity=".6" stroke-width="1"><g transform="rotate(0.0) scale(0.95)"><use href="#p"/></g><g transform="rotate(30.0) scale(0.95)"><use href="#p"/></g><g transform="rotate(60.0) scale(0.95)"><use href="#p"/></g><g transform="rotate(90.0) scale(0.95)"><use href="#p"/></g><g transform="rotate(120.0) scale(0.95)"><use href="#p"/></g><g transform="rotate(150.0) scale(0.95)"><use href="#p"/></g><g transform="rotate(180.0) scale(0.95)"><use href="#p"/></g><g transform="rotate(210.0) scale(0.95)"><use href="#p"/></g><g transform="rotate(240.0) scale(0.95)"><use href="#p"/></g><g transform="rotate(270.0) scale(0.95)"><use href="#p"/></g><g transform="rotate(300.0) scale(0.95)"><use href="#p"/></g><g transform="rotate(330.0) scale(0.95)"><use href="#p"/></g></g>
+  <g fill="#e8b04a" fill-opacity=".16" stroke="#e8b04a" stroke-opacity=".7" stroke-width=".9"><g transform="rotate(22.5) scale(0.62)"><use href="#p"/></g><g transform="rotate(67.5) scale(0.62)"><use href="#p"/></g><g transform="rotate(112.5) scale(0.62)"><use href="#p"/></g><g transform="rotate(157.5) scale(0.62)"><use href="#p"/></g><g transform="rotate(202.5) scale(0.62)"><use href="#p"/></g><g transform="rotate(247.5) scale(0.62)"><use href="#p"/></g><g transform="rotate(292.5) scale(0.62)"><use href="#p"/></g><g transform="rotate(337.5) scale(0.62)"><use href="#p"/></g></g>
+  <circle r="14" fill="none" stroke="#e8b04a" stroke-opacity=".55" stroke-width=".9" stroke-dasharray="1.4 2.6"/>
+  <circle r="9" fill="#5e100e" stroke="#e8b04a" stroke-opacity=".7" stroke-width="1"/>
+  <g fill="#e8b04a" fill-opacity=".75"><circle cx="5.0" cy="0.0" r=".9"/><circle cx="2.5" cy="4.3" r=".9"/><circle cx="-2.5" cy="4.3" r=".9"/><circle cx="-5.0" cy="0.0" r=".9"/><circle cx="-2.5" cy="-4.3" r=".9"/><circle cx="2.5" cy="-4.3" r=".9"/><circle r="1.6"/></g>
+</g>
+  </defs>
+  <rect width="120" height="120" fill="#7d1512"/>
+  <!-- diagonal lattice -->
+  <g fill="none" stroke="#e8b04a" stroke-opacity=".28" stroke-width=".8">
+    <path d="M0 0L60 60L120 0M0 120L60 60L120 120"/>
+    <path d="M30 0L0 30M90 0L120 30M30 120L0 90M90 120L120 90"/>
+    <path d="M60 0L30 30L0 60M60 0L90 30L120 60M60 120L30 90L0 60M60 120L90 90L120 60"/>
+  </g>
+  <g fill="#e8b04a" fill-opacity=".5"><circle cx="30" cy="30" r="1.6"/><circle cx="90" cy="30" r="1.6"/><circle cx="30" cy="90" r="1.6"/><circle cx="90" cy="90" r="1.6"/><circle cx="45" cy="15" r="1"/><circle cx="75" cy="15" r="1"/><circle cx="45" cy="105" r="1"/><circle cx="75" cy="105" r="1"/><circle cx="15" cy="45" r="1"/><circle cx="15" cy="75" r="1"/><circle cx="105" cy="45" r="1"/><circle cx="105" cy="75" r="1"/></g>
+  <!-- rosettes: centre + four corners (tile seamlessly) -->
+  <use href="#ros" x="60" y="60"/>
+  <use href="#ros" x="0" y="0"/><use href="#ros" x="120" y="0"/><use href="#ros" x="0" y="120"/><use href="#ros" x="120" y="120"/>
+  <!-- paisley pairs straddling the tile edges so they join across the seams -->
+<g transform="translate(60 0)"><g transform="rotate(180) translate(-8 0)"><use href="#kr"/></g><g transform="rotate(180) translate(8 0) scale(-1 1)"><use href="#kr"/></g></g>
+<g transform="translate(60 120)"><g transform="rotate(0) translate(-8 0)"><use href="#kr"/></g><g transform="rotate(0) translate(8 0) scale(-1 1)"><use href="#kr"/></g></g>
+<g transform="translate(0 60) rotate(90)"><g transform="rotate(0) translate(-8 0)"><use href="#kr"/></g><g transform="rotate(0) translate(8 0) scale(-1 1)"><use href="#kr"/></g></g>
+<g transform="translate(120 60) rotate(90)"><g transform="rotate(180) translate(-8 0)"><use href="#kr"/></g><g transform="rotate(180) translate(8 0) scale(-1 1)"><use href="#kr"/></g></g>
+</svg>
