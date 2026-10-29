@@ -14,6 +14,49 @@ service cloud.firestore {
         request.auth.token.email == 'ravikiran.kalal@gmail.com';
     }
 
+    // Wedding planner app (public/weddings). Keep in sync with PLANNER_EMAIL in
+    // public/weddings/js/config.js.
+    function isWeddingPlanner() {
+      return request.auth != null &&
+        request.auth.token.email == 'ravikiran.kalal@gmail.com';
+    }
+    function str(d, k, max) {
+      return d[k] is string && d[k].size() <= max;
+    }
+    function validLead(d) {
+      return d.keys().hasOnly(['name', 'phone', 'email', 'city', 'weddingDate', 'guests',
+                               'callbackTime', 'interest', 'services', 'notes', 'source',
+                               'status', 'uid', 'createdAt'])
+        && d.keys().hasAll(['name', 'phone', 'email', 'city', 'weddingDate', 'guests',
+                            'callbackTime', 'interest', 'services', 'notes', 'source',
+                            'status', 'uid', 'createdAt'])
+        && str(d, 'name', 100) && d.name.size() >= 2
+        && str(d, 'phone', 20) && d.phone.matches('^[+]?[0-9 ()-]{7,20}$')
+        && str(d, 'email', 120) && str(d, 'city', 80) && str(d, 'weddingDate', 10)
+        && str(d, 'notes', 1000)
+        && (d.guests == null || (d.guests is int && d.guests >= 0 && d.guests <= 100000))
+        && d.callbackTime in ['morning', 'afternoon', 'evening', 'anytime']
+        && d.interest in ['full', 'selected']
+        && d.services is list && d.services.size() <= 20
+        && d.source is map && d.source.size() <= 5
+        && d.status == 'new'
+        && d.createdAt == request.time
+        && (d.uid == null || (request.auth != null && d.uid == request.auth.uid));
+    }
+
+    // Anyone (signed in or not) may submit a callback request, but only a
+    // well-formed one; they can never read or change it afterwards. A signed-in
+    // customer can read back their own. Only the planner reads/manages all.
+    match /weddingLeads/{leadId} {
+      allow create: if validLead(request.resource.data);
+      allow read: if isWeddingPlanner()
+        || (request.auth != null && resource.data.uid == request.auth.uid);
+      allow update: if isWeddingPlanner()
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['status', 'plannerNote', 'updatedAt']);
+      allow delete: if isWeddingPlanner();
+    }
+
     // This is a private tool for a small team, not a multi-tenant app.
     // The two financial admins can read and write everything; the super
     // admin gets read-only oversight of everything and can never write —

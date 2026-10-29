@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Wedding Planner — plan your whole wedding, or just the services you need</title>
+  <meta name="description" content="Book complete wedding planning or pick individual services — venue, decor, catering, photography and more. Leave your number and we'll call you back." />
+  <meta name="theme-color" content="#8c2f4b" />
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" />
+  <link rel="stylesheet" href="css/weddings.css" />
+  <link rel="modulepreload" href="js/firebase.js" />
+</head>
+<body>
+  <header class="top">
+    <a class="brand" href="/weddings/">Wedding Planner</a>
+    <nav>
+      <a id="callLink" href="#enquire" class="btn small">Request a callback</a>
+      <button id="authBtn" class="link" type="button">Sign in</button>
+    </nav>
+  </header>
+
+  <main id="app">
+    <section class="hero">
+      <h1>Your wedding, planned your way</h1>
+      <p>Hand us the whole celebration, or choose only the services you need. Leave your number and we'll call you back.</p>
+      <a href="#enquire" class="btn">Request a callback</a>
+      <p class="contact">Or reach us now: <a id="phoneLink" href="#">Call</a> · <a id="waLink" href="#" target="_blank" rel="noopener">WhatsApp</a></p>
+    </section>
+
+    <section class="choices">
+      <article>
+        <h2>Complete planning</h2>
+        <p>One team from first meeting to the last guest leaving — venue, vendors, schedule and day-of coordination.</p>
+      </article>
+      <article>
+        <h2>Pick your services</h2>
+        <p>Already sorted some things? Book just decor, catering, photography or any mix of services.</p>
+      </article>
+    </section>
+
+    <section id="enquire" class="card">
+      <h2>Request a callback</h2>
+      <form id="leadForm" novalidate>
+        <fieldset class="seg">
+          <legend>I want</legend>
+          <label><input type="radio" name="interest" value="full" checked /> Complete wedding planning</label>
+          <label><input type="radio" name="interest" value="selected" /> Selected services</label>
+        </fieldset>
+
+        <fieldset id="servicesBox" class="services" hidden>
+          <legend>Which services?</legend>
+        </fieldset>
+
+        <label>Your name <input name="name" required maxlength="100" autocomplete="name" /></label>
+        <label>Phone number <input name="phone" type="tel" required maxlength="20" autocomplete="tel" inputmode="tel" /></label>
+        <label>Best time to call
+          <select name="callbackTime">
+            <option value="anytime">Any time</option>
+            <option value="morning">Morning</option>
+            <option value="afternoon">Afternoon</option>
+            <option value="evening">Evening</option>
+          </select>
+        </label>
+        <div class="row">
+          <label>Wedding date (if known) <input name="weddingDate" type="date" /></label>
+          <label>Approx. guests <input name="guests" type="number" min="0" max="100000" inputmode="numeric" /></label>
+        </div>
+        <label>City <input name="city" maxlength="80" autocomplete="address-level2" /></label>
+        <label>Email (optional) <input name="email" type="email" maxlength="120" autocomplete="email" /></label>
+        <label>Anything else we should know? <textarea name="notes" rows="3" maxlength="1000"></textarea></label>
+
+        <!-- Honeypot: real people never see or fill this. -->
+        <input name="website" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true" />
+
+        <p id="formMsg" class="msg" role="status"></p>
+        <button class="btn" type="submit">Request a callback</button>
+        <p class="fine">We use your details only to call you about your wedding. See <a href="#privacy">privacy</a>.</p>
+      </form>
+    </section>
+
+    <section id="mine" class="card" hidden>
+      <h2>Your requests</h2>
+      <ul id="mineList" class="list"></ul>
+    </section>
+
+    <section id="admin" class="card" hidden>
+      <h2>Leads</h2>
+      <p id="adminMsg" class="msg"></p>
+      <div id="adminTools" hidden>
+        <select id="statusFilter"><option value="">All statuses</option></select>
+      </div>
+      <ul id="leadList" class="list"></ul>
+    </section>
+
+    <section id="privacy" class="card">
+      <h2>Privacy</h2>
+      <p>When you request a callback we store the details you enter (name, phone, optional email, wedding details and notes) and which ad or link you came from. They are used only to contact you about your wedding and are not sold or shared with other businesses. To have your details deleted, ask us when we call or email us.</p>
+    </section>
+  </main>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

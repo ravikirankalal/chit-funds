@@ -124,6 +124,15 @@ firebase.json             hosting + emulator config
 docs/                     dev-tool auth notes, Firebase project notes
 ```
 
+## Wedding planner app (`/weddings`)
+
+A separate static app at `https://localbc-41b52.web.app/weddings`, in `public/weddings/` with its own
+page, CSS and JS — it shares only the Firebase project and `firebase-config.js` with the chit funds app.
+Customers (signed in or not) request a callback for full planning or selected services; the planner
+(`PLANNER_EMAIL` in `public/weddings/js/config.js`, duplicated in `firestore.rules`) sees and manages
+leads after signing in at the same page. Data lives in the `weddingLeads` collection. Set `CONTACT` and
+`ADS` in `config.js` before running Google Ads. Local testing: open `/weddings/?emulator=1`.
+
 ## Data model (Firestore)
 
 ```
