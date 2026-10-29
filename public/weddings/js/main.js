@@ -7,6 +7,7 @@ import {
 } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
 import { SERVICES, ADS, PLANNER_EMAIL, CONTACT } from './config.js';
 import { submitLead, watchMyLeads } from './leads.js';
+import { icon } from './icons.js';
 import { showAdmin, hideAdmin } from './admin.js';
 
 const $ = function (id) { return document.getElementById(id); };
@@ -31,8 +32,25 @@ function trackConversion() {
 }
 
 // ---- Contact links -------------------------------------------------------
-$('phoneLink').href = 'tel:+' + CONTACT.phone;
+$('phoneLink').href = $('phoneLinkTop').href = 'tel:+' + CONTACT.phone;
 $('waLink').href = 'https://wa.me/' + CONTACT.whatsapp;
+
+// ---- Icons, service tiles, "request callback" shortcuts -------------------
+document.querySelectorAll('[data-ic]').forEach(function (n) { n.innerHTML = icon(n.dataset.ic); });
+SERVICES.forEach(function (s) {
+  const t = document.createElement('div');
+  t.className = 'tile';
+  t.innerHTML = '<span>' + icon(s.id) + '</span>';
+  t.appendChild(document.createTextNode(s.label));
+  $('serviceGrid').appendChild(t);
+});
+document.querySelectorAll('[data-focus-form]').forEach(function (a) {
+  a.addEventListener('click', function (e) {
+    e.preventDefault();
+    form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setTimeout(function () { form.elements.name.focus({ preventScroll: true }); }, 400);
+  });
+});
 
 // ---- Service checkboxes --------------------------------------------------
 const box = $('servicesBox');
@@ -40,7 +58,9 @@ SERVICES.forEach(function (s) {
   const label = document.createElement('label');
   const cb = document.createElement('input');
   cb.type = 'checkbox'; cb.name = 'service'; cb.value = s.id;
-  label.append(cb, document.createTextNode(s.label));
+  const chip = document.createElement('span');
+  chip.textContent = s.label;
+  label.append(cb, chip);
   box.appendChild(label);
 });
 form.addEventListener('change', function (e) {
@@ -80,6 +100,7 @@ form.addEventListener('submit', async function (e) {
     trackConversion();
     form.reset();
     box.hidden = true;
+    form.querySelector('details').open = false;
     setMsg('Thank you! We\'ll call you back soon.', 'ok');
   } catch (err) {
     console.error(err);
