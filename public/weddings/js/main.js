@@ -5,7 +5,7 @@ import { auth } from './firebase.js';
 import {
   GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged
 } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
-import { SERVICES, ADS, PLANNER_EMAIL, CONTACT } from './config.js';
+import { SERVICES, ADS, PLANNER_EMAIL, CONTACT } from './config.js?v=2';
 import { submitLead, watchMyLeads } from './leads.js';
 import { icon } from './icons.js';
 import { showAdmin, hideAdmin } from './admin.js';
@@ -34,23 +34,67 @@ function trackConversion() {
 // ---- Contact links -------------------------------------------------------
 $('phoneLink').href = $('phoneLinkTop').href = 'tel:+' + CONTACT.phone;
 $('waLink').href = 'https://wa.me/' + CONTACT.whatsapp;
+document.querySelectorAll('.rsvp-call').forEach(function (a) { a.href = 'tel:+' + CONTACT.phone; });
+document.querySelectorAll('.rsvp-wa').forEach(function (a) { a.href = 'https://wa.me/' + CONTACT.whatsapp; });
 
 // ---- Icons, service tiles, "request callback" shortcuts -------------------
 document.querySelectorAll('[data-ic]').forEach(function (n) { n.innerHTML = icon(n.dataset.ic); });
+// The form opens as a bottom sheet over the page (no scrolling); it is moved
+// back to its spot after the services grid when the sheet closes.
+const sheet = $('sheet');
+function openSheet() {
+  $('sheetBody').appendChild(form);
+  sheet.hidden = false;
+  document.body.style.overflow = 'hidden';
+  // Focus the panel, not a field: focusing an input would pop the keyboard open.
+  $('sheetBody').parentNode.focus();
+}
+function closeSheet() {
+  $('formSlot').appendChild(form);
+  sheet.hidden = true;
+  document.body.style.overflow = '';
+}
+function focusForm() { openSheet(); }
+sheet.addEventListener('click', function (e) { if (e.target.closest('[data-close]')) closeSheet(); });
+document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !sheet.hidden) closeSheet(); });
+document.querySelectorAll('[data-focus-form]').forEach(function (a) {
+  a.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); focusForm(); });
+});
+// The whole hero is a tap target for "request a callback".
+document.querySelector('.hero').addEventListener('click', focusForm);
+
 SERVICES.forEach(function (s) {
-  const t = document.createElement('div');
+  const t = document.createElement('button');
+  t.type = 'button';
   t.className = 'tile';
-  t.innerHTML = '<span>' + icon(s.id) + '</span>';
-  t.appendChild(document.createTextNode(s.label));
+  t.dataset.service = s.id;
+  t.id = 'svc-' + s.id;
+  const thumb = document.createElement('span');
+  thumb.className = 'thumb';
+  thumb.style.backgroundImage = 'url(img/' + s.id + '.jpg?v=3)';
+  const cap = document.createElement('span');
+  cap.className = 'cap';
+  const name = document.createElement('b'); name.textContent = s.label;
+  const blurb = document.createElement('small'); blurb.textContent = s.blurb || '';
+  const go = document.createElement('em'); go.textContent = 'Get quote \u203A';
+  cap.append(name, blurb, go);
+  t.append(thumb, cap);
+  t.setAttribute('aria-label', s.label + ' - get a quote');
+  t.addEventListener('click', function () { pickService(s); });
   $('serviceGrid').appendChild(t);
 });
-document.querySelectorAll('[data-focus-form]').forEach(function (a) {
-  a.addEventListener('click', function (e) {
-    e.preventDefault();
-    form.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    setTimeout(function () { form.elements.name.focus({ preventScroll: true }); }, 400);
+
+// Photo credits (Unsplash API guidelines ask for photographer + Unsplash links).
+fetch('img/credits.json').then(function (r) { return r.json(); }).then(function (list) {
+  const p = $('credits');
+  p.append('Photos on ');
+  const u = document.createElement('a'); u.href = 'https://unsplash.com/?utm_source=wedding_planner&utm_medium=referral'; u.textContent = 'Unsplash';
+  p.append(u, ' by ');
+  list.forEach(function (c, i) {
+    const a = document.createElement('a'); a.href = c.url; a.textContent = c.by; a.rel = 'noopener';
+    p.append(a, i < list.length - 1 ? ', ' : '.');
   });
-});
+}).catch(function () {});
 
 // ---- Service checkboxes --------------------------------------------------
 const box = $('servicesBox');
@@ -66,6 +110,17 @@ SERVICES.forEach(function (s) {
 form.addEventListener('change', function (e) {
   if (e.target.name === 'interest') box.hidden = e.target.value !== 'selected';
 });
+
+// A tapped service tile pre-selects that service in the form and jumps to it.
+function pickService(s) {
+  form.elements.interest.value = 'selected';
+  box.hidden = false;
+  form.querySelectorAll('input[name=service]').forEach(function (cb) { if (cb.value === s.id) cb.checked = true; });
+  const picked = $('picked');
+  picked.hidden = false;
+  picked.textContent = 'Quotation for: ' + form.querySelectorAll('input[name=service]:checked').length + ' service(s) selected. Add your number and we\'ll call you.';
+  focusForm();
+}
 
 // ---- Submit --------------------------------------------------------------
 function setMsg(text, kind) { msg.textContent = text; msg.className = 'msg ' + (kind || ''); }
@@ -101,7 +156,9 @@ form.addEventListener('submit', async function (e) {
     form.reset();
     box.hidden = true;
     form.querySelector('details').open = false;
+    $('picked').hidden = true;
     setMsg('Thank you! We\'ll call you back soon.', 'ok');
+    if (!sheet.hidden) setTimeout(closeSheet, 2500);
   } catch (err) {
     console.error(err);
     setMsg('Sorry, something went wrong. Please try again.', 'err');

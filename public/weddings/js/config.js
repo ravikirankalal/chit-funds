@@ -13,18 +13,18 @@ export const CONTACT = { phone: '910000000000', whatsapp: '910000000000' };
 export const ADS = { id: '', conversionLabel: '' };
 
 export const SERVICES = [
-  { id: 'venue', label: 'Venue & booking' },
-  { id: 'decor', label: 'Decoration & mandap' },
-  { id: 'catering', label: 'Catering' },
-  { id: 'photo', label: 'Photography' },
-  { id: 'video', label: 'Videography' },
-  { id: 'makeup', label: 'Bridal makeup' },
-  { id: 'mehendi', label: 'Mehendi' },
-  { id: 'music', label: 'Music & DJ' },
-  { id: 'invites', label: 'Invitations' },
-  { id: 'priest', label: 'Priest / pandit' },
-  { id: 'transport', label: 'Guest transport' },
-  { id: 'stay', label: 'Guest accommodation' }
+  { id: 'venue', label: 'Venue', blurb: 'Halls, lawns, resorts' },
+  { id: 'decor', label: 'Decoration & mandap', blurb: 'Mandap, stage, flowers' },
+  { id: 'catering', label: 'Catering', blurb: 'Menus for every guest' },
+  { id: 'photo', label: 'Photography', blurb: 'Candid & traditional' },
+  { id: 'video', label: 'Videography', blurb: 'Films & highlights' },
+  { id: 'makeup', label: 'Bridal makeup', blurb: 'Bridal & family' },
+  { id: 'mehendi', label: 'Mehendi', blurb: 'Bridal & guest artists' },
+  { id: 'music', label: 'Music & DJ', blurb: 'DJ, band, sangeet' },
+  { id: 'invites', label: 'Invitations', blurb: 'Cards & e-invites' },
+  { id: 'priest', label: 'Priest / pandit', blurb: 'Rituals & muhurat' },
+  { id: 'transport', label: 'Guest transport', blurb: 'Cars & guest travel' },
+  { id: 'stay', label: 'Guest stay', blurb: 'Rooms for family' }
 ];
 
 export const STATUSES = ['new', 'contacted', 'booked', 'closed'];

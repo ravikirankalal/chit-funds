@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 40" width="280" height="40">
+  <defs>
+    <path id="pt" d="M0 0C-4-5-5-13 0-19C5-13 4-5 0 0Z"/>
+    <g id="arm">
+  <path d="M104 20H98" stroke="#d9962b" stroke-width="1.2"/>
+  <g transform="translate(94 20)"><path d="M0-5L5 0L0 5L-5 0Z" fill="#9c1c1a" stroke="#d9962b" stroke-width="1"/><circle r="1.4" fill="#f1d58a"/></g>
+  <path d="M89 20H30" stroke="#d9962b" stroke-width="1.1"/>
+  <path d="M89 16.5H44M89 23.5H44" stroke="#d9962b" stroke-width=".7" stroke-opacity=".8"/>
+  <path d="M44 16.5C40 16.5 38 20 34 20C38 20 40 23.5 44 23.5" fill="none" stroke="#d9962b" stroke-width=".7" stroke-opacity=".8"/>
+  <g fill="#d9962b"><circle cx="82" cy="20" r="1.2"/><circle cx="74" cy="20" r="1.2"/><circle cx="66" cy="20" r="1.2"/><circle cx="58" cy="20" r="1.2"/></g>
+  <path d="M30 20H14" stroke="#d9962b" stroke-width="1.1"/><circle cx="10" cy="20" r="1.6" fill="#d9962b"/><circle cx="4.5" cy="20" r="1.1" fill="#d9962b"/><circle cx="1" cy="20" r=".7" fill="#d9962b"/>
+</g>
+    <g id="kr"><path d="M0 0C-9-2-12-14-5-20C2-25 12-22 12-14C12-9 7-7 4-10C2-12 3-15 6-14C5-17 1-17-1-15C-4-12-3-7 0-4C2-3 3-1 0 0Z" fill="#9c1c1a" stroke="#d9962b" stroke-width="1.2"/><path d="M-1-6C-4-9-5-14-2-17" fill="none" stroke="#f1d58a" stroke-width="1" stroke-linecap="round"/><circle cx="6" cy="-14" r="1.2" fill="#f1d58a"/></g>
+  </defs>
+  <use href="#arm" x="0"/>
+  <g transform="translate(280 0) scale(-1 1)"><use href="#arm"/></g>
+  <!-- paisleys flanking the rosette, pointing outward -->
+  <g transform="translate(123 22) rotate(-90) scale(.9)"><use href="#kr"/></g>
+  <g transform="translate(157 22) rotate(90) scale(-.9 .9)"><use href="#kr"/></g>
+  <!-- central rosette -->
+  <g transform="translate(140 20)">
+    <circle r="17" fill="#fcf4dc" fill-opacity=".0" stroke="#d9962b" stroke-width="1" stroke-dasharray="1.2 2.4"/>
+    <g transform="rotate(0.0) scale(0.9)"><use href="#pt" fill="#f6e3a8" stroke="#b8791a" stroke-width="1.11"/></g><g transform="rotate(30.0) scale(0.9)"><use href="#pt" fill="#f6e3a8" stroke="#b8791a" stroke-width="1.11"/></g><g transform="rotate(60.0) scale(0.9)"><use href="#pt" fill="#f6e3a8" stroke="#b8791a" stroke-width="1.11"/></g><g transform="rotate(90.0) scale(0.9)"><use href="#pt" fill="#f6e3a8" stroke="#b8791a" stroke-width="1.11"/></g><g transform="rotate(120.0) scale(0.9)"><use href="#pt" fill="#f6e3a8" stroke="#b8791a" stroke-width="1.11"/></g><g transform="rotate(150.0) scale(0.9)"><use href="#pt" fill="#f6e3a8" stroke="#b8791a" stroke-width="1.11"/></g><g transform="rotate(180.0) scale(0.9)"><use href="#pt" fill="#f6e3a8" stroke="#b8791a" stroke-width="1.11"/></g><g transform="rotate(210.0) scale(0.9)"><use href="#pt" fill="#f6e3a8" stroke="#b8791a" stroke-width="1.11"/></g><g transform="rotate(240.0) scale(0.9)"><use href="#pt" fill="#f6e3a8" stroke="#b8791a" stroke-width="1.11"/></g><g transform="rotate(270.0) scale(0.9)"><use href="#pt" fill="#f6e3a8" stroke="#b8791a" stroke-width="1.11"/></g><g transform="rotate(300.0) scale(0.9)"><use href="#pt" fill="#f6e3a8" stroke="#b8791a" stroke-width="1.11"/></g><g transform="rotate(330.0) scale(0.9)"><use href="#pt" fill="#f6e3a8" stroke="#b8791a" stroke-width="1.11"/></g>
+    <g transform="rotate(22.5) scale(0.62)"><use href="#pt" fill="#e8b04a" stroke="#b8791a" stroke-width="1.61"/></g><g transform="rotate(67.5) scale(0.62)"><use href="#pt" fill="#e8b04a" stroke="#b8791a" stroke-width="1.61"/></g><g transform="rotate(112.5) scale(0.62)"><use href="#pt" fill="#e8b04a" stroke="#b8791a" stroke-width="1.61"/></g><g transform="rotate(157.5) scale(0.62)"><use href="#pt" fill="#e8b04a" stroke="#b8791a" stroke-width="1.61"/></g><g transform="rotate(202.5) scale(0.62)"><use href="#pt" fill="#e8b04a" stroke="#b8791a" stroke-width="1.61"/></g><g transform="rotate(247.5) scale(0.62)"><use href="#pt" fill="#e8b04a" stroke="#b8791a" stroke-width="1.61"/></g><g transform="rotate(292.5) scale(0.62)"><use href="#pt" fill="#e8b04a" stroke="#b8791a" stroke-width="1.61"/></g><g transform="rotate(337.5) scale(0.62)"><use href="#pt" fill="#e8b04a" stroke="#b8791a" stroke-width="1.61"/></g>
+    <g transform="rotate(0.0) scale(0.4)"><use href="#pt" fill="#c3302a" stroke="#b8791a" stroke-width="2.50"/></g><g transform="rotate(45.0) scale(0.4)"><use href="#pt" fill="#c3302a" stroke="#b8791a" stroke-width="2.50"/></g><g transform="rotate(90.0) scale(0.4)"><use href="#pt" fill="#c3302a" stroke="#b8791a" stroke-width="2.50"/></g><g transform="rotate(135.0) scale(0.4)"><use href="#pt" fill="#c3302a" stroke="#b8791a" stroke-width="2.50"/></g><g transform="rotate(180.0) scale(0.4)"><use href="#pt" fill="#c3302a" stroke="#b8791a" stroke-width="2.50"/></g><g transform="rotate(225.0) scale(0.4)"><use href="#pt" fill="#c3302a" stroke="#b8791a" stroke-width="2.50"/></g><g transform="rotate(270.0) scale(0.4)"><use href="#pt" fill="#c3302a" stroke="#b8791a" stroke-width="2.50"/></g><g transform="rotate(315.0) scale(0.4)"><use href="#pt" fill="#c3302a" stroke="#b8791a" stroke-width="2.50"/></g>
+    <circle r="4.2" fill="#9c1c1a" stroke="#d9962b" stroke-width="1.2"/><circle r="1.8" fill="#f1d58a"/>
+  </g>
+</svg>
