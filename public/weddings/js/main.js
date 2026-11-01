@@ -6,9 +6,9 @@ import {
   GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged
 } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
 import { SERVICES, ADS, PLANNER_EMAIL, CONTACT } from './config.js?v=5';
-import { submitLead, watchMyLeads } from './leads.js';
+import { submitLead, watchMyLeads } from './leads.js?v=2';
 import { icon } from './icons.js';
-import { showAdmin, hideAdmin } from './admin.js';
+import { showAdmin, hideAdmin } from './admin.js?v=2';
 
 const $ = function (id) { return document.getElementById(id); };
 const form = $('leadForm');

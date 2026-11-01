@@ -2,7 +2,7 @@
 
 import { db } from './firebase.js';
 import {
-  collection, addDoc, doc, updateDoc, query, where, orderBy, onSnapshot, serverTimestamp
+  collection, addDoc, doc, updateDoc, deleteDoc, query, where, orderBy, onSnapshot, serverTimestamp
 } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
 
 const leads = collection(db, 'weddingLeads');
@@ -51,4 +51,8 @@ export function watchAllLeads(cb, onError) {
 
 export function updateLead(id, fields) {
   return updateDoc(doc(db, 'weddingLeads', id), { ...fields, updatedAt: serverTimestamp() });
+}
+
+export function deleteLead(id) {
+  return deleteDoc(doc(db, 'weddingLeads', id));
 }
