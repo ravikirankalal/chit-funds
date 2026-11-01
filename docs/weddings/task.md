@@ -14,21 +14,26 @@ Status key: [ ] open, [~] in progress, [x] done. Update this file as items finis
       (`public/weddings/icons/icon.svg`) and theme colour. Depends on A1.
 - [ ] **A3. Real phone and WhatsApp numbers.** Replace the placeholder `910000000000` in
       `public/weddings/js/config.js` (`CONTACT.phone`, `CONTACT.whatsapp`). Needs: numbers from owner.
-- [ ] **A4. End-to-end lead test on the live site.** Submit a callback request, confirm it
-      appears under Leads when signed in as the planner, change its status, then delete the test lead.
+- [~] **A4. End-to-end lead test on the live site.** DONE 2026-11-01: anonymous create accepted by the
+      rules; anonymous read/list/delete refused (403); test lead deleted with the Firebase CLI.
+      NOT DONE: seeing it in the Leads screen and changing its status (needs the planner's own Google sign-in), and a real submit from the page form.
 - [ ] **A5. Google Ads conversion tracking.** Fill `ADS` in `config.js` (conversion ID and
       label); confirm the conversion fires once per successful lead; check UTM/`gclid` is stored on the lead.
       Needs: Ads account details from owner.
 
 ## B. Should do soon
 
-- [ ] **B1. Privacy policy page.** A standalone page (not the collapsed footer note),
+- [x] **B1. Privacy policy page.** Added `public/weddings/privacy/index.html` (PR pending). Owner to read it; add business name and contact once known.
+- (was) B1: A standalone page (not the collapsed footer note),
       linked from the form and footer, covering name, phone, email, notes and ad source.
-- [ ] **B2. Spam protection.** Review options beyond the honeypot and Firestore field rules;
+- [ ] **B2. Spam protection.** Reviewed: nothing more to do without a Blaze-plan Cloud Function or App Check enforcement; watch lead quality instead.
+- (was) B2: Review options beyond the honeypot and Firestore field rules;
       note that App Check enforcement would affect the chit-funds app.
-- [ ] **B3. HTML caching.** Add a no-cache rule for HTML in `firebase.json` so deploys show up
+- [~] **B3. HTML caching.** Separate PR `hosting-html-no-cache` (affects both apps); verified on a preview channel.
+- (was) B3: Add a no-cache rule for HTML in `firebase.json` so deploys show up
       at once. It is a shared config, so ship it as its own PR (it affects chit funds too).
-- [ ] **B4. Tablet and desktop check.** View the wide layouts; fix any problems.
+- [ ] **B4. Tablet and desktop check.** Not possible from the phone-only setup; needs a browser on a larger screen.
+- (was) B4: View the wide layouts; fix any problems.
 - [ ] **B5. Kannada proofreading.** Have a native speaker check all Kannada text
       (ಶುಭ ವಿವಾಹ, ಕಾರ್ಯಕ್ರಮಗಳು, ceremony names, ಹೀಗೆ ನಡೆಯುತ್ತದೆ, ಶುಭಮಸ್ತು, Ganesha line).
 - [ ] **B6. Real photos.** Replace Unsplash stock with the owner's own event photos when
