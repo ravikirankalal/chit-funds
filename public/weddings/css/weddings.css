@@ -493,3 +493,8 @@ body { background: #f6e9c9 url(../img/orn/bg.svg?v=1) center top / 96px 96px; }
 
 /* Section frieze: arcade of cusped arches with paisley-and-bud centre */
 .frieze, .frieze.full { height: 36px; border: 0; background: url(../img/orn/frieze2.svg?v=1) repeat-x center / auto 36px; }
+
+/* Brand lockup: SW monogram + name */
+.brand { display: inline-flex; align-items: center; gap: .55rem; }
+.brand-mark { height: 25px; width: auto; display: block; }
+@media (max-width: 360px) { .brand { font-size: 1.3rem; } .brand-mark { height: 21px; } }
