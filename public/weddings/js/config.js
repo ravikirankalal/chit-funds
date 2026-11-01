@@ -10,7 +10,7 @@ export const CONTACT = { phone: '919901216122', whatsapp: '919901216122' };
 
 // Google Ads. Leave ADS_ID empty to disable tracking entirely.
 // ADS_ID looks like 'AW-1234567890'; the label is from the conversion action.
-export const ADS = { id: '', conversionLabel: '' };
+export const ADS = { id: 'AW-11297900974', conversionLabel: '' };  // label: from the conversion's Event snippet
 
 export const SERVICES = [
   { id: 'venue', label: 'Venue', blurb: 'Halls, lawns, resorts' },
