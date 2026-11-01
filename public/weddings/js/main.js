@@ -5,7 +5,7 @@ import { auth } from './firebase.js';
 import {
   GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged
 } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
-import { SERVICES, ADS, PLANNER_EMAIL, CONTACT } from './config.js?v=2';
+import { SERVICES, ADS, PLANNER_EMAIL, CONTACT } from './config.js?v=3';
 import { submitLead, watchMyLeads } from './leads.js';
 import { icon } from './icons.js';
 import { showAdmin, hideAdmin } from './admin.js';
