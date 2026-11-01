@@ -161,7 +161,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tiro+Kannada:ital@0;1&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Mulish:wght@400;500;600;700&display=swap" />
-  <link rel="stylesheet" href="css/weddings.css?v=44" />
+  <link rel="stylesheet" href="css/weddings.css?v=52" />
   <link rel="modulepreload" href="js/firebase.js" />
   <link rel="preload" as="image" href="img/hero.jpg?v=2" />
   <!-- Google tag (gtag.js) -->
@@ -283,39 +283,62 @@
       <div id="formSlot">
       <form id="leadForm" class="quick" novalidate>
         <svg class="cn tl" aria-hidden="true"><use href="#corner"/></svg><svg class="cn tr" aria-hidden="true"><use href="#corner"/></svg><svg class="cn bl" aria-hidden="true"><use href="#corner"/></svg><svg class="cn br" aria-hidden="true"><use href="#corner"/></svg>
-        <h2>Request a callback or quotation</h2><p id="picked" class="picked" hidden></p>
-        <label>Your name <input name="name" required maxlength="100" autocomplete="name" /></label>
-        <label>Phone number <input name="phone" type="tel" required maxlength="20" autocomplete="tel" inputmode="tel" /></label>
+        <h2>Request a callback or quotation</h2>
+        <p class="sub">We'll call you back. Free, no obligation.</p><p id="picked" class="picked" hidden></p>
+        <label>Your name <span class="fld"><span class="fi" data-ic="user"></span><input name="name" required maxlength="100" autocomplete="name" placeholder="e.g. Asha Kulkarni" /></span></label>
+        <label>Phone number <span class="fld"><span class="fi" data-ic="phone"></span><input name="phone" type="tel" required maxlength="20" autocomplete="tel" inputmode="tel" placeholder="10-digit mobile number" /></span></label>
 
         <details>
-          <summary>Add wedding details <span>(optional)</span></summary>
+          <summary><span class="si" data-ic="sparkle"></span>Add wedding details <span>(optional)</span></summary>
           <fieldset class="seg">
             <legend>I want</legend>
-            <label><input type="radio" name="interest" value="full" checked /> Complete planning</label>
-            <label><input type="radio" name="interest" value="selected" /> Selected services</label>
+            <label class="opt"><input type="radio" name="interest" value="full" checked /><span><i data-ic="sparkle"></i>Complete planning</span></label>
+            <label class="opt"><input type="radio" name="interest" value="selected" /><span><i data-ic="list"></i>Selected services</span></label>
           </fieldset>
           <fieldset id="servicesBox" class="chips" hidden><legend>Which services?</legend></fieldset>
           <div class="row">
-            <label>Wedding date <input name="weddingDate" type="date" /></label>
-            <label>Approx. guests <input name="guests" type="number" min="0" max="100000" inputmode="numeric" /></label>
+            <label>Wedding date <span class="fld"><span class="fi" data-ic="calendar"></span><input name="weddingDate" type="date" /></span></label>
+            <label>Approx. guests <span class="fld"><span class="fi" data-ic="users"></span><input name="guests" type="number" min="0" max="100000" inputmode="numeric" /></span></label>
           </div>
-          <label>City <input name="city" maxlength="80" autocomplete="address-level2" /></label>
-          <label>Best time to call
-            <select name="callbackTime">
+          <label>City <span class="fld"><span class="fi" data-ic="pin"></span><input name="city" maxlength="80" autocomplete="address-level2" /></span></label>
+          <label>Best time to call <span class="fld"><span class="fi" data-ic="clock"></span><select name="callbackTime">
               <option value="anytime">Any time</option>
               <option value="morning">Morning</option>
               <option value="afternoon">Afternoon</option>
               <option value="evening">Evening</option>
-            </select>
-          </label>
-          <label>Email <input name="email" type="email" maxlength="120" autocomplete="email" /></label>
-          <label>Anything else? <textarea name="notes" rows="2" maxlength="1000"></textarea></label>
+            </select></span></label>
+          <label>Email <span class="fld"><span class="fi" data-ic="invites"></span><input name="email" type="email" maxlength="120" autocomplete="email" /></span></label>
+          <label>Anything else? <span class="fld fld-area"><span class="fi" data-ic="note"></span><textarea name="notes" rows="2" maxlength="1000"></textarea></span></label>
         </details>
 
         <input name="website" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true" />
         <p id="formMsg" class="msg" role="status"></p>
-        <button class="btn block" type="submit">Request callback / quote</button>
+        <div id="failActions" class="fail-actions" hidden>
+          <a class="btn ghost rsvp-call" href="#">Call us</a>
+          <a class="btn ghost rsvp-wa" href="#" target="_blank" rel="noopener">WhatsApp</a>
+        </div>
+        <button class="btn block submit" type="submit"><span class="spin" aria-hidden="true"></span><span class="bi" data-ic="phone"></span><span class="lbl">Request callback / quote</span></button>
         <p class="fine">We only use your details to call you about your wedding. <a href="privacy/">Privacy</a></p>
+        <div id="formResult" class="result" tabindex="-1" role="status" aria-live="polite">
+          <div class="burst" aria-hidden="true">
+            <span class="halo"></span><span class="halo h2"></span>
+            <svg class="tick" viewBox="0 0 64 64">
+              <defs><linearGradient id="gRing" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f1d58a"/><stop offset=".5" stop-color="#d9962b"/><stop offset="1" stop-color="#a86a10"/></linearGradient>
+              <radialGradient id="gDisc" cx=".35" cy=".3" r=".9"><stop offset="0" stop-color="#4f8a3f"/><stop offset="1" stop-color="#1f5a2e"/></radialGradient></defs>
+              <circle class="tick-gold" cx="32" cy="32" r="29.5" /><circle class="tick-disc" cx="32" cy="32" r="23" /><path class="tick-check" d="M21.5 33.5l8 8 14-16" />
+            </svg>
+            <svg class="star s1" viewBox="0 0 24 24"><path d="M12 0l2.2 9.8L24 12l-9.8 2.2L12 24l-2.2-9.8L0 12l9.8-2.2z"/></svg><svg class="star s2" viewBox="0 0 24 24"><path d="M12 0l2.2 9.8L24 12l-9.8 2.2L12 24l-2.2-9.8L0 12l9.8-2.2z"/></svg><svg class="star s3" viewBox="0 0 24 24"><path d="M12 0l2.2 9.8L24 12l-9.8 2.2L12 24l-2.2-9.8L0 12l9.8-2.2z"/></svg><svg class="star s4" viewBox="0 0 24 24"><path d="M12 0l2.2 9.8L24 12l-9.8 2.2L12 24l-2.2-9.8L0 12l9.8-2.2z"/></svg>
+          </div>
+          <h3>Thank you, <span id="resName">friend</span>!</h3>
+          <p id="resText">We'll call you soon.</p>
+          <p class="res-note">Your request is with our planner. Keep your phone handy.</p>
+          <p class="res-kn" lang="kn"><b>ಧನ್ಯವಾದಗಳು!</b> ನಿಮ್ಮ ಕೋರಿಕೆ ನಮಗೆ ತಲುಪಿದೆ. <span id="resKn">ನಾವು ಶೀಘ್ರದಲ್ಲೇ ನಿಮಗೆ ಕರೆ ಮಾಡುತ್ತೇವೆ.</span></p>
+          <p class="res-shubha" lang="kn">॥ ಶುಭಮಸ್ತು ॥</p>
+          <div class="res-actions">
+            <a class="btn gold rsvp-wa" href="#" target="_blank" rel="noopener">WhatsApp us</a>
+            <button class="btn ghost" type="button" id="resDone">Done</button>
+          </div>
+        </div>
       </form>
       </div>
     </section>
@@ -369,7 +392,16 @@
   <div id="sheet" class="sheet" hidden>
     <div class="backdrop" data-close></div>
     <div class="panel" tabindex="-1" role="dialog" aria-modal="true" aria-label="Request a callback or quotation">
-      <button class="close" type="button" aria-label="Close" data-close>&times;</button>
+      <div class="sheet-head">
+        <span class="medal" aria-hidden="true"><span class="m-ask" data-ic="phone"></span><span class="m-done" data-ic="check"></span></span>
+        <div class="head-text">
+          <h2 class="head-ask">Request a callback or quotation</h2>
+          <h2 class="head-done">Request received</h2>
+          <p class="head-ask">Free and no obligation. We call you back.</p>
+          <p class="head-done">Our planner will call you shortly.</p>
+        </div>
+        <button class="close" type="button" aria-label="Close" data-close>&times;</button>
+      </div>
       <div id="sheetBody"></div>
     </div>
   </div>
@@ -380,6 +412,6 @@
     <a href="#leadForm" class="cta" data-focus-form>Request callback</a>
   </nav>
 
-  <script type="module" src="js/main.js?v=14"></script>
+  <script type="module" src="js/main.js?v=18"></script>
 </body>
 </html>
