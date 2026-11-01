@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://shivaleela-weddings.web.app/sitemap.xml
