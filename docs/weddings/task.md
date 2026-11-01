@@ -7,19 +7,19 @@ Status key: [ ] open, [~] in progress, [x] done. Update this file as items finis
 
 ## A. Blockers (do before any ad spend)
 
-- [ ] **A1. Business name.** Pick the real name; replace "Wedding Planner" in the header,
+- [x] **A1. DONE: "Shivaleela Weddings" (2026-11-01).** Replaced "Wedding Planner" in the header,
       `<title>`, meta description and footer. Needs: name from owner.
 - [ ] **A2. Logo / brand mark design.** Design a logo or monogram (SVG) in the invitation
       theme (maroon, gold, Kannada accent); use it in the header, favicon
       (`public/weddings/icons/icon.svg`) and theme colour. Depends on A1.
-- [ ] **A3. Real phone and WhatsApp numbers.** Replace the placeholder `910000000000` in
+- [x] **A3. DONE: +91 99012 16122 (2026-11-01), change in config.js.** Replaced placeholder `910000000000` in
       `public/weddings/js/config.js` (`CONTACT.phone`, `CONTACT.whatsapp`). Needs: numbers from owner.
 - [~] **A4. End-to-end lead test on the live site.** DONE 2026-11-01: anonymous create accepted by the
       rules; anonymous read/list/delete refused (403); test lead deleted with the Firebase CLI.
       NOT DONE: seeing it in the Leads screen and changing its status (needs the planner's own Google sign-in), and a real submit from the page form.
 - [ ] **A5. Google Ads conversion tracking.** Fill `ADS` in `config.js` (conversion ID and
       label); confirm the conversion fires once per successful lead; check UTM/`gclid` is stored on the lead.
-      Needs: Ads account details from owner.
+      Needs: Conversion ID (AW-...) and label from owner; see state.md.
 
 ## B. Should do soon
 
@@ -42,7 +42,7 @@ Status key: [ ] open, [~] in progress, [x] done. Update this file as items finis
 ## C. Nice to have
 
 - [ ] **C1. Tap cue on service boxes** (they have no visible "get quote" hint now).
-- [ ] **C2. Tidy CSS.** It has grown in layers; merge into one clean theme.
+- [ ] **C2. Tidy CSS (backlog, owner confirmed 2026-11-01).** It has grown in layers (many ?v= revisions); merge into one clean theme without changing the look.
 - [ ] **C3. Narrow the Firestore catch-all rule** (risky, separate change; see firestore.rules).
 - [ ] **C4. Why-choose-us strip** and testimonials, only with real content.
 
