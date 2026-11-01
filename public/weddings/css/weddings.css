@@ -511,3 +511,6 @@ body { background: #f6e9c9 url(../img/orn/bg.svg?v=1) center top / 96px 96px; }
 .callTop { background: linear-gradient(180deg, var(--gold-soft), var(--gold)); color: var(--deep); border: 1.5px solid var(--deep); border-radius: 999px; min-height: 40px; min-width: 40px; padding: 0 .75rem; box-shadow: 0 2px 0 var(--deep); }
 .top .link { border: 1.5px solid var(--primary); border-radius: 999px; min-height: 40px; padding: 0 1rem; font: 700 .9rem var(--font-sans); letter-spacing: .04em; color: var(--primary); background: transparent; }
 @media (max-width: 360px) { .top .link { padding: 0 .75rem; font-size: .85rem; } .callTop { padding: 0 .6rem; } }
+
+/* Leads: delete button */
+.list .actions .danger { color: var(--danger); border-color: var(--danger); background: transparent; margin-left: auto; }

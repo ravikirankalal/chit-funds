@@ -1,7 +1,7 @@
 // Planner-only lead list. The email check here is UX only; firestore.rules
 // is what actually restricts access.
 
-import { watchAllLeads, updateLead } from './leads.js';
+import { watchAllLeads, updateLead, deleteLead } from './leads.js?v=2';
 import { STATUSES } from './config.js';
 
 const $ = function (id) { return document.getElementById(id); };
@@ -70,7 +70,18 @@ function render() {
     const note = document.createElement('input');
     note.placeholder = 'Note'; note.maxLength = 500; note.value = l.plannerNote || '';
     note.addEventListener('change', function () { updateLead(l.id, { plannerNote: note.value }); });
-    actions.append(call, wa, sel, note);
+    const del = el('button', 'Delete', 'btn small danger'); del.type = 'button';
+    del.addEventListener('click', function () {
+      if (!confirm('Delete the lead from ' + l.name + '? This cannot be undone.')) return;
+      del.disabled = true;
+      deleteLead(l.id).catch(function (err) {
+        console.error(err);
+        del.disabled = false;
+        $('adminMsg').textContent = 'Could not delete the lead.';
+        $('adminMsg').className = 'msg err';
+      });
+    });
+    actions.append(call, wa, sel, note, del);
     li.appendChild(actions);
     ul.appendChild(li);
   });
