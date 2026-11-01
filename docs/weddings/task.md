@@ -2,7 +2,7 @@
 
 Companion: [state.md](state.md) (what exists now). Update both when work lands.
 
-Live: https://localbc-41b52.web.app/weddings/  (v0.1, PR #78, tag `v0.1`)
+Live: https://shivaleela-weddings.web.app/  (own hosting site; old path https://localbc-41b52.web.app/weddings/ still works; v0.1, PR #78, tag `v0.1`)
 Status key: [ ] open, [~] in progress, [x] done. Update this file as items finish.
 
 ## A. Blockers (do before any ad spend)
@@ -39,6 +39,23 @@ Status key: [ ] open, [~] in progress, [x] done. Update this file as items finis
       OPEN: remove "Call Now"/"Call Us Now" headlines from the ad; find and remove the stray "Bengaluru, 52 Sai Baba Temple Rd" location shown in the
       ad preview (not the owner's); GSTIN banner (owner); delete the "Test Ads" lead; first conversion. Kannada ad generation is unavailable in Ads.
       Review the search-terms report after a few days and add negatives. Rule from owner: never disconnect adb.
+      2026-11-01 LATER: funds ₹1,000 added; ad final URL moved to https://shivaleela-weddings.web.app/ (ad "under review" again); 49 phrase keywords + 14
+      negatives added with an Ads Script (1 error: "wedding set up companies" missing, add it); sitelinks "Request a Callback" (campaign, `/?callback=1`) and
+      "Our Services" (account, `/#serviceGrid`) added, both pending, old sitelink with the project-id URL removed; Ad Preview blocked by CAPTCHA (owner);
+      images confirmed impossible for this campaign. Decide: lower budget ₹500 to about ₹200 (Kalaburagi volume is tiny); add 4 more sitelinks (6 recommended);
+      re-add business name and logo; review the search-terms report; first impressions and first conversion.
+
+## A7. Own hosting site (DONE 2026-11-01)
+- [x] Second Hosting site `shivaleela-weddings` serving `public/weddings` at `/` (PR #91), weddings-only `js/firebase-config.js` fixing a 404 that broke the page JS (PR #92), `/?callback=1` opens the callback sheet (PR #92). Keep `js/firebase-config.js` in sync with `public/firebase-config.js`.
+- [ ] Optional: buy a `.in` domain and connect it to the `shivaleela-weddings` site (DuckDNS was dropped).
+
+## A8. Search visibility without ads
+- [x] In code (PR #93): robots.txt, sitemap.xml, canonical, Open Graph/Twitter, geo tags, JSON-LD, crawlable Kalaburagi section with FAQ, Kannada paragraph.
+- [ ] Owner: check the FAQ and "nearby towns" wording is true for the business.
+- [ ] Owner: Google Business Profile (verification by Google; biggest factor for "near me" and Maps).
+- [ ] Owner: Google Search Console, URL-prefix property for https://shivaleela-weddings.web.app/ with the HTML-tag method; Claude adds the tag, then submit sitemap.xml.
+- [ ] Owner: free listings (Justdial, Sulekha, WedMeGood, WeddingWire) with identical name and phone; ask clients for Google reviews; share the link on Instagram, Facebook, WhatsApp Business.
+- [ ] Later: a Kannada version of the page; real photos (B6) for image search.
 
 ## B. Should do soon
 
@@ -68,5 +85,5 @@ Status key: [ ] open, [~] in progress, [x] done. Update this file as items finis
 ## Release steps (each version)
 
 1. Work on a branch; deploy to preview channel `design-preview` to review.
-2. Open a PR into `develop`, merge, `firebase deploy --only hosting --project localbc-41b52`.
+2. Open a PR into `develop`, merge, `firebase deploy --only hosting:weddings,hosting:main --project localbc-41b52` (previews: `firebase hosting:channel:deploy NAME --only weddings --expires 1d`).
 3. Tag the release (`v0.2`, ...).
