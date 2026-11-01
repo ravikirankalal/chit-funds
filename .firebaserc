@@ -2,6 +2,17 @@
   "projects": {
     "default": "localbc-41b52"
   },
-  "targets": {},
+  "targets": {
+    "localbc-41b52": {
+      "hosting": {
+        "main": [
+          "localbc-41b52"
+        ],
+        "weddings": [
+          "shivaleela-weddings"
+        ]
+      }
+    }
+  },
   "etags": {}
 }
