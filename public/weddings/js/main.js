@@ -43,7 +43,10 @@ document.querySelectorAll('[data-ic]').forEach(function (n) { n.innerHTML = icon
 // The form opens as a bottom sheet over the page (no scrolling); it is moved
 // back to its spot after the services grid when the sheet closes.
 const sheet = $('sheet');
+let closeTimer = 0;
 function openSheet() {
+  clearTimeout(closeTimer);
+  sheet.classList.remove('closing');
   $('sheetBody').appendChild(form);
   sheet.hidden = false;
   document.body.style.overflow = 'hidden';
@@ -51,9 +54,23 @@ function openSheet() {
   $('sheetBody').parentNode.focus();
 }
 function closeSheet() {
-  $('formSlot').appendChild(form);
-  sheet.hidden = true;
+  if (sheet.hidden || sheet.classList.contains('closing')) return;
+  sheet.classList.add('closing');
   document.body.style.overflow = '';
+  closeTimer = setTimeout(function () {
+    $('formSlot').appendChild(form);
+    sheet.hidden = true;
+    sheet.classList.remove('closing');
+    resetForm();
+  }, 210);
+}
+// Back to a clean form (after a success view, or when the sheet is dismissed).
+function resetForm() {
+  form.classList.remove('is-done');
+  sheet.classList.remove('done');
+  setMsg('');
+  $('failActions').hidden = true;
+  form.querySelectorAll('.invalid').forEach(clearInvalid);
 }
 function focusForm() { openSheet(); }
 sheet.addEventListener('click', function (e) { if (e.target.closest('[data-close]')) closeSheet(); });
@@ -128,25 +145,111 @@ function pickService(s) {
 // ---- Submit --------------------------------------------------------------
 function setMsg(text, kind) { msg.textContent = text; msg.className = 'msg ' + (kind || ''); }
 
+// Inline field errors: red border, small message under the field, gentle shake.
+function markInvalid(input, text) {
+  const label = input.closest('label');
+  input.classList.add('invalid');
+  input.setAttribute('aria-invalid', 'true');
+  let note = label.querySelector('.field-err');
+  if (!note) { note = document.createElement('span'); note.className = 'field-err'; note.setAttribute('role', 'alert'); label.appendChild(note); }
+  note.textContent = text;
+  label.classList.remove('shake'); void label.offsetWidth; label.classList.add('shake');
+}
+function clearInvalid(input) {
+  input.classList.remove('invalid');
+  input.removeAttribute('aria-invalid');
+  const note = input.closest('label') && input.closest('label').querySelector('.field-err');
+  if (note) note.remove();
+}
+form.addEventListener('input', function (e) { if (e.target.classList && e.target.classList.contains('invalid')) clearInvalid(e.target); });
+
+function shakeForm() { form.classList.remove('shake'); void form.offsetWidth; form.classList.add('shake'); }
+
+const submitBtn = form.querySelector('button[type=submit]');
+function setSending(on) {
+  submitBtn.disabled = on;
+  submitBtn.classList.toggle('loading', on);
+  submitBtn.querySelector('.lbl').textContent = on ? 'Sending…' : 'Request callback / quote';
+}
+
+// Marigold petals drift down over the page when a request goes through.
+function celebrate() {
+  if (navigator.vibrate) navigator.vibrate([30, 50, 70]);
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const host = document.createElement('div');
+  host.className = 'confetti';
+  host.setAttribute('aria-hidden', 'true');
+  const colors = ['#d9962b', '#e8821a', '#9c1c1a', '#f1d58a', '#c4560f', '#3e6b32'];
+  for (let i = 0; i < 38; i++) {
+    const p = document.createElement('i');
+    p.className = 'petal';
+    p.style.cssText = '--x:' + (Math.random() * 100).toFixed(1) + '%;--s:' + (6 + Math.random() * 7).toFixed(1) + 'px;--c:' + colors[i % colors.length] +
+      ';--d:' + (2.8 + Math.random() * 2).toFixed(2) + 's;--w:' + (0.5 + Math.random() * 1.1).toFixed(2) + 's;--dx:' + ((Math.random() - 0.5) * 180).toFixed(0) + 'px;--r:' + (Math.random() * 720 - 360).toFixed(0) + 'deg';
+    host.appendChild(p);
+  }
+  document.body.appendChild(host);
+  setTimeout(function () { host.remove(); }, 6000);
+}
+
+function showSuccess(name, phone, when) {
+  $('resName').textContent = name.split(' ')[0];
+  $('resText').innerHTML = '';
+  const t = document.createElement('span');
+  t.textContent = 'We\'ll call you on ';
+  const b = document.createElement('b'); b.textContent = phone;
+  const w = document.createElement('span');
+  w.textContent = when === 'anytime' ? ' soon.' : ' this ' + when + '.';
+  $('resText').append(t, b, w);
+  // Same promise in Kannada, matched to the chosen call time.
+  const knWhen = { morning: 'ಬೆಳಿಗ್ಗೆ', afternoon: 'ಮಧ್ಯಾಹ್ನ', evening: 'ಸಂಜೆ' };
+  $('resKn').textContent = knWhen[when] ? 'ನಾವು ' + knWhen[when] + ' ನಿಮಗೆ ಕರೆ ಮಾಡುತ್ತೇವೆ.' : 'ನಾವು ಶೀಘ್ರದಲ್ಲೇ ನಿಮಗೆ ಕರೆ ಮಾಡುತ್ತೇವೆ.';
+  form.classList.add('is-done');
+  sheet.classList.add('done');
+  celebrate();
+  const r = $('formResult');
+  r.classList.remove('play'); void r.offsetWidth; r.classList.add('play');
+  r.focus({ preventScroll: true });
+  r.scrollIntoView({ block: 'nearest' });
+}
+$('resDone').addEventListener('click', function () {
+  if (!sheet.hidden) closeSheet(); else resetForm();
+});
+
+function withTimeout(p, ms) {
+  return Promise.race([p, new Promise(function (_, rej) { setTimeout(function () { rej({ code: 'deadline-exceeded' }); }, ms); })]);
+}
+
+function failureText(err) {
+  if (!navigator.onLine || (err && (err.code === 'unavailable' || err.code === 'deadline-exceeded'))) return 'We could not reach the server. Check your connection and try again, or call or WhatsApp us.';
+  if (err && err.code === 'permission-denied') return 'We could not save your request right now. Please call or WhatsApp us and we will help at once.';
+  return 'Sorry, something went wrong. Please try again, or call or WhatsApp us.';
+}
+
 form.addEventListener('submit', async function (e) {
   e.preventDefault();
   const f = new FormData(form);
   if (f.get('website')) return; // honeypot tripped: pretend success, send nothing
 
+  form.querySelectorAll('.invalid').forEach(clearInvalid);
+  setMsg('');
+  $('failActions').hidden = true;
+
   const name = String(f.get('name')).trim();
   const phone = String(f.get('phone')).trim();
   const interest = f.get('interest');
   const services = interest === 'selected' ? f.getAll('service') : [];
-  if (name.length < 2) return setMsg('Please enter your name.', 'err');
-  if (!/^[+]?[0-9 ()-]{7,20}$/.test(phone)) return setMsg('Please enter a valid phone number.', 'err');
-  if (interest === 'selected' && !services.length) return setMsg('Pick at least one service.', 'err');
+  let firstBad = null;
+  if (name.length < 2) { markInvalid(form.elements.name, 'Please enter your name.'); firstBad = firstBad || form.elements.name; }
+  if (!/^[+]?[0-9 ()-]{7,20}$/.test(phone)) { markInvalid(form.elements.phone, 'Enter a valid phone number, digits only.'); firstBad = firstBad || form.elements.phone; }
+  if (interest === 'selected' && !services.length) { setMsg('Pick at least one service.', 'err'); shakeForm(); return; }
+  if (firstBad) { firstBad.focus(); return; }
 
   const guests = f.get('guests') === '' ? null : parseInt(f.get('guests'), 10);
-  const btn = form.querySelector('button[type=submit]');
-  btn.disabled = true;
-  setMsg('Sending…');
+  if (!navigator.onLine) { setMsg(failureText(null), 'err'); $('failActions').hidden = false; shakeForm(); return; }
+  setSending(true);
   try {
-    await submitLead({
+    // Firestore waits for the server forever when the network is bad, so give up after 15s.
+    await withTimeout(submitLead({
       name, phone, interest, services,
       email: String(f.get('email')).trim(),
       city: String(f.get('city')).trim(),
@@ -154,19 +257,22 @@ form.addEventListener('submit', async function (e) {
       guests: Number.isInteger(guests) ? guests : null,
       callbackTime: f.get('callbackTime'),
       notes: String(f.get('notes')).trim()
-    }, auth.currentUser && auth.currentUser.uid);
+    }, auth.currentUser && auth.currentUser.uid), 15000);
     trackConversion();
+    const when = f.get('callbackTime');
     form.reset();
     box.hidden = true;
     form.querySelector('details').open = false;
     $('picked').hidden = true;
-    setMsg('Thank you! We\'ll call you back soon.', 'ok');
-    if (!sheet.hidden) setTimeout(closeSheet, 2500);
+    showSuccess(name, phone, when);
   } catch (err) {
     console.error(err);
-    setMsg('Sorry, something went wrong. Please try again.', 'err');
+    setMsg(failureText(err), 'err');
+    $('failActions').hidden = false;
+    shakeForm();
+    if (navigator.vibrate) navigator.vibrate(120);
   } finally {
-    btn.disabled = false;
+    setSending(false);
   }
 });
 
