@@ -9,7 +9,7 @@ Status key: [ ] open, [~] in progress, [x] done. Update this file as items finis
 
 - [x] **A1. DONE: "Shivaleela Weddings" (2026-11-01).** Replaced "Wedding Planner" in the header,
       `<title>`, meta description and footer. Needs: name from owner.
-- [ ] **A2. Logo / brand mark design.** Design a logo or monogram (SVG) in the invitation
+- [x] **A2. Logo DONE 2026-11-01:** bold SW monogram (option 3) in header, favicon, `img/logo/`. Lockups (`lockup*.svg`) exist for later use; not yet used elsewhere. Design a logo or monogram (SVG) in the invitation
       theme (maroon, gold, Kannada accent); use it in the header, favicon
       (`public/weddings/icons/icon.svg`) and theme colour. Depends on A1.
 - [x] **A3. DONE: +91 99012 16122 (2026-11-01), change in config.js.** Replaced placeholder `910000000000` in

@@ -16,7 +16,7 @@ sees and manages leads after Google sign-in.
 
 ## Code map (`public/weddings/`)
 - `index.html`, `css/weddings.css` (layered; later rules override earlier ones), `js/`
-  - `config.js` SERVICES (12), STATUSES, CONTACT (placeholder numbers), ADS (empty), PLANNER_EMAIL
+  - `config.js` SERVICES (12), STATUSES, CONTACT (919901216122, edit here to change), ADS (empty), PLANNER_EMAIL
   - `main.js` hero, service grid, bottom-sheet form, submit, credits
   - `leads.js` / `admin.js` lead create/read and the planner's Leads view
   - `firebase.js` shares `../firebase-config.js`
@@ -39,13 +39,18 @@ square corners, filigree corner art, red paisley field, cusped-arch photo window
 stripes, scroll dividers, 4-across service grid, ceremonies card, RSVP band, callback bottom sheet,
 pinned Call / WhatsApp / Request-callback bar on mobile.
 
-## Pending PRs (2026-11-01)
-- `weddings-launch-prep`: privacy page + task/state updates
-- `hosting-html-no-cache`: firebase.json HTML no-cache (shared with chit funds)
+## Shipped since v0.1 (2026-11-01, deployed to production)
+- PR #80 HTML no-cache, PR #81 privacy page, PR #82 name "Shivaleela Weddings" + phone/WhatsApp +919901216122.
+
+## Logo (A2, done: SW monogram)
+Three option sets were drawn in the session scratchpad (not in repo). Set 3 (real typefaces as outlines,
+distinct layouts: arch emblem, round badge, bold monogram, door panel, script, modern line) is the
+current candidate set; owner has not picked yet. Rules: real display typefaces outlined, options must
+differ in layout, divider, type and colour.
 
 ## Known gaps
-See task.md. Main ones: placeholder phone/WhatsApp, empty ADS config, placeholder business name,
-no live lead test, no standalone privacy page, wide-screen layouts unchecked.
+See task.md. Main ones: no logo yet, empty ADS config (owner to send AW id + label), lead test through
+the Leads screen and a real form submit not done, wide-screen layouts unchecked, Kannada unproofread.
 
 ## How to ship
 Branch, deploy to a preview channel to review, PR into `develop`, merge,
