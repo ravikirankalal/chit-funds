@@ -14,9 +14,9 @@ Status key: [ ] open, [~] in progress, [x] done. Update this file as items finis
       (`public/weddings/icons/icon.svg`) and theme colour. Depends on A1.
 - [x] **A3. DONE: +91 99012 16122 (2026-11-01), change in config.js.** Replaced placeholder `910000000000` in
       `public/weddings/js/config.js` (`CONTACT.phone`, `CONTACT.whatsapp`). Needs: numbers from owner.
-- [~] **A4. End-to-end lead test on the live site.** DONE 2026-11-01: anonymous create accepted by the
+- [x] **A4. End-to-end lead test on the live site.** DONE 2026-11-01: anonymous create accepted by the
       rules; anonymous read/list/delete refused (403); a real form submit from the live page worked and the
-      planner can see the lead in Leads after sign-in. NOT CONFIRMED: changing its status, deleting the "Test Ads" lead.
+      planner can see the lead in Leads after sign-in. NOT CONFIRMED: status change confirmed working; delete button added (PR below) so the "Test Ads" lead can be removed.
 - [~] **A5. Google Ads conversion tracking.** DONE 2026-11-01: tag `AW-11297900974` in the page head, conversion
       "Callback request" created, label set in `config.js`, deployed (PRs #85, #86). WAITING: first conversion to show in
       Ads (status Inactive until then, can take hours); enhanced conversions left to the owner; GSTIN billing banner unresolved.
