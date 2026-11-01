@@ -20,6 +20,13 @@ Status key: [ ] open, [~] in progress, [x] done. Update this file as items finis
 - [~] **A5. Google Ads conversion tracking.** DONE 2026-11-01: tag `AW-11297900974` in the page head, conversion
       "Callback request" created, label set in `config.js`, deployed (PRs #85, #86). WAITING: first conversion to show in
       Ads (status Inactive until then, can take hours); enhanced conversions left to the owner; GSTIN billing banner unresolved.
+- [~] **A6. Google Ads Search campaign `Leads-Search-1`.** PUBLISHED 2026-11-01 (Search network only, Kalaburagi city,
+      location option "Presence", Maximise conversions, **₹500/day**, English/Hindi + 2 more). Keywords: phrase match incl. Gulbarga/Kalaburagi
+      variations; 16 campaign-level negatives (e.g. birthday, cheap, course, download, dress, free, job, jewellery, "invitation card printing").
+      Assets on campaign: business name "Shivaleela Weddings", SW logo, Call +91 99012 16122 (India), 4 callouts (Venue & Decor,
+      Catering & Photography, Bridal Makeup & Mehendi, Book Only What You Need); no sitelinks (one landing page). Landing page: `/weddings/`.
+      WAITING: ad review (status Pending; watch for a disapproval over the "Rs 5 Lakh*" asterisk), first impressions/clicks, GSTIN banner (owner),
+      delete the "Test Ads" lead. Kannada ad generation is unavailable in Ads. Review the search-terms report after a few days and add negatives.
 
 ## B. Should do soon
 
