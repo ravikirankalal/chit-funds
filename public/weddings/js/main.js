@@ -5,7 +5,7 @@ import { auth } from './firebase.js';
 import {
   GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged
 } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
-import { SERVICES, ADS, PLANNER_EMAIL, CONTACT } from './config.js?v=3';
+import { SERVICES, ADS, PLANNER_EMAIL, CONTACT } from './config.js?v=4';
 import { submitLead, watchMyLeads } from './leads.js';
 import { icon } from './icons.js';
 import { showAdmin, hideAdmin } from './admin.js';
@@ -15,7 +15,8 @@ const form = $('leadForm');
 const msg = $('formMsg');
 
 // ---- Google Ads (only when configured) ----------------------------------
-if (ADS.id) {
+// The Google tag itself is in index.html <head> so Google can detect it; load it here only as a fallback.
+if (ADS.id && !window.gtag) {
   const s = document.createElement('script');
   s.async = true;
   s.src = 'https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(ADS.id);
