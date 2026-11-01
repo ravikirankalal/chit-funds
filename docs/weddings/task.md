@@ -25,6 +25,10 @@ Status key: [ ] open, [~] in progress, [x] done. Update this file as items finis
       variations; 16 campaign-level negatives (e.g. birthday, cheap, course, download, dress, free, job, jewellery, "invitation card printing").
       Assets on campaign: business name "Shivaleela Weddings", SW logo, Call +91 99012 16122 (India), 4 callouts (Venue & Decor,
       Catering & Photography, Bridal Makeup & Mehendi, Book Only What You Need); no sitelinks (one landing page). Landing page: `/weddings/`.
+      2026-11-01 review: 8 of the 20 Gulbarga/Kalaburagi keywords were eligible, 12 "Low search volume" (removed); added 4 broader phrase-match keywords
+      ("wedding planner", "wedding planners near me", "wedding event management", "wedding planning services"); location targeting keeps them local.
+      Settings audit clean (Kalaburagi only, all-day schedule, no bid adjustments, score 95%). Skip Google's suggestions to opt in to search partners,
+      Display Expansion and broad match until there is conversion data.
       WAITING: ad review (status Pending; watch for a disapproval over the "Rs 5 Lakh*" asterisk), first impressions/clicks, GSTIN banner (owner),
       delete the "Test Ads" lead. Kannada ad generation is unavailable in Ads. Review the search-terms report after a few days and add negatives.
 
