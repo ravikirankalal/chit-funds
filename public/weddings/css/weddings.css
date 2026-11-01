@@ -498,3 +498,16 @@ body { background: #f6e9c9 url(../img/orn/bg.svg?v=1) center top / 96px 96px; }
 .brand { display: inline-flex; align-items: center; gap: .55rem; }
 .brand-mark { height: 25px; width: auto; display: block; }
 @media (max-width: 360px) { .brand { font-size: 1.3rem; } .brand-mark { height: 21px; } }
+
+/* Header: outlined logo lockup (SW monogram + tracked caps), sized to fit any phone */
+.top { gap: .5rem; overflow: hidden; }
+.brand { display: inline-flex; align-items: center; min-width: 0; flex: 0 1 auto; }
+.brand-lockup { display: block; height: 42px; width: auto; max-width: 100%; }
+.top nav { flex: none; }
+@media (max-width: 360px) { .brand-lockup { height: 34px; } }
+
+/* Header actions: gold call button + outlined sign-in, matching the logo's gold/maroon */
+.top nav { gap: .55rem; }
+.callTop { background: linear-gradient(180deg, var(--gold-soft), var(--gold)); color: var(--deep); border: 1.5px solid var(--deep); border-radius: 999px; min-height: 40px; min-width: 40px; padding: 0 .75rem; box-shadow: 0 2px 0 var(--deep); }
+.top .link { border: 1.5px solid var(--primary); border-radius: 999px; min-height: 40px; padding: 0 1rem; font: 700 .9rem var(--font-sans); letter-spacing: .04em; color: var(--primary); background: transparent; }
+@media (max-width: 360px) { .top .link { padding: 0 .75rem; font-size: .85rem; } .callTop { padding: 0 .6rem; } }
