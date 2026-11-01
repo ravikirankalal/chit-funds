@@ -63,6 +63,8 @@ document.querySelectorAll('[data-focus-form]').forEach(function (a) {
 });
 // The whole hero is a tap target for "request a callback".
 document.querySelector('.hero').addEventListener('click', focusForm);
+// Ad sitelink "Request a Callback" lands on /?callback=1 and opens the form at once.
+if (new URLSearchParams(location.search).get('callback') === '1') openSheet();
 
 SERVICES.forEach(function (s) {
   const t = document.createElement('button');

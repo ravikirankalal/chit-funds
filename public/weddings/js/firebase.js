@@ -2,7 +2,7 @@
 // funds app uses, but lives in its own page/module graph so nothing here can
 // affect it. Emulators are used only on localhost with ?emulator=1.
 
-import { firebaseConfig } from '../../firebase-config.js';
+import { firebaseConfig } from './firebase-config.js';
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
 import { getAuth, connectAuthEmulator } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
 import { initializeFirestore, connectFirestoreEmulator } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
