@@ -41,7 +41,7 @@ pinned Call / WhatsApp / Request-callback bar on mobile.
 
 ## Shipped since v0.1 (2026-11-01, deployed to production)
 - PR #80 HTML no-cache, #81 privacy page, #82 name + phone/WhatsApp +919901216122, #83/#84 SW logo and header lockup, #85 Google tag in head, #86 conversion label (ADS in config.js).
-- PR #87 delete button on leads. Google Ads campaign `Leads-Search-1` live since 2026-11-01 at ₹500/day (see task.md A6); ads, assets and negatives are set in the Ads UI, not in the repo.
+- PR #87 delete button on leads. Google Ads campaign `Leads-Search-1` live since 2026-11-01 at ₹500/day, serving without business name and logo for now (see task.md A6); ads, assets and negatives are set in the Ads UI, not in the repo.
 
 ## Logo (A2, done: SW monogram)
 Three option sets were drawn in the session scratchpad (not in repo). Set 3 (real typefaces as outlines,
