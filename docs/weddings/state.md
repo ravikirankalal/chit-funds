@@ -39,6 +39,10 @@ square corners, filigree corner art, red paisley field, cusped-arch photo window
 stripes, scroll dividers, 4-across service grid, ceremonies card, RSVP band, callback bottom sheet,
 pinned Call / WhatsApp / Request-callback bar on mobile.
 
+## Pending PRs (2026-11-01)
+- `weddings-launch-prep`: privacy page + task/state updates
+- `hosting-html-no-cache`: firebase.json HTML no-cache (shared with chit funds)
+
 ## Known gaps
 See task.md. Main ones: placeholder phone/WhatsApp, empty ADS config, placeholder business name,
 no live lead test, no standalone privacy page, wide-screen layouts unchecked.
