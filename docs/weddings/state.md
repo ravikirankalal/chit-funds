@@ -40,7 +40,7 @@ stripes, scroll dividers, 4-across service grid, ceremonies card, RSVP band, cal
 pinned Call / WhatsApp / Request-callback bar on mobile.
 
 ## Shipped since v0.1 (2026-11-01, deployed to production)
-- PR #80 HTML no-cache, PR #81 privacy page, PR #82 name "Shivaleela Weddings" + phone/WhatsApp +919901216122.
+- PR #80 HTML no-cache, #81 privacy page, #82 name + phone/WhatsApp +919901216122, #83/#84 SW logo and header lockup, #85 Google tag in head, #86 conversion label (ADS in config.js).
 
 ## Logo (A2, done: SW monogram)
 Three option sets were drawn in the session scratchpad (not in repo). Set 3 (real typefaces as outlines,
@@ -49,8 +49,7 @@ current candidate set; owner has not picked yet. Rules: real display typefaces o
 differ in layout, divider, type and colour.
 
 ## Known gaps
-See task.md. Main ones: no logo yet, empty ADS config (owner to send AW id + label), lead test through
-the Leads screen and a real form submit not done, wide-screen layouts unchecked, Kannada unproofread.
+See task.md. Main ones: no logo yet, ADS conversion not yet confirmed firing in Google Ads, lead status change/delete not confirmed, wide-screen layouts unchecked, Kannada unproofread.
 
 ## How to ship
 Branch, deploy to a preview channel to review, PR into `develop`, merge,
