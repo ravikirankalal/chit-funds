@@ -42,7 +42,7 @@ pinned Call / WhatsApp / Request-callback bar on mobile.
 ## Shipped since v0.1 (2026-11-01, deployed to production)
 - PR #80 HTML no-cache, PR #81 privacy page, PR #82 name "Shivaleela Weddings" + phone/WhatsApp +919901216122.
 
-## Logo work (A2, in progress)
+## Logo (A2, done: SW monogram)
 Three option sets were drawn in the session scratchpad (not in repo). Set 3 (real typefaces as outlines,
 distinct layouts: arch emblem, round badge, bold monogram, door panel, script, modern line) is the
 current candidate set; owner has not picked yet. Rules: real display typefaces outlined, options must
